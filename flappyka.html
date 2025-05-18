@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akshara Ata - Flappy Ka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #87CEEB; /* Sky blue background */
+            font-family: 'Press Start 2P', cursive;
+            color: #333;
+            overflow: hidden; 
+        }
+
+        #game-container {
+            border: 5px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            position: relative;
+            background-color: #f0f0f0; 
+        }
+
+        canvas {
+            display: block;
+            background-color: #70c5ce; /* A slightly different blue for the game sky */
+            border-radius: 5px; 
+        }
+
+        #info-panel {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            padding: 10px 0; /* Reduced padding */
+            background-color: #fff8dc; 
+            border-bottom: 3px solid #333;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            font-size: 0.9em; /* Smaller font for info panel */
+        }
+
+        #current-char-display {
+            font-family: 'Noto Sans Telugu', sans-serif;
+            font-size: 2.5em; 
+            font-weight: bold;
+            color: #d9534f; 
+            background-color: #fff;
+            padding: 3px 10px;
+            border-radius: 8px;
+            border: 2px solid #d9534f;
+        }
+        
+        #score-display, #timer-display {
+            font-size: 1em;
+            color: #5cb85c; 
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .control-button {
+            background-color: #5bc0de; 
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            font-size: 1em;
+            font-family: 'Press Start 2P', cursive;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px #28a745; 
+            transition: all 0.1s ease;
+        }
+
+        .control-button:active {
+            box-shadow: 0 2px #28a745;
+            transform: translateY(2px);
+        }
+        
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            font-size: 1.8em;
+            text-align: center;
+            z-index: 100; 
+            display: none; 
+        }
+        #message-box button {
+             font-family: 'Press Start 2P', cursive;
+             font-size: 0.7em;
+             padding: 10px 15px;
+             margin-top: 15px;
+             background-color: #5cb85c;
+             color: white;
+             border: none;
+             border-radius: 5px;
+             cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <h1> తెలుగు తునకలు - ఫ్లాపి(క)</h1>
+    <h4> Telugu Tunakalu - Flappy Ka</h4>
+    
+    <div id="game-container">
+        <div id="info-panel">
+            <div>Current: <span id="current-char-display">క</span></div>
+            <div id="timer-display">Effect: ---</div>
+            <div id="score-display">Score: 0</div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="message-box">
+            <span id="message-text">Message Here!</span><br>
+            <button id="restart-button" style="display:none;">Restart</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="jump-btn" class="control-button">Jump (Up Arrow/Space)</button>
+    </div>
+
+    <script>
+        // Get canvas and context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // DOM Elements
+        const currentCharDisplay = document.getElementById('current-char-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const restartButton = document.getElementById('restart-button');
+
+        // Game variables
+        let canvasWidth = 800;
+        let canvasHeight = 400;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+
+        const baseChar = 'క';
+        const gudinthalu = {
+            'ా': 'కా', 'ి': 'కి', 'ు': 'కు', 'ే': 'కే', 'ో': 'కో',
+            'ీ': 'కీ', 'ూ': 'కూ', 'ౄ': 'కౄ', 'ె': 'కె', 'ై': 'కై', 'ొ': 'కొ', 'ౌ': 'కౌ', 'ం': 'కం', 'ః': 'కః'
+        };
+        const modifierSymbols = Object.keys(gudinthalu);
+        
+        let score = 0;
+        let gameSpeed = 1.2; // Significantly reduced game speed
+        let gameOver = false;
+        let gameStarted = false;
+
+        // Player properties
+        const player = {
+            x: 100, // Fixed horizontal position
+            y: canvasHeight / 2,
+            width: 60, 
+            height: 60,
+            dy: 0,
+            jumpForce: 4.5, // Drastically reduced jump force for a very small jump
+            gravity: 0.20, // Drastically reduced gravity for an extremely slow fall
+            char: baseChar,
+            modifierActive: false,
+            modifierTimer: 0,
+            maxModifierTime: 5000 
+        };
+
+        // Obstacle properties
+        let obstacles = [];
+        const obstacleWidth = 80;
+        const obstacleGap = 220; // Further increased obstacle gap
+        let obstacleSpawnTimer = 0;
+        // Adjusted spawn interval based on new game speed
+        const obstacleSpawnInterval = 180 * (1 / gameSpeed) * 50; // Further increased base interval
+
+
+        // Modifier items properties
+        let activeModifiers = [];
+        const modifierSize = 40;
+
+        // --- Input Handling ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' || e.key === ' ') {
+                 e.preventDefault(); 
+                 if (!gameStarted && !gameOver) startGame();
+                 else if (gameOver) return; 
+                 else if (gameStarted) playerJump();
+            }
+        });
+
+
+        // Touch controls / Mouse Click
+        const jumpButton = document.getElementById('jump-btn');
+        function handleJumpInput(e) {
+            e.preventDefault(); 
+            if (!gameStarted && !gameOver) startGame();
+            else if (gameOver) return;
+            else if (gameStarted) playerJump();
+        }
+        jumpButton.addEventListener('touchstart', handleJumpInput);
+        jumpButton.addEventListener('mousedown', handleJumpInput); 
+
+
+        restartButton.addEventListener('click', resetGame);
+
+        // --- Helper Functions ---
+        function playerJump() {
+            if (gameStarted && !gameOver) {
+                player.dy = -player.jumpForce;
+            }
+        }
+
+        function drawPlayer() {
+            ctx.font = "bold 50px 'Noto Sans Telugu', sans-serif"; 
+            ctx.fillStyle = '#FF4500'; 
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(player.char, player.x + player.width / 2, player.y + player.height / 2);
+        }
+
+        function spawnObstacle() {
+            const minPipeHeight = 20; // Minimum height for either part of the pipe
+            // Ensure the gap calculation leaves enough room for both pipes
+            const topPipeHeight = Math.random() * (canvasHeight - obstacleGap - minPipeHeight * 2) + minPipeHeight;
+            const bottomPipeY = topPipeHeight + obstacleGap;
+
+            obstacles.push({
+                x: canvasWidth,
+                width: obstacleWidth,
+                topPipeHeight: topPipeHeight,
+                bottomPipeY: bottomPipeY,
+                passed: false 
+            });
+
+            // Chance to spawn a modifier with this obstacle
+            if (Math.random() < 0.55 && activeModifiers.length < 2) { // Slightly higher chance for modifier
+                spawnModifier(canvasWidth + obstacleWidth / 2, topPipeHeight + obstacleGap / 2);
+            }
+        }
+        
+        function spawnModifier(x, y) {
+            const randomSymbol = modifierSymbols[Math.floor(Math.random() * modifierSymbols.length)];
+            activeModifiers.push({
+                x: x - modifierSize / 2,
+                y: y - modifierSize / 2,
+                char: randomSymbol,
+                width: modifierSize,
+                height: modifierSize
+            });
+        }
+
+
+        function drawObstacles() {
+            obstacles.forEach(obs => {
+                ctx.fillStyle = '#2E8B57'; 
+                // Top pipe
+                ctx.fillRect(obs.x, 0, obs.width, obs.topPipeHeight);
+                // Bottom pipe
+                ctx.fillRect(obs.x, obs.bottomPipeY, obs.width, canvasHeight - obs.bottomPipeY);
+                
+                ctx.strokeStyle = '#000'; 
+                ctx.strokeRect(obs.x, 0, obs.width, obs.topPipeHeight);
+                ctx.strokeRect(obs.x, obs.bottomPipeY, obs.width, canvasHeight - obs.bottomPipeY);
+            });
+        }
+        
+        function drawModifiers() {
+            activeModifiers.forEach(mod => {
+                ctx.font = "bold 35px 'Noto Sans Telugu', sans-serif"; 
+                ctx.fillStyle = '#4B0082'; 
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(mod.char, mod.x + mod.width / 2, mod.y + mod.height / 2);
+            });
+        }
+        
+        function showMessage(text, showRestart = false, duration = 0) {
+            messageText.innerHTML = text; 
+            messageBox.style.display = 'block';
+            restartButton.style.display = showRestart ? 'inline-block' : 'none';
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    if (!gameOver) { 
+                         messageBox.style.display = 'none';
+                    }
+                }, duration);
+            }
+        }
+
+        function hideMessage() {
+            messageBox.style.display = 'none';
+        }
+
+        function startGame() {
+            if (gameStarted) return;
+            gameStarted = true;
+            gameOver = false;
+            score = 0;
+            player.y = canvasHeight / 2;
+            player.dy = 0;
+            player.char = baseChar;
+            player.modifierActive = false;
+            player.modifierTimer = 0;
+            obstacles = [];
+            activeModifiers = [];
+            obstacleSpawnTimer = obstacleSpawnInterval * 0.5; // Start spawning obstacles a bit later due to slow speed
+            hideMessage();
+            updateScoreDisplay();
+            updateCharDisplay();
+            updateTimerDisplay();
+            
+            spawnObstacle(); 
+            lastTime = performance.now(); 
+            gameLoop(lastTime); 
+        }
+
+        function resetGame() {
+            gameOver = false;
+            gameStarted = false; 
+            hideMessage();
+            startGame();
+        }
+
+        function handleGameOver() {
+            gameOver = true;
+            gameStarted = false;
+            showMessage(`Game Over! Score: ${score}<br>Jump or Restart`, true);
+        }
+        
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+        function updateCharDisplay() {
+            currentCharDisplay.textContent = player.char;
+        }
+        function updateTimerDisplay() {
+             if (player.modifierActive) {
+                timerDisplay.textContent = `Effect: ${(player.modifierTimer / 1000).toFixed(1)}s`;
+            } else {
+                timerDisplay.textContent = "Effect: ---";
+            }
+        }
+
+
+        // --- Game Logic Update ---
+        let lastTime = 0;
+        function update(timestamp) {
+            if (!gameStarted || gameOver) return; 
+
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // Player physics
+            player.dy += player.gravity;
+            player.y += player.dy;
+
+            // Check for collision with top/bottom boundaries
+            if (player.y < 0 || player.y + player.height > canvasHeight) {
+                handleGameOver();
+                return;
+            }
+
+            // Obstacle management
+            obstacleSpawnTimer += deltaTime;
+            if (obstacleSpawnTimer > obstacleSpawnInterval) {
+                spawnObstacle();
+                obstacleSpawnTimer = 0;
+            }
+
+            obstacles.forEach((obs, index) => {
+                obs.x -= gameSpeed;
+
+                // Collision with obstacles
+                if (player.x < obs.x + obs.width && player.x + player.width > obs.x) {
+                    if (player.y < obs.topPipeHeight || player.y + player.height > obs.bottomPipeY) {
+                        handleGameOver();
+                        return; 
+                    }
+                }
+
+                // Score point for passing obstacle
+                if (!obs.passed && obs.x + obs.width < player.x) {
+                    obs.passed = true;
+                    score += 5; 
+                    updateScoreDisplay();
+                }
+
+                // Remove off-screen obstacles
+                if (obs.x + obs.width < 0) {
+                    obstacles.splice(index, 1);
+                }
+            });
+            
+            if (gameOver) return; 
+
+            // Modifier management
+             activeModifiers.forEach((mod, index) => {
+                mod.x -= gameSpeed; 
+
+                // Collision with modifiers
+                if (player.x < mod.x + mod.width &&
+                    player.x + player.width > mod.x &&
+                    player.y < mod.y + mod.height &&
+                    player.y + player.height > mod.y) {
+                    
+                    player.char = gudinthalu[mod.char];
+                    player.modifierActive = true;
+                    player.modifierTimer = player.maxModifierTime;
+                    activeModifiers.splice(index, 1); 
+                    score += 10; 
+                    updateCharDisplay();
+                    updateTimerDisplay();
+                    showMessage(` ${mod.char} పట్టుకున్నాం! ఇప్పుడు ${player.char} అయిపోయాం`, false, 1000);
+                }
+
+                // Remove off-screen modifiers
+                if (mod.x + mod.width < 0) {
+                    activeModifiers.splice(index, 1);
+                }
+            });
+
+
+            // Modifier timer update
+            if (player.modifierActive) {
+                player.modifierTimer -= deltaTime;
+                if (player.modifierTimer <= 0) {
+                    player.char = baseChar;
+                    player.modifierActive = false;
+                    player.modifierTimer = 0;
+                    updateCharDisplay();
+                    showMessage(`ఎఫక్ట్ పోయింది  మళ్ళి ${baseChar} అయిపోయింది`, false, 1000);
+                }
+                updateTimerDisplay();
+            }
+        }
+
+        // --- Drawing ---
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Draw game elements
+            drawObstacles();
+            drawModifiers();
+            drawPlayer(); 
+        }
+
+        // --- Game Loop ---
+        function gameLoop(timestamp) {
+            if (gameOver) { 
+                draw(); 
+                return;
+            }
+            if (!gameStarted && !gameOver) { 
+                drawStartScreen(); 
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            update(timestamp);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function drawStartScreen() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight); 
+            player.y = canvasHeight / 2; 
+            player.dy = 0;
+            drawPlayer(); 
+            showMessage("Press Jump to Start!", false);
+        }
+
+
+        // --- Initialization ---
+        function init() {
+            updateScoreDisplay();
+            updateCharDisplay();
+            updateTimerDisplay();
+            resizeCanvas(); 
+            drawStartScreen(); 
+            lastTime = performance.now(); 
+            requestAnimationFrame(gameLoop); 
+        }
+        
+        // Resize canvas listener
+        function resizeCanvas() {
+            const gameContainer = document.getElementById('game-container');
+            const aspectRatio = 2 / 1; 
+            let newWidth = Math.min(window.innerWidth * 0.9, 800); 
+            let newHeight = newWidth / aspectRatio;
+
+            if (newHeight > window.innerHeight * 0.8) { // Allow even more vertical space if available
+                newHeight = window.innerHeight * 0.8;
+                newWidth = newHeight * aspectRatio;
+            }
+            
+            canvas.width = newWidth;
+            canvas.height = newHeight; 
+            
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+
+            player.y = Math.min(player.y, canvasHeight - player.height);
+            player.x = Math.max(canvasWidth * 0.1, 50); 
+
+            if (typeof draw === "function") { 
+                 if (gameStarted || gameOver) draw(); 
+                 else drawStartScreen(); 
+            }
+        }
+
+        window.addEventListener('load', init);
+        window.addEventListener('resize', resizeCanvas);
+
+    </script>
+</body>
+</html>
