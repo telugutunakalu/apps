@@ -71,6 +71,16 @@
       font-size: clamp(1.1rem, 3.5vw, 1.3rem);
       color: #444;
     }
+    /* Added this for the detailed analysis heading too */
+    .results-area > h2 {
+      text-align: center;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: bold;
+      font-size: clamp(1.1rem, 3.5vw, 1.3rem);
+      color: #444;
+    }
+
 
     table {
       width: 100%;
@@ -178,6 +188,12 @@
       th, td {
         padding: 6px;
       }
+      .results-area > h2, h2.analysis-heading {
+        font-size: clamp(1rem, 4vw, 1.2rem);
+      }
+      .summary-box h2 {
+        font-size: clamp(0.9rem, 3.5vw, 1.05rem);
+      }
     }
 
   </style>
@@ -196,9 +212,6 @@
   </div>
 
   <script>
-    // JavaScript code remains the same as in your original post
-    // ... (All your existing JavaScript functions: simpleHash, data sets, categorizeAksharam, etc.) ...
-
     //////////////////////////////////////////////////////////////////////////
     // 1) Basic 32-bit hash for unique ID (Not true MD5, but a simple fallback)
     //////////////////////////////////////////////////////////////////////////
@@ -422,29 +435,29 @@
         </table>`;
       resultsContainer.innerHTML = secondaryBanner + summaryHtml + analysisTable;
       const ctx = document.getElementById('categoryChart').getContext('2d');
-      const backgroundColors = sortedCats.map((_, index) => `hsl(${(index * 360 / sortedCats.length) % 360}, 70%, 65%)`);
+      const backgroundColors = sortedCats.map((_, index) => `hsl(${(index * 360 / Math.max(1, sortedCats.length)) % 360}, 70%, 65%)`); // Added Math.max to prevent division by zero
       new Chart(ctx, {
         type: 'pie',
         data: {
           labels: sortedCats,
           datasets: [{
-            label: 'Category Counts', // Added a label for the dataset
+            label: 'Category Counts',
             data: sortedCats.map(cat => categoryCounts[cat]),
             backgroundColor: backgroundColors,
-            borderColor: '#fff', // Add a border for better separation of slices
+            borderColor: '#fff',
             borderWidth: 1
           }]
         },
         options: {
-          responsive: true, // Make chart responsive
-          maintainAspectRatio: false, // Important for custom height
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
-              position: 'top', // 'top' or 'bottom' often better on mobile
+              position: 'top',
               labels: {
-                  boxWidth: 12, // Smaller legend color boxes
+                  boxWidth: 12,
                   font: {
-                      size: clamp(10, 2vw, 12) // Responsive font for legend
+                      size: 11 // CORRECTED: Use a static number
                   }
               }
             },
