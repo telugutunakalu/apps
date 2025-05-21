@@ -2,7 +2,7 @@
 <html lang="te">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>అక్షరాల వేట (Aksharaala Veta)</title>
     <style>
         body {
@@ -11,414 +11,423 @@
             background-color: #1a1a2e; /* Dark blue background */
             display: flex;
             flex-direction: column;
+            align-items: center; /* Center content blocks horizontally */
+            height: 100vh; /* Or 100dvh for dynamic viewport height */
+            font-family: 'Noto Sans Telugu', 'Gautami', sans-serif; /* Telugu fonts */
+            padding: 5px;
+            box-sizing: border-box;
+            color: #e0e1dd;
+        }
+
+        #gameTitle {
+            font-size: clamp(18px, 5vw, 28px); /* Responsive font size */
+            color: #e0e1dd;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        #scoreBoard {
+            font-size: clamp(14px, 4vw, 20px); /* Responsive font size */
+            color: #FFD700; /* Gold for score */
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        #gameDisplayArea {
+            flex-grow: 1; /* Takes up most of the vertical space */
+            width: 100%;
+            max-width: 800px; /* Max width for very large screens, canvas will scale within */
+            display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            font-family: 'Noto Sans Telugu', 'Gautami', sans-serif; /* Telugu fonts */
+            overflow: hidden; /* Ensure canvas doesn't overflow this container */
+            margin-bottom: 5px; /* Space before controls */
         }
-        #gameTitle {
-            font-size: 28px;
-            color: #e0e1dd; /* Light text color */
-            margin-bottom: 10px;
-        }
-        #scoreBoard {
-            font-size: 20px;
-            color: #FFD700; /* Gold for score */
-            margin-bottom: 10px;
-        }
+
         canvas {
-            border: 2px solid #61dafb; /* Bright border for canvas */
+            border: 1px solid #61dafb; /* Thinner border for smaller screens */
             display: block;
             background-color: #232730; /* Slightly lighter game area background */
-            box-shadow: 0 0 15px rgba(97, 218, 251, 0.5); /* Subtle glow for canvas */
+            box-shadow: 0 0 10px rgba(97, 218, 251, 0.3); /* Softer glow */
+            /* Actual width/height attributes are set by JS (internal resolution) */
+            /* Style width/height are set by JS to scale visually */
+            /* image-rendering: pixelated; /* Optional: for crisp pixels if upscaling significantly */
         }
+
+        #controlsContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px; /* Space between button rows */
+            padding: 5px 0;
+            user-select: none; /* Prevent text selection on buttons */
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE10+ */
+        }
+        #controlsContainer .button-row {
+            display: flex;
+            gap: 20px; /* Space between left and right */
+        }
+        #controlsContainer button {
+            font-size: clamp(18px, 5vw, 24px);
+            padding: 8px 12px; /* Slightly smaller padding */
+            min-width: 55px; /* Ensure buttons are tappable */
+            min-height: 35px;
+            background-color: #43A047; /* Greener */
+            color: white;
+            border: 1px solid #2E7D32;
+            border-radius: 8px; /* More rounded */
+            cursor: pointer;
+            touch-action: manipulation; /* Improve touch responsiveness, prevent double-tap zoom */
+            font-weight: bold;
+        }
+        #controlsContainer button:active {
+            background-color: #388E3C;
+        }
+
         #instructions {
-            margin-top: 15px;
-            font-size: 0.9em;
+            font-size: clamp(12px, 3vw, 14px); /* Slightly smaller max */
             color: #aaa; /* Light gray for instructions */
+            text-align: center;
+            margin-top: 5px;
         }
+
+        /* Hide scrollbar that might appear due to 100vh calculations on some browsers */
+        html, body {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* Internet Explorer 10+ */
+        }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { /* WebKit */
+            display: none;
+        }
+
     </style>
 </head>
 <body>
     <div id="gameTitle">అక్షరాల వేట</div>
     <div id="scoreBoard">Score: 0 | Remaining: 0</div>
-    <canvas id="gameCanvas"></canvas>
+
+    <div id="gameDisplayArea">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="controlsContainer">
+        <button id="btnUp" aria-label="Move Up">▲</button>
+        <div class="button-row">
+            <button id="btnLeft" aria-label="Move Left">◀</button>
+            <button id="btnRight" aria-label="Move Right">▶</button>
+        </div>
+        <button id="btnDown" aria-label="Move Down">▼</button>
+    </div>
+
     <div id="instructions">Use Arrow Keys to move. Eat all the Telugu letters!</div>
 
     <script>
         // Game Script for "అక్షరాల వేట (Aksharaala Veta)"
-        // Current time: Wednesday, May 14, 2025 - Time will be dynamically logged by SCRIPT_LOAD_TIME
-        // Location context: Hyderabad, Telangana, India.
-
         const SCRIPT_LOAD_TIME = new Date();
         console.log(`Aksharaala Veta script loaded at: ${SCRIPT_LOAD_TIME.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
         console.log(`Location context: Hyderabad, Telangana, India. Current Time: ${SCRIPT_LOAD_TIME.toLocaleTimeString('en-US', { hour12: false })}`);
 
-        window.onload = function() {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
-            const scoreBoardElement = document.getElementById('scoreBoard'); // Renamed for clarity
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreBoardElement = document.getElementById('scoreBoard');
+        const gameDisplayArea = document.getElementById('gameDisplayArea');
+        const instructionsElement = document.getElementById('instructions');
 
-            // Canvas setup
-            canvas.width = 800;
-            canvas.height = 600;
+        // Fixed internal game resolution
+        const INTERNAL_WIDTH = 800;
+        const INTERNAL_HEIGHT = 600;
+        canvas.width = INTERNAL_WIDTH;
+        canvas.height = INTERNAL_HEIGHT;
 
-            // --- Game State Variables ---
-            let score = 0;
-            let lettersRemaining = 0;
-            let gameOver = false;
-            const initialLetterCount = 25; // Number of letters to spawn
+        // --- Game State Variables ---
+        let score = 0;
+        let lettersRemaining = 0;
+        let gameOver = false;
+        const initialLetterCount = 25;
 
-            // --- Pac-Man Configuration ---
-            const pacman = {
-                x: canvas.width / 2,
-                y: canvas.height / 2,
-                radius: 20,
-                speed: 3.5, // Slightly faster Pac-Man
-                dx: 3.5,    // Current speed in x (starts moving right)
-                dy: 0,      // Current speed in y
-                color: '#FFD700', // Classic yellow
-                mouthOpenValue: 0,    // Current state of mouth animation
-                mouthAngle: 0.40,   // Max angle of mouth opening (radians)
-                isMouthOpening: true, // Direction of mouth animation
-                mouthSpeed: 0.09    // Speed of mouth animation
-            };
+        // --- Pac-Man Configuration ---
+        const pacman = {
+            x: INTERNAL_WIDTH / 2,
+            y: INTERNAL_HEIGHT / 2,
+            radius: 20,
+            speed: 3.5,
+            dx: 3.5,
+            dy: 0,
+            color: '#FFD700',
+            mouthOpenValue: 0,
+            mouthAngle: 0.40,
+            isMouthOpening: true,
+            mouthSpeed: 0.09
+        };
 
-            // --- Telugu Letters (Targets/Food) ---
-            const letters = [];
-            const teluguChars = [ // A diverse set of Telugu characters
-                'అ', 'ఆ', 'ఇ', 'ఈ', 'ఉ', 'ఊ', 'ఋ', 'ఎ', 'ఏ', 'ఐ', 'ఒ', 'ఓ', 'ఔ',
-                'క', 'ఖ', 'గ', 'ఘ', 'ఙ', 'చ', 'ఛ', 'జ', 'ఝ', 'ఞ',
-                'ట', 'ఠ', 'డ', 'ఢ', 'ణ', 'త', 'థ', 'ద', 'ధ', 'న',
-                'ప', 'ఫ', 'బ', 'భ', 'మ', 'య', 'ర', 'ల', 'వ',
-                'శ', 'ష', 'స', 'హ', 'ళ', 'క్ష', 'ఱ',
-                'ం', 'ః', '్', 'ా', 'ి', 'ీ', 'ు', 'ూ', 'ృ', 'ె', 'ే', 'ై', 'ొ', 'ో', 'ౌ'
-            ];
-            const letterBaseSpeed = 1.2; // Base speed for letters
+        // --- Telugu Letters (Targets/Food) ---
+        const letters = [];
+        const teluguChars = [
+            'అ', 'ఆ', 'ఇ', 'ఈ', 'ఉ', 'ఊ', 'ఋ', 'ఎ', 'ఏ', 'ఐ', 'ఒ', 'ఓ', 'ఔ',
+            'క', 'ఖ', 'గ', 'ఘ', 'ఙ', 'చ', 'ఛ', 'జ', 'ఝ', 'ఞ',
+            'ట', 'ఠ', 'డ', 'ఢ', 'ణ', 'త', 'థ', 'ద', 'ధ', 'న',
+            'ప', 'ఫ', 'బ', 'భ', 'మ', 'య', 'ర', 'ల', 'వ',
+            'శ', 'ష', 'స', 'హ', 'ళ', 'క్ష', 'ఱ',
+            'ం', 'ః', '్', 'ా', 'ి', 'ీ', 'ు', 'ూ', 'ృ', 'ె', 'ే', 'ై', 'ొ', 'ో', 'ౌ'
+        ];
+        const letterBaseSpeed = 1.2;
 
-            // --- Static Background Phrase ---
-            const staticPhraseText = "తెలుగు తునకలు"; // The phrase from previous context
-            const staticPhraseFontSize = Math.min(canvas.width / 18, 35);
-            const staticPhraseFont = `bold ${staticPhraseFontSize}px 'Noto Sans Telugu', 'Gautami', sans-serif`;
-            const staticPhraseColor = "rgba(200, 200, 220, 0.15)"; // Very dim, less obtrusive
-            const staticPhraseYPosition = canvas.height * 0.08;
+        // --- Static Background Phrase ---
+        const staticPhraseText = "తెలుగు తునకలు";
+        const staticPhraseFontSize = Math.min(INTERNAL_WIDTH / 18, 35);
+        const staticPhraseFont = `bold ${staticPhraseFontSize}px 'Noto Sans Telugu', 'Gautami', sans-serif`;
+        const staticPhraseColor = "rgba(200, 200, 220, 0.15)";
+        const staticPhraseYPosition = INTERNAL_HEIGHT * 0.08;
 
-            /**
-             * Generates a random bright color.
-             * @returns {string} CSS color string.
-             */
-            function getRandomColor() {
-                const h = Math.floor(Math.random() * 360); // Hue
-                const s = Math.floor(Math.random() * 30 + 70); // Saturation (70-100%)
-                const l = Math.floor(Math.random() * 20 + 50); // Lightness (50-70%)
-                return `hsl(${h}, ${s}%, ${l}%)`;
+        function getRandomColor() {
+            const h = Math.floor(Math.random() * 360);
+            const s = Math.floor(Math.random() * 30 + 70);
+            const l = Math.floor(Math.random() * 20 + 50);
+            return `hsl(${h}, ${s}%, ${l}%)`;
+        }
+
+        function createLetter() {
+            const char = teluguChars[Math.floor(Math.random() * teluguChars.length)];
+            const size = Math.random() * 18 + 18;
+            const padding = 40;
+            let x, y;
+            do {
+                x = Math.random() * (INTERNAL_WIDTH - 2 * padding - size) + padding + size / 2;
+                y = Math.random() * (INTERNAL_HEIGHT - 2 * padding - size) + padding + size / 2;
+            } while (Math.sqrt((x - pacman.x)**2 + (y - pacman.y)**2) < pacman.radius * 3);
+
+            const angle = Math.random() * Math.PI * 2;
+            const speed = letterBaseSpeed + (Math.random() - 0.5) * 0.5;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            const color = getRandomColor();
+            ctx.font = `${size}px 'Noto Sans Telugu', 'Lohit Telugu', sans-serif`;
+            const metrics = ctx.measureText(char);
+            const pWidth = metrics.width > 0 ? metrics.width : size * 0.6;
+            const pHeight = size;
+            letters.push({ char, x, y, vx, vy, color, size, width: pWidth, height: pHeight, changeDirectionTimer: Math.random() * 240 + 120 });
+        }
+
+        function initializeGame() {
+            score = 0;
+            letters.length = 0;
+            gameOver = false;
+            pacman.x = INTERNAL_WIDTH / 2;
+            pacman.y = INTERNAL_HEIGHT / 2;
+            pacman.dx = pacman.speed;
+            pacman.dy = 0;
+            pacman.mouthOpenValue = 0;
+            pacman.isMouthOpening = true;
+            for (let i = 0; i < initialLetterCount; i++) createLetter();
+            lettersRemaining = letters.length;
+            updateScoreBoard();
+            console.log("Game initialized. Pac-Man ready. Chasing " + lettersRemaining + " letters.");
+        }
+
+        function updateScoreBoard() {
+            scoreBoardElement.textContent = `Score: ${score} | Remaining: ${lettersRemaining}`;
+        }
+
+        function updatePacman() {
+            if (gameOver) return;
+            pacman.x += pacman.dx;
+            pacman.y += pacman.dy;
+            if (pacman.x - pacman.radius < 0) pacman.x = pacman.radius;
+            if (pacman.x + pacman.radius > INTERNAL_WIDTH) pacman.x = INTERNAL_WIDTH - pacman.radius;
+            if (pacman.y - pacman.radius < 0) pacman.y = pacman.radius;
+            if (pacman.y + pacman.radius > INTERNAL_HEIGHT) pacman.y = INTERNAL_HEIGHT - pacman.radius;
+            if (pacman.isMouthOpening) {
+                pacman.mouthOpenValue += pacman.mouthSpeed;
+                if (pacman.mouthOpenValue >= pacman.mouthAngle) pacman.isMouthOpening = false;
+            } else {
+                pacman.mouthOpenValue -= pacman.mouthSpeed;
+                if (pacman.mouthOpenValue <= 0) pacman.isMouthOpening = true;
             }
+        }
 
-            /**
-             * Creates a single Telugu letter particle.
-             */
-            function createLetter() {
-                const char = teluguChars[Math.floor(Math.random() * teluguChars.length)];
-                const size = Math.random() * 18 + 18; // Font size 18px to 36px
-                const padding = 40; // Keep away from edges initially
-                
-                // Ensure letters don't spawn too close to Pac-Man's starting position
-                let x, y;
-                do {
-                    x = Math.random() * (canvas.width - 2 * padding - size) + padding + size / 2;
-                    y = Math.random() * (canvas.height - 2 * padding - size) + padding + size / 2;
-                } while (Math.sqrt((x - pacman.x)**2 + (y - pacman.y)**2) < pacman.radius * 3);
+        function drawPacman() {
+            ctx.beginPath();
+            let startAngle, endAngle;
+            if (pacman.dx > 0) { startAngle = pacman.mouthOpenValue; endAngle = Math.PI * 2 - pacman.mouthOpenValue; }
+            else if (pacman.dx < 0) { startAngle = Math.PI + pacman.mouthOpenValue; endAngle = Math.PI - pacman.mouthOpenValue; }
+            else if (pacman.dy > 0) { startAngle = Math.PI / 2 + pacman.mouthOpenValue; endAngle = Math.PI / 2 - pacman.mouthOpenValue; }
+            else if (pacman.dy < 0) { startAngle = -Math.PI / 2 + pacman.mouthOpenValue; endAngle = -Math.PI / 2 - pacman.mouthOpenValue; }
+            else { startAngle = pacman.mouthOpenValue; endAngle = Math.PI * 2 - pacman.mouthOpenValue; }
+            ctx.arc(pacman.x, pacman.y, pacman.radius, startAngle, endAngle);
+            ctx.lineTo(pacman.x, pacman.y);
+            ctx.closePath();
+            ctx.fillStyle = pacman.color;
+            ctx.fill();
+            ctx.beginPath();
+            const eyeRadius = pacman.radius / 5;
+            let eyeX = pacman.x + pacman.radius * 0.3;
+            let eyeY = pacman.y - pacman.radius * 0.5;
+            if (pacman.dx < 0) eyeX = pacman.x - pacman.radius * 0.3;
+            if (pacman.dy > 0 && pacman.dx === 0) { eyeX = pacman.x; eyeY = pacman.y + pacman.radius * 0.3; }
+            if (pacman.dy < 0 && pacman.dx === 0) { eyeX = pacman.x; eyeY = pacman.y - pacman.radius * 0.3; }
+            ctx.arc(eyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#333";
+            ctx.fill();
+        }
 
-
-                const angle = Math.random() * Math.PI * 2; // Random initial direction
-                const speed = letterBaseSpeed + (Math.random() - 0.5) * 0.5; // Slight speed variation
-                const vx = Math.cos(angle) * speed;
-                const vy = Math.sin(angle) * speed;
-                const color = getRandomColor();
-
-                // Measure character for more accurate collision box (though still an approximation)
-                ctx.font = `${size}px 'Noto Sans Telugu', 'Lohit Telugu', sans-serif`;
-                const metrics = ctx.measureText(char);
-                const pWidth = metrics.width > 0 ? metrics.width : size * 0.6; // Fallback width
-                const pHeight = size; // Approximate height based on font size
-
-                letters.push({
-                    char, x, y, vx, vy, color, size,
-                    width: pWidth,
-                    height: pHeight,
-                    changeDirectionTimer: Math.random() * 240 + 120 // Frames (2-6 seconds) before changing direction
-                });
-            }
-
-            /**
-             * Initializes or resets the game state.
-             */
-            function initializeGame() {
-                score = 0;
-                letters.length = 0; // Clear existing letters
-                gameOver = false;
-
-                // Reset Pac-Man
-                pacman.x = canvas.width / 2;
-                pacman.y = canvas.height / 2;
-                pacman.dx = pacman.speed; // Start moving right
-                pacman.dy = 0;
-                pacman.mouthOpenValue = 0;
-                pacman.isMouthOpening = true;
-
-                // Spawn initial letters
-                for (let i = 0; i < initialLetterCount; i++) {
-                    createLetter();
+        function updateLetters() {
+            if (gameOver) return;
+            for (let i = letters.length - 1; i >= 0; i--) {
+                const l = letters[i];
+                l.x += l.vx;
+                l.y += l.vy;
+                const letterLeft = l.x - l.width / 2;
+                const letterRight = l.x + l.width / 2;
+                const letterTop = l.y - l.height / 2;
+                const letterBottom = l.y + l.height / 2;
+                if (letterRight > INTERNAL_WIDTH || letterLeft < 0) {
+                    l.vx *= -1; l.x = (letterRight > INTERNAL_WIDTH) ? INTERNAL_WIDTH - l.width / 2 -1 : l.width / 2 + 1;
                 }
-                lettersRemaining = letters.length;
-                updateScoreBoard();
-                console.log("Game initialized. Pac-Man ready. Chasing " + lettersRemaining + " letters.");
-            }
-
-            /**
-             * Updates the score display on the HTML page.
-             */
-            function updateScoreBoard() {
-                scoreBoardElement.textContent = `Score: ${score} | Remaining: ${lettersRemaining}`;
-            }
-
-            /**
-             * Updates Pac-Man's position and mouth animation.
-             */
-            function updatePacman() {
-                if (gameOver) return;
-
-                pacman.x += pacman.dx;
-                pacman.y += pacman.dy;
-
-                // Pac-Man boundary collision (keeps Pac-Man within canvas)
-                if (pacman.x - pacman.radius < 0) pacman.x = pacman.radius;
-                if (pacman.x + pacman.radius > canvas.width) pacman.x = canvas.width - pacman.radius;
-                if (pacman.y - pacman.radius < 0) pacman.y = pacman.radius;
-                if (pacman.y + pacman.radius > canvas.height) pacman.y = canvas.height - pacman.radius;
-
-                // Animate Pac-Man's mouth
-                if (pacman.isMouthOpening) {
-                    pacman.mouthOpenValue += pacman.mouthSpeed;
-                    if (pacman.mouthOpenValue >= pacman.mouthAngle) {
-                        pacman.isMouthOpening = false;
-                    }
-                } else {
-                    pacman.mouthOpenValue -= pacman.mouthSpeed;
-                    if (pacman.mouthOpenValue <= 0) {
-                        pacman.isMouthOpening = true;
-                    }
+                if (letterBottom > INTERNAL_HEIGHT || letterTop < 0) {
+                    l.vy *= -1; l.y = (letterBottom > INTERNAL_HEIGHT) ? INTERNAL_HEIGHT - l.height / 2 -1 : l.height / 2 + 1;
                 }
-            }
-
-            /**
-             * Draws Pac-Man on the canvas.
-             */
-            function drawPacman() {
-                ctx.beginPath();
-                let startAngle, endAngle;
-
-                // Determine mouth orientation based on movement direction
-                if (pacman.dx > 0) { // Moving Right
-                    startAngle = pacman.mouthOpenValue;
-                    endAngle = Math.PI * 2 - pacman.mouthOpenValue;
-                } else if (pacman.dx < 0) { // Moving Left
-                    startAngle = Math.PI + pacman.mouthOpenValue;
-                    endAngle = Math.PI - pacman.mouthOpenValue;
-                } else if (pacman.dy > 0) { // Moving Down
-                    startAngle = Math.PI / 2 + pacman.mouthOpenValue;
-                    endAngle = Math.PI / 2 - pacman.mouthOpenValue;
-                } else if (pacman.dy < 0) { // Moving Up
-                    startAngle = -Math.PI / 2 + pacman.mouthOpenValue;
-                    endAngle = -Math.PI / 2 - pacman.mouthOpenValue;
-                } else { // Not moving (or initial state before first key press) - default to right
-                    startAngle = pacman.mouthOpenValue;
-                    endAngle = Math.PI * 2 - pacman.mouthOpenValue;
+                l.changeDirectionTimer--;
+                if (l.changeDirectionTimer <= 0) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = letterBaseSpeed + (Math.random() - 0.5) * 0.5;
+                    l.vx = Math.cos(angle) * speed;
+                    l.vy = Math.sin(angle) * speed;
+                    l.changeDirectionTimer = Math.random() * 240 + 120;
                 }
-
-
-                ctx.arc(pacman.x, pacman.y, pacman.radius, startAngle, endAngle);
-                ctx.lineTo(pacman.x, pacman.y); // Creates the mouth effect
-                ctx.closePath();
-                ctx.fillStyle = pacman.color;
-                ctx.fill();
-
-                // Simple eye for Pac-Man
-                ctx.beginPath();
-                const eyeRadius = pacman.radius / 5;
-                let eyeX = pacman.x + pacman.radius * 0.3;
-                let eyeY = pacman.y - pacman.radius * 0.5;
-                if (pacman.dx < 0) eyeX = pacman.x - pacman.radius * 0.3; // Eye looks left
-                if (pacman.dy > 0 && pacman.dx === 0) { eyeX = pacman.x; eyeY = pacman.y + pacman.radius * 0.3; } // Eye looks down
-                if (pacman.dy < 0 && pacman.dx === 0) { eyeX = pacman.x; eyeY = pacman.y - pacman.radius * 0.3; } // Eye looks up
-
-                ctx.arc(eyeX, eyeY, eyeRadius, 0, Math.PI * 2);
-                ctx.fillStyle = "#333"; // Dark eye
-                ctx.fill();
-            }
-
-            /**
-             * Updates positions and behaviors of Telugu letters.
-             */
-            function updateLetters() {
-                if (gameOver) return;
-
-                for (let i = letters.length - 1; i >= 0; i--) {
-                    const l = letters[i];
-                    l.x += l.vx;
-                    l.y += l.vy;
-
-                    // Letter boundary bouncing
-                    const letterLeft = l.x - l.width / 2;
-                    const letterRight = l.x + l.width / 2;
-                    const letterTop = l.y - l.height / 2;
-                    const letterBottom = l.y + l.height / 2;
-
-                    if (letterRight > canvas.width || letterLeft < 0) {
-                        l.vx *= -1; // Reverse horizontal direction
-                        l.x = (letterRight > canvas.width) ? canvas.width - l.width / 2 -1 : l.width / 2 + 1; // Nudge back
-                    }
-                    if (letterBottom > canvas.height || letterTop < 0) {
-                        l.vy *= -1; // Reverse vertical direction
-                        l.y = (letterBottom > canvas.height) ? canvas.height - l.height / 2 -1 : l.height / 2 + 1; // Nudge back
-                    }
-
-                    // Random direction change timer
-                    l.changeDirectionTimer--;
-                    if (l.changeDirectionTimer <= 0) {
-                        const angle = Math.random() * Math.PI * 2;
-                        const speed = letterBaseSpeed + (Math.random() - 0.5) * 0.5;
-                        l.vx = Math.cos(angle) * speed;
-                        l.vy = Math.sin(angle) * speed;
-                        l.changeDirectionTimer = Math.random() * 240 + 120; // Reset timer (2-6 seconds at 60fps)
-                    }
-
-                    // Collision detection: Pac-Man eats letter
-                    // Using distance between centers for simplicity
-                    const dxPacLetter = pacman.x - l.x;
-                    const dyPacLetter = pacman.y - l.y;
-                    const distanceSquared = dxPacLetter * dxPacLetter + dyPacLetter * dyPacLetter;
-                    // Collision when distance < sum of radii (approx for letter)
-                    const collisionDistance = pacman.radius + Math.max(l.width, l.height) * 0.5; // Effective radius for letter
-
-                    if (distanceSquared < collisionDistance * collisionDistance) {
-                        letters.splice(i, 1); // Remove letter from array
-                        score += 10; // Increase score
-                        lettersRemaining = letters.length;
-                        updateScoreBoard();
-
-                        // Check for win condition
-                        if (lettersRemaining === 0) {
-                            gameOver = true;
-                            console.log("Game Over! All letters eaten.");
-                        }
+                const dxPacLetter = pacman.x - l.x;
+                const dyPacLetter = pacman.y - l.y;
+                const distanceSquared = dxPacLetter * dxPacLetter + dyPacLetter * dyPacLetter;
+                const collisionDistance = pacman.radius + Math.max(l.width, l.height) * 0.5;
+                if (distanceSquared < collisionDistance * collisionDistance) {
+                    letters.splice(i, 1);
+                    score += 10;
+                    lettersRemaining = letters.length;
+                    updateScoreBoard();
+                    if (lettersRemaining === 0) {
+                        gameOver = true;
+                        console.log("Game Over! All letters eaten.");
                     }
                 }
             }
+        }
 
-            /**
-             * Draws all Telugu letters on the canvas.
-             */
-            function drawLetters() {
-                for (const l of letters) {
-                    ctx.font = `${l.size}px 'Noto Sans Telugu', 'Lohit Telugu', sans-serif`;
-                    ctx.fillStyle = l.color;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(l.char, l.x, l.y);
-                }
-            }
-
-            /**
-             * Draws the static background phrase.
-             */
-            function drawStaticBackgroundPhrase() {
-                ctx.font = staticPhraseFont;
-                ctx.fillStyle = staticPhraseColor;
+        function drawLetters() {
+            for (const l of letters) {
+                ctx.font = `${l.size}px 'Noto Sans Telugu', 'Lohit Telugu', sans-serif`;
+                ctx.fillStyle = l.color;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(staticPhraseText, canvas.width / 2, staticPhraseYPosition);
+                ctx.fillText(l.char, l.x, l.y);
             }
+        }
 
-            /**
-             * Main game loop for animation and updates.
-             */
-            function gameLoop() {
-                // Clear the canvas for new frame
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function drawStaticBackgroundPhrase() {
+            ctx.font = staticPhraseFont;
+            ctx.fillStyle = staticPhraseColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(staticPhraseText, INTERNAL_WIDTH / 2, staticPhraseYPosition);
+        }
 
-                drawStaticBackgroundPhrase(); // Draw background elements first
-
-                updatePacman();
-                drawPacman();
-
-                updateLetters();
-                drawLetters();
-
-                // Game Over message
-                if (gameOver) {
-                    ctx.fillStyle = "rgba(0, 0, 0, 0.75)"; // Semi-transparent overlay
-                    ctx.fillRect(0, canvas.height / 2 - 60, canvas.width, 120);
-
-                    ctx.font = "bold 40px 'Noto Sans Telugu', Arial, sans-serif";
-                    ctx.fillStyle = "#FFD700"; // Gold
-                    ctx.textAlign = "center";
-                    ctx.fillText("అక్షరాలు పూర్తయ్యాయి!", canvas.width / 2, canvas.height / 2 - 15); // "Letters Finished!"
-
-                    ctx.font = "20px Arial, sans-serif";
-                    ctx.fillStyle = "#FFFFFF"; // White
-                    ctx.fillText("Press F5 or Refresh to Play Again", canvas.width / 2, canvas.height / 2 + 25);
-                    return; // Stop the game loop
-                }
-
-                requestAnimationFrame(gameLoop); // Continue animation
+        function gameLoop() {
+            ctx.clearRect(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
+            drawStaticBackgroundPhrase();
+            updatePacman();
+            drawPacman();
+            updateLetters();
+            drawLetters();
+            if (gameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+                ctx.fillRect(0, INTERNAL_HEIGHT / 2 - 60, INTERNAL_WIDTH, 120);
+                ctx.font = "bold 40px 'Noto Sans Telugu', Arial, sans-serif";
+                ctx.fillStyle = "#FFD700";
+                ctx.textAlign = "center";
+                ctx.fillText("అక్షరాలు పూర్తయ్యాయి!", INTERNAL_WIDTH / 2, INTERNAL_HEIGHT / 2 - 15);
+                ctx.font = "20px Arial, sans-serif";
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fillText("Refresh to Play Again", INTERNAL_WIDTH / 2, INTERNAL_HEIGHT / 2 + 25);
+                return;
             }
+            requestAnimationFrame(gameLoop);
+        }
 
-            // --- Event Listeners for Pac-Man Control ---
-            window.addEventListener('keydown', (e) => {
-                if (gameOver) return;
+        // --- Pac-Man Control Handler ---
+        function handlePacmanControl(direction) {
+            if (gameOver) return;
+            switch(direction) {
+                case 'ArrowUp': if (pacman.dy === 0) { pacman.dx = 0; pacman.dy = -pacman.speed; } break;
+                case 'ArrowDown': if (pacman.dy === 0) { pacman.dx = 0; pacman.dy = pacman.speed; } break;
+                case 'ArrowLeft': if (pacman.dx === 0) { pacman.dx = -pacman.speed; pacman.dy = 0; } break;
+                case 'ArrowRight': if (pacman.dx === 0) { pacman.dx = pacman.speed; pacman.dy = 0; } break;
+            }
+        }
 
-                // Prevent default browser scroll for arrow keys
-                if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-                    e.preventDefault();
-                }
+        // --- Event Listeners for Pac-Man Control ---
+        window.addEventListener('keydown', (e) => {
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+                e.preventDefault(); // Prevent browser scroll for arrow keys
+                handlePacmanControl(e.key);
+            }
+            // Support WASD
+            const key = e.key.toLowerCase();
+            if (key === 'w') handlePacmanControl('ArrowUp');
+            if (key === 's') handlePacmanControl('ArrowDown');
+            if (key === 'a') handlePacmanControl('ArrowLeft');
+            if (key === 'd') handlePacmanControl('ArrowRight');
+        });
 
-                switch(e.key) {
-                    case 'ArrowUp':
-                    case 'w': // Support WASD
-                    case 'W':
-                        if (pacman.dy === 0) { // Only change if not already moving vertically
-                            pacman.dx = 0; pacman.dy = -pacman.speed;
-                        }
-                        break;
-                    case 'ArrowDown':
-                    case 's':
-                    case 'S':
-                        if (pacman.dy === 0) {
-                            pacman.dx = 0; pacman.dy = pacman.speed;
-                        }
-                        break;
-                    case 'ArrowLeft':
-                    case 'a':
-                    case 'A':
-                        if (pacman.dx === 0) { // Only change if not already moving horizontally
-                            pacman.dx = -pacman.speed; pacman.dy = 0;
-                        }
-                        break;
-                    case 'ArrowRight':
-                    case 'd':
-                    case 'D':
-                        if (pacman.dx === 0) {
-                            pacman.dx = pacman.speed; pacman.dy = 0;
-                        }
-                        break;
-                }
-            });
+        // --- On-Screen Button Controls ---
+        const btnUp = document.getElementById('btnUp');
+        const btnDown = document.getElementById('btnDown');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
 
-            // --- Game Initialization ---
+        ['click', 'touchstart'].forEach(eventType => {
+            btnUp.addEventListener(eventType, (e) => { e.preventDefault(); handlePacmanControl('ArrowUp'); });
+            btnDown.addEventListener(eventType, (e) => { e.preventDefault(); handlePacmanControl('ArrowDown'); });
+            btnLeft.addEventListener(eventType, (e) => { e.preventDefault(); handlePacmanControl('ArrowLeft'); });
+            btnRight.addEventListener(eventType, (e) => { e.preventDefault(); handlePacmanControl('ArrowRight'); });
+        });
+
+
+        // --- Canvas Display Sizing ---
+        function adjustCanvasDisplaySize() {
+            const containerWidth = gameDisplayArea.clientWidth;
+            const containerHeight = gameDisplayArea.clientHeight;
+            const aspectRatio = INTERNAL_WIDTH / INTERNAL_HEIGHT;
+            let newDisplayWidth;
+            let newDisplayHeight;
+
+            if (containerWidth / containerHeight > aspectRatio) {
+                newDisplayHeight = containerHeight;
+                newDisplayWidth = newDisplayHeight * aspectRatio;
+            } else {
+                newDisplayWidth = containerWidth;
+                newDisplayHeight = newDisplayWidth / aspectRatio;
+            }
+            canvas.style.width = `${Math.floor(newDisplayWidth)}px`;
+            canvas.style.height = `${Math.floor(newDisplayHeight)}px`;
+        }
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(adjustCanvasDisplaySize, 50); // Debounce resize
+        });
+
+        // --- Game Initialization on Load ---
+        window.addEventListener('load', () => {
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0) {
+                instructionsElement.textContent = "Use on-screen buttons to move. Eat all Telugu letters!";
+            } else {
+                 instructionsElement.textContent = "Use Arrow Keys or WASD to move. Eat all Telugu letters!";
+            }
+            adjustCanvasDisplaySize(); // Initial sizing
             initializeGame();
-            requestAnimationFrame(gameLoop); // Start the game loop
-        };
+            requestAnimationFrame(gameLoop);
+        });
+
     </script>
 </body>
 </html>
