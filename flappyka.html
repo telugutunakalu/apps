@@ -2,36 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Akshara Ata - Flappy Ka</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --sky-blue: #87CEEB;
+            --game-sky: #70c5ce;
+            --dark-text: #333;
+            --info-bg: #fff8dc; /* Cornsilk */
+            --char-color: #d9534f; /* Reddish */
+            --score-color: #5cb85c; /* Greenish */
+            --button-blue: #5bc0de;
+            --button-shadow: #28a745;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Align to top to see title first */
             min-height: 100vh;
+            min-height: 100dvh; /* For mobile browser toolbars */
             margin: 0;
-            background-color: #87CEEB; /* Sky blue background */
+            background-color: var(--sky-blue);
             font-family: 'Press Start 2P', cursive;
-            color: #333;
-            overflow: hidden; 
+            color: var(--dark-text);
+            overflow: hidden;
+            padding-top: 10px; /* Space for titles */
+        }
+
+        h1, h4 {
+            text-align: center;
+            margin: 5px 0;
+            padding: 0 10px; /* Prevent long titles from touching edges */
+        }
+        h1 { font-size: clamp(1.2em, 4vw, 1.8em); }
+        h4 { font-size: clamp(0.8em, 2.5vw, 1em); margin-bottom: 10px;}
+
+
+        #app-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 800px; /* Max width for very large screens */
+            flex-grow: 1; /* Takes remaining vertical space */
+            overflow: hidden; /* Contains game content */
+            margin-bottom: 10px; /* Space from bottom of screen */
         }
 
         #game-container {
-            border: 5px solid #333;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
-            position: relative;
-            background-color: #f0f0f0; 
-        }
-
-        canvas {
-            display: block;
-            background-color: #70c5ce; /* A slightly different blue for the game sky */
-            border-radius: 5px; 
+            border: 3px solid var(--dark-text); /* Slightly thinner border */
+            border-radius: 8px; /* Slightly smaller radius */
+            box-shadow: 0 0 15px rgba(0,0,0,0.15);
+            position: relative; /* For message box */
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column; /* Info panel on top, then canvas */
+            flex-grow: 1; /* Key for taking available space */
+            overflow: hidden; /* Ensure canvas doesn't break layout */
         }
 
         #info-panel {
@@ -39,121 +74,145 @@
             justify-content: space-around;
             align-items: center;
             width: 100%;
-            padding: 10px 0; /* Reduced padding */
-            background-color: #fff8dc; 
-            border-bottom: 3px solid #333;
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-            font-size: 0.9em; /* Smaller font for info panel */
+            padding: clamp(6px, 1.5vh, 10px) 5px; /* Responsive padding */
+            background-color: var(--info-bg);
+            border-bottom: 2px solid var(--dark-text);
+            font-size: clamp(0.7em, 2.5vw, 0.9em); /* Responsive font */
+            flex-shrink: 0; /* Don't shrink info panel */
         }
 
         #current-char-display {
             font-family: 'Noto Sans Telugu', sans-serif;
-            font-size: 2.5em; 
+            font-size: clamp(1.8em, 6vw, 2.5em); /* Responsive */
             font-weight: bold;
-            color: #d9534f; 
+            color: var(--char-color);
             background-color: #fff;
-            padding: 3px 10px;
-            border-radius: 8px;
-            border: 2px solid #d9534f;
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 2px solid var(--char-color);
         }
-        
+
         #score-display, #timer-display {
-            font-size: 1em;
-            color: #5cb85c; 
+            font-size: clamp(0.8em, 3vw, 1em); /* Responsive */
+            color: var(--score-color);
+            text-align: center; /* For better wrapping on small screens */
+        }
+        #timer-display { min-width: 80px; } /* Give it some space */
+
+
+        canvas {
+            display: block;
+            background-color: var(--game-sky);
+            /* Style width/height set by JS to scale, attributes set for resolution */
+            max-width: 100%; /* Important for scaling */
+            max-height: 100%; /* Important for scaling */
+            object-fit: contain; /* Ensures aspect ratio is maintained */
+            margin: auto; /* Centers canvas if game-container is flex and canvas doesn't fill */
         }
 
         .controls {
-            margin-top: 15px;
+            margin-top: 10px; /* Reduced margin */
             display: flex;
             gap: 10px;
             justify-content: center;
+            width: 100%;
+            padding: 5px 0;
+            flex-shrink: 0; /* Don't shrink controls area */
         }
 
         .control-button {
-            background-color: #5bc0de; 
+            background-color: var(--button-blue);
             color: white;
             border: none;
-            padding: 12px 18px;
-            font-size: 1em;
+            padding: clamp(10px, 3vh, 12px) clamp(15px, 5vw, 18px); /* Responsive padding */
+            font-size: clamp(0.8em, 3vw, 1em); /* Responsive font */
             font-family: 'Press Start 2P', cursive;
             border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px #28a745; 
+            box-shadow: 0 4px var(--button-shadow);
             transition: all 0.1s ease;
+            touch-action: manipulation; /* For better touch response */
         }
 
         .control-button:active {
-            box-shadow: 0 2px #28a745;
+            box-shadow: 0 2px var(--button-shadow);
             transform: translateY(2px);
         }
-        
+
         #message-box {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(0,0,0,0.85); /* Slightly more opaque */
             color: white;
-            padding: 25px;
+            padding: clamp(15px, 5vw, 25px); /* Responsive padding */
             border-radius: 10px;
-            font-size: 1.8em;
+            font-size: clamp(1.2em, 4vw, 1.8em); /* Responsive font */
             text-align: center;
-            z-index: 100; 
-            display: none; 
+            z-index: 100;
+            display: none;
+            width: 80%; /* Limit width for better readability */
+            max-width: 400px;
         }
         #message-box button {
              font-family: 'Press Start 2P', cursive;
-             font-size: 0.7em;
-             padding: 10px 15px;
-             margin-top: 15px;
-             background-color: #5cb85c;
+             font-size: clamp(0.6em, 2.5vw, 0.7em); /* Responsive */
+             padding: clamp(8px, 2vh, 10px) clamp(12px, 4vw, 15px);
+             margin-top: clamp(10px, 2vh, 15px);
+             background-color: var(--score-color);
              color: white;
              border: none;
              border-radius: 5px;
              cursor: pointer;
+             touch-action: manipulation;
         }
-
     </style>
 </head>
 <body>
     <h1> తెలుగు తునకలు - ఫ్లాపి(క)</h1>
     <h4> Telugu Tunakalu - Flappy Ka</h4>
-    
-    <div id="game-container">
-        <div id="info-panel">
-            <div>Current: <span id="current-char-display">క</span></div>
-            <div id="timer-display">Effect: ---</div>
-            <div id="score-display">Score: 0</div>
-        </div>
-        <canvas id="gameCanvas"></canvas>
-        <div id="message-box">
-            <span id="message-text">Message Here!</span><br>
-            <button id="restart-button" style="display:none;">Restart</button>
+
+    <div id="app-wrapper">
+        <div id="game-container">
+            <div id="info-panel">
+                <div>Current: <span id="current-char-display">క</span></div>
+                <div id="timer-display">Effect: ---</div>
+                <div id="score-display">Score: 0</div>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+            <div id="message-box">
+                <span id="message-text">Message Here!</span><br>
+                <button id="restart-button" style="display:none;">Restart</button>
+            </div>
         </div>
     </div>
 
     <div class="controls">
-        <button id="jump-btn" class="control-button">Jump (Up Arrow/Space)</button>
+        <button id="jump-btn" class="control-button">Jump!</button>
     </div>
 
     <script>
-        // Get canvas and context
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('game-container'); // Used for available space calc
 
-        // DOM Elements
         const currentCharDisplay = document.getElementById('current-char-display');
         const timerDisplay = document.getElementById('timer-display');
         const scoreDisplay = document.getElementById('score-display');
         const messageBox = document.getElementById('message-box');
         const messageText = document.getElementById('message-text');
         const restartButton = document.getElementById('restart-button');
+        const jumpButton = document.getElementById('jump-btn');
 
-        // Game variables
-        let canvasWidth = 800;
-        let canvasHeight = 400;
-        canvas.width = canvasWidth;
+        // INTERNAL Game variables (fixed resolution for game logic)
+        const INTERNAL_CANVAS_WIDTH = 800;
+        const INTERNAL_CANVAS_HEIGHT = 400;
+
+        // Variables to store current actual drawing surface size (updated by resizeCanvas)
+        let canvasWidth = INTERNAL_CANVAS_WIDTH;
+        let canvasHeight = INTERNAL_CANVAS_HEIGHT;
+        canvas.width = canvasWidth; // Set initial drawing surface size
         canvas.height = canvasHeight;
 
         const baseChar = 'క';
@@ -162,66 +221,55 @@
             'ీ': 'కీ', 'ూ': 'కూ', 'ౄ': 'కౄ', 'ె': 'కె', 'ై': 'కై', 'ొ': 'కొ', 'ౌ': 'కౌ', 'ం': 'కం', 'ః': 'కః'
         };
         const modifierSymbols = Object.keys(gudinthalu);
-        
+
         let score = 0;
-        let gameSpeed = 1.2; // Significantly reduced game speed
+        let gameSpeed = 1.2;
         let gameOver = false;
         let gameStarted = false;
 
-        // Player properties
         const player = {
-            x: 100, // Fixed horizontal position
-            y: canvasHeight / 2,
-            width: 60, 
+            x: INTERNAL_CANVAS_WIDTH * 0.15, // Position relative to internal width
+            y: INTERNAL_CANVAS_HEIGHT / 2,
+            width: 60,
             height: 60,
             dy: 0,
-            jumpForce: 4.5, // Drastically reduced jump force for a very small jump
-            gravity: 0.20, // Drastically reduced gravity for an extremely slow fall
+            jumpForce: 4.5, // Scaled relative to internal height
+            gravity: 0.20,  // Scaled relative to internal height
             char: baseChar,
             modifierActive: false,
             modifierTimer: 0,
-            maxModifierTime: 5000 
+            maxModifierTime: 5000
         };
 
-        // Obstacle properties
         let obstacles = [];
-        const obstacleWidth = 80;
-        const obstacleGap = 220; // Further increased obstacle gap
+        const obstacleWidth = 80; // Relative to internal width
+        const obstacleGap = 220;  // Relative to internal height
         let obstacleSpawnTimer = 0;
-        // Adjusted spawn interval based on new game speed
-        const obstacleSpawnInterval = 180 * (1 / gameSpeed) * 50; // Further increased base interval
+        const obstacleSpawnIntervalBase = 180 * 50; // Base interval in some unit
+        let obstacleSpawnInterval = obstacleSpawnIntervalBase / gameSpeed;
 
 
-        // Modifier items properties
         let activeModifiers = [];
         const modifierSize = 40;
 
-        // --- Input Handling ---
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowUp' || e.key === ' ') {
-                 e.preventDefault(); 
-                 if (!gameStarted && !gameOver) startGame();
-                 else if (gameOver) return; 
-                 else if (gameStarted) playerJump();
+                 e.preventDefault();
+                 handleJumpAction();
             }
         });
 
-
-        // Touch controls / Mouse Click
-        const jumpButton = document.getElementById('jump-btn');
-        function handleJumpInput(e) {
-            e.preventDefault(); 
-            if (!gameStarted && !gameOver) startGame();
-            else if (gameOver) return;
-            else if (gameStarted) playerJump();
+        function handleJumpAction() {
+             if (!gameStarted && !gameOver) startGame();
+             else if (gameOver) return;
+             else if (gameStarted) playerJump();
         }
-        jumpButton.addEventListener('touchstart', handleJumpInput);
-        jumpButton.addEventListener('mousedown', handleJumpInput); 
 
+        jumpButton.addEventListener('touchstart', (e) => { e.preventDefault(); handleJumpAction(); });
+        jumpButton.addEventListener('mousedown', (e) => { e.preventDefault(); handleJumpAction(); });
 
         restartButton.addEventListener('click', resetGame);
 
-        // --- Helper Functions ---
         function playerJump() {
             if (gameStarted && !gameOver) {
                 player.dy = -player.jumpForce;
@@ -229,33 +277,31 @@
         }
 
         function drawPlayer() {
-            ctx.font = "bold 50px 'Noto Sans Telugu', sans-serif"; 
-            ctx.fillStyle = '#FF4500'; 
+            ctx.font = `bold ${0.125 * INTERNAL_CANVAS_HEIGHT}px 'Noto Sans Telugu', sans-serif`; // ~50px for 400h
+            ctx.fillStyle = '#FF4500';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(player.char, player.x + player.width / 2, player.y + player.height / 2);
         }
 
         function spawnObstacle() {
-            const minPipeHeight = 20; // Minimum height for either part of the pipe
-            // Ensure the gap calculation leaves enough room for both pipes
-            const topPipeHeight = Math.random() * (canvasHeight - obstacleGap - minPipeHeight * 2) + minPipeHeight;
+            const minPipeHeight = INTERNAL_CANVAS_HEIGHT * 0.05; // 20 for 400h
+            const topPipeHeight = Math.random() * (INTERNAL_CANVAS_HEIGHT - obstacleGap - minPipeHeight * 2) + minPipeHeight;
             const bottomPipeY = topPipeHeight + obstacleGap;
 
             obstacles.push({
-                x: canvasWidth,
+                x: INTERNAL_CANVAS_WIDTH, // Spawn off the internal canvas right edge
                 width: obstacleWidth,
                 topPipeHeight: topPipeHeight,
                 bottomPipeY: bottomPipeY,
-                passed: false 
+                passed: false
             });
 
-            // Chance to spawn a modifier with this obstacle
-            if (Math.random() < 0.55 && activeModifiers.length < 2) { // Slightly higher chance for modifier
-                spawnModifier(canvasWidth + obstacleWidth / 2, topPipeHeight + obstacleGap / 2);
+            if (Math.random() < 0.55 && activeModifiers.length < 2) {
+                spawnModifier(INTERNAL_CANVAS_WIDTH + obstacleWidth / 2, topPipeHeight + obstacleGap / 2);
             }
         }
-        
+
         function spawnModifier(x, y) {
             const randomSymbol = modifierSymbols[Math.floor(Math.random() * modifierSymbols.length)];
             activeModifiers.push({
@@ -267,91 +313,66 @@
             });
         }
 
-
         function drawObstacles() {
             obstacles.forEach(obs => {
-                ctx.fillStyle = '#2E8B57'; 
-                // Top pipe
+                ctx.fillStyle = '#2E8B57';
                 ctx.fillRect(obs.x, 0, obs.width, obs.topPipeHeight);
-                // Bottom pipe
-                ctx.fillRect(obs.x, obs.bottomPipeY, obs.width, canvasHeight - obs.bottomPipeY);
-                
-                ctx.strokeStyle = '#000'; 
+                ctx.fillRect(obs.x, obs.bottomPipeY, obs.width, INTERNAL_CANVAS_HEIGHT - obs.bottomPipeY);
+                ctx.strokeStyle = '#000';
                 ctx.strokeRect(obs.x, 0, obs.width, obs.topPipeHeight);
-                ctx.strokeRect(obs.x, obs.bottomPipeY, obs.width, canvasHeight - obs.bottomPipeY);
+                ctx.strokeRect(obs.x, obs.bottomPipeY, obs.width, INTERNAL_CANVAS_HEIGHT - obs.bottomPipeY);
             });
         }
-        
+
         function drawModifiers() {
             activeModifiers.forEach(mod => {
-                ctx.font = "bold 35px 'Noto Sans Telugu', sans-serif"; 
-                ctx.fillStyle = '#4B0082'; 
+                ctx.font = `bold ${0.0875 * INTERNAL_CANVAS_HEIGHT}px 'Noto Sans Telugu', sans-serif`; // ~35px for 400h
+                ctx.fillStyle = '#4B0082';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(mod.char, mod.x + mod.width / 2, mod.y + mod.height / 2);
             });
         }
-        
+
         function showMessage(text, showRestart = false, duration = 0) {
-            messageText.innerHTML = text; 
+            messageText.innerHTML = text;
             messageBox.style.display = 'block';
             restartButton.style.display = showRestart ? 'inline-block' : 'none';
-            
             if (duration > 0) {
                 setTimeout(() => {
-                    if (!gameOver) { 
+                    if (!gameOver || !showRestart) { // Hide only if not game over screen or if it's a temp message
                          messageBox.style.display = 'none';
                     }
                 }, duration);
             }
         }
-
-        function hideMessage() {
-            messageBox.style.display = 'none';
-        }
+        function hideMessage() { messageBox.style.display = 'none';}
 
         function startGame() {
             if (gameStarted) return;
-            gameStarted = true;
-            gameOver = false;
-            score = 0;
-            player.y = canvasHeight / 2;
-            player.dy = 0;
-            player.char = baseChar;
-            player.modifierActive = false;
-            player.modifierTimer = 0;
-            obstacles = [];
-            activeModifiers = [];
-            obstacleSpawnTimer = obstacleSpawnInterval * 0.5; // Start spawning obstacles a bit later due to slow speed
-            hideMessage();
-            updateScoreDisplay();
-            updateCharDisplay();
-            updateTimerDisplay();
-            
-            spawnObstacle(); 
-            lastTime = performance.now(); 
-            gameLoop(lastTime); 
+            gameStarted = true; gameOver = false; score = 0;
+            player.y = INTERNAL_CANVAS_HEIGHT / 2; player.dy = 0; player.char = baseChar;
+            player.modifierActive = false; player.modifierTimer = 0;
+            obstacles = []; activeModifiers = [];
+            obstacleSpawnTimer = obstacleSpawnInterval * 0.7; // Start spawning a bit later
+            hideMessage(); updateScoreDisplay(); updateCharDisplay(); updateTimerDisplay();
+            spawnObstacle(); // Spawn one immediately
+            lastTime = performance.now();
+            gameLoop(lastTime);
         }
 
         function resetGame() {
-            gameOver = false;
-            gameStarted = false; 
-            hideMessage();
-            startGame();
+            gameOver = false; gameStarted = false;
+            hideMessage(); startGame();
         }
 
         function handleGameOver() {
-            gameOver = true;
-            gameStarted = false;
-            showMessage(`Game Over! Score: ${score}<br>Jump or Restart`, true);
+            gameOver = true; gameStarted = false;
+            showMessage(`Game Over! Score: ${score}<br>Tap Jump or Restart`, true);
         }
-        
-        function updateScoreDisplay() {
-            scoreDisplay.textContent = `Score: ${score}`;
-        }
-        function updateCharDisplay() {
-            currentCharDisplay.textContent = player.char;
-        }
+
+        function updateScoreDisplay() { scoreDisplay.textContent = `Score: ${score}`; }
+        function updateCharDisplay() { currentCharDisplay.textContent = player.char; }
         function updateTimerDisplay() {
              if (player.modifierActive) {
                 timerDisplay.textContent = `Effect: ${(player.modifierTimer / 1000).toFixed(1)}s`;
@@ -360,173 +381,145 @@
             }
         }
 
-
-        // --- Game Logic Update ---
         let lastTime = 0;
         function update(timestamp) {
-            if (!gameStarted || gameOver) return; 
-
-            const deltaTime = timestamp - lastTime;
+            if (!gameStarted || gameOver) return;
+            const deltaTime = Math.min(timestamp - lastTime, 50); // Cap deltaTime to prevent large jumps
             lastTime = timestamp;
 
-            // Player physics
-            player.dy += player.gravity;
-            player.y += player.dy;
+            player.dy += player.gravity * (deltaTime / 16.67); // Normalize physics to ~60FPS
+            player.y += player.dy * (deltaTime / 16.67);
 
-            // Check for collision with top/bottom boundaries
-            if (player.y < 0 || player.y + player.height > canvasHeight) {
-                handleGameOver();
-                return;
+
+            if (player.y < 0 || player.y + player.height > INTERNAL_CANVAS_HEIGHT) {
+                handleGameOver(); return;
             }
 
-            // Obstacle management
             obstacleSpawnTimer += deltaTime;
             if (obstacleSpawnTimer > obstacleSpawnInterval) {
-                spawnObstacle();
-                obstacleSpawnTimer = 0;
+                spawnObstacle(); obstacleSpawnTimer = 0;
             }
 
-            obstacles.forEach((obs, index) => {
-                obs.x -= gameSpeed;
+            const currentSpeed = gameSpeed * (deltaTime / 16.67); // Normalize speed
 
-                // Collision with obstacles
+            obstacles.forEach((obs, index) => {
+                obs.x -= currentSpeed;
                 if (player.x < obs.x + obs.width && player.x + player.width > obs.x) {
                     if (player.y < obs.topPipeHeight || player.y + player.height > obs.bottomPipeY) {
-                        handleGameOver();
-                        return; 
+                        handleGameOver(); return;
                     }
                 }
-
-                // Score point for passing obstacle
                 if (!obs.passed && obs.x + obs.width < player.x) {
-                    obs.passed = true;
-                    score += 5; 
-                    updateScoreDisplay();
+                    obs.passed = true; score += 5; updateScoreDisplay();
                 }
-
-                // Remove off-screen obstacles
-                if (obs.x + obs.width < 0) {
-                    obstacles.splice(index, 1);
-                }
+                if (obs.x + obs.width < 0) obstacles.splice(index, 1);
             });
-            
-            if (gameOver) return; 
+            if (gameOver) return;
 
-            // Modifier management
-             activeModifiers.forEach((mod, index) => {
-                mod.x -= gameSpeed; 
-
-                // Collision with modifiers
-                if (player.x < mod.x + mod.width &&
-                    player.x + player.width > mod.x &&
-                    player.y < mod.y + mod.height &&
-                    player.y + player.height > mod.y) {
-                    
-                    player.char = gudinthalu[mod.char];
-                    player.modifierActive = true;
-                    player.modifierTimer = player.maxModifierTime;
-                    activeModifiers.splice(index, 1); 
-                    score += 10; 
-                    updateCharDisplay();
-                    updateTimerDisplay();
-                    showMessage(` ${mod.char} పట్టుకున్నాం! ఇప్పుడు ${player.char} అయిపోయాం`, false, 1000);
+            activeModifiers.forEach((mod, index) => {
+                mod.x -= currentSpeed;
+                if (player.x < mod.x + mod.width && player.x + player.width > mod.x &&
+                    player.y < mod.y + mod.height && player.y + player.height > mod.y) {
+                    player.char = gudinthalu[mod.char]; player.modifierActive = true;
+                    player.modifierTimer = player.maxModifierTime; activeModifiers.splice(index, 1);
+                    score += 10; updateCharDisplay(); updateTimerDisplay();
+                    showMessage(` ${mod.char} పట్టుకున్నాం! ఇప్పుడు ${player.char}`, false, 1500);
                 }
-
-                // Remove off-screen modifiers
-                if (mod.x + mod.width < 0) {
-                    activeModifiers.splice(index, 1);
-                }
+                if (mod.x + mod.width < 0) activeModifiers.splice(index, 1);
             });
 
-
-            // Modifier timer update
             if (player.modifierActive) {
                 player.modifierTimer -= deltaTime;
                 if (player.modifierTimer <= 0) {
-                    player.char = baseChar;
-                    player.modifierActive = false;
-                    player.modifierTimer = 0;
+                    player.char = baseChar; player.modifierActive = false; player.modifierTimer = 0;
                     updateCharDisplay();
-                    showMessage(`ఎఫక్ట్ పోయింది  మళ్ళి ${baseChar} అయిపోయింది`, false, 1000);
+                    showMessage(`ఎఫక్ట్ పోయింది! మళ్ళి ${baseChar}`, false, 1500);
                 }
                 updateTimerDisplay();
             }
         }
 
-        // --- Drawing ---
         function draw() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-            // Draw game elements
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight); // Use current drawing surface size
             drawObstacles();
             drawModifiers();
-            drawPlayer(); 
+            drawPlayer();
         }
 
-        // --- Game Loop ---
         function gameLoop(timestamp) {
-            if (gameOver) { 
-                draw(); 
-                return;
-            }
-            if (!gameStarted && !gameOver) { 
-                drawStartScreen(); 
-                requestAnimationFrame(gameLoop);
-                return;
-            }
-
+            if (gameOver) { draw(); return; } // Keep drawing last frame on game over
+            if (!gameStarted) { drawStartScreen(); requestAnimationFrame(gameLoop); return; }
             update(timestamp);
             draw();
             requestAnimationFrame(gameLoop);
         }
-        
+
         function drawStartScreen() {
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight); 
-            player.y = canvasHeight / 2; 
-            player.dy = 0;
-            drawPlayer(); 
-            showMessage("Press Jump to Start!", false);
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            player.y = INTERNAL_CANVAS_HEIGHT / 2; player.dy = 0; // Reset player pos for start screen
+            drawPlayer();
+            if (!gameOver) { // Only show "Press Jump" if not coming from a game over state
+                showMessage("Press Jump to Start!", false);
+            }
         }
 
-
-        // --- Initialization ---
-        function init() {
-            updateScoreDisplay();
-            updateCharDisplay();
-            updateTimerDisplay();
-            resizeCanvas(); 
-            drawStartScreen(); 
-            lastTime = performance.now(); 
-            requestAnimationFrame(gameLoop); 
-        }
-        
-        // Resize canvas listener
         function resizeCanvas() {
-            const gameContainer = document.getElementById('game-container');
-            const aspectRatio = 2 / 1; 
-            let newWidth = Math.min(window.innerWidth * 0.9, 800); 
-            let newHeight = newWidth / aspectRatio;
+            // Game container provides the available space for the canvas
+            const containerWidth = gameContainer.clientWidth;
+            const containerHeight = gameContainer.clientHeight - document.getElementById('info-panel').offsetHeight; // Subtract info panel height
 
-            if (newHeight > window.innerHeight * 0.8) { // Allow even more vertical space if available
-                newHeight = window.innerHeight * 0.8;
-                newWidth = newHeight * aspectRatio;
+            const aspectRatio = INTERNAL_CANVAS_WIDTH / INTERNAL_CANVAS_HEIGHT; // e.g., 800/400 = 2
+
+            let newDisplayWidth;
+            let newDisplayHeight;
+
+            if (containerWidth / containerHeight > aspectRatio) {
+                // Container is wider than game aspect ratio, so height is the constraint
+                newDisplayHeight = containerHeight;
+                newDisplayWidth = newDisplayHeight * aspectRatio;
+            } else {
+                // Container is taller (or same aspect ratio), so width is the constraint
+                newDisplayWidth = containerWidth;
+                newDisplayHeight = newDisplayWidth / aspectRatio;
             }
-            
-            canvas.width = newWidth;
-            canvas.height = newHeight; 
-            
-            canvasWidth = canvas.width;
-            canvasHeight = canvas.height;
 
-            player.y = Math.min(player.y, canvasHeight - player.height);
-            player.x = Math.max(canvasWidth * 0.1, 50); 
+            // Set the canvas's display size (CSS pixels)
+            canvas.style.width = `${Math.floor(newDisplayWidth)}px`;
+            canvas.style.height = `${Math.floor(newDisplayHeight)}px`;
 
-            if (typeof draw === "function") { 
-                 if (gameStarted || gameOver) draw(); 
-                 else drawStartScreen(); 
+            // Set the canvas's drawing surface size (attributes)
+            // For crisp rendering, match this to internal resolution or use integer scaling factors
+            // Here, we keep internal resolution fixed.
+            canvas.width = INTERNAL_CANVAS_WIDTH;
+            canvas.height = INTERNAL_CANVAS_HEIGHT;
+
+            // Update global canvas dimensions used by game logic if they were dynamic
+            // For this setup, canvasWidth and canvasHeight refer to drawing surface, which is fixed.
+            canvasWidth = INTERNAL_CANVAS_WIDTH;
+            canvasHeight = INTERNAL_CANVAS_HEIGHT;
+
+
+            // Re-center player or adjust other elements if needed after resize
+            // Player X is percentage based, Y is fixed relative to internal height
+            player.x = INTERNAL_CANVAS_WIDTH * 0.15; // Recalculate based on internal width
+            player.y = Math.min(player.y, INTERNAL_CANVAS_HEIGHT - player.height);
+
+
+            if (typeof draw === "function") {
+                 if (gameStarted || gameOver) draw();
+                 else drawStartScreen();
             }
         }
+
+
+        function init() {
+            updateScoreDisplay(); updateCharDisplay(); updateTimerDisplay();
+            resizeCanvas(); // Call resize first to set up canvas dimensions properly
+            drawStartScreen();
+            lastTime = performance.now();
+            // requestAnimationFrame(gameLoop); // gameLoop is started by startGame
+        }
+
 
         window.addEventListener('load', init);
         window.addEventListener('resize', resizeCanvas);
