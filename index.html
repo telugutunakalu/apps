@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>తెలుగు వినోదాలు - నా యాప్‌లు</title>
+    <style>
+        :root {
+            --bg-color: #121212; /* Very dark grey, not pure black */
+            --card-bg-color: #1e1e1e; /* Slightly lighter for cards */
+            --text-color: #e0e0e0; /* Light grey for general text */
+            --primary-accent-color: #00bcd4; /* A vibrant cyan/teal */
+            --secondary-accent-color: #ffeb3b; /* A warm yellow for highlights */
+            --card-hover-glow: rgba(0, 188, 212, 0.3);
+            --font-main: 'Noto Sans Telugu', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .page-title {
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            color: var(--primary-accent-color);
+            margin-bottom: 1rem;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+        }
+
+        .page-subtitle {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: #b0b0b0;
+            margin-bottom: 3rem;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px; /* Increased gap */
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .app-card {
+            background-color: var(--card-bg-color);
+            border-radius: 15px; /* More rounded */
+            padding: 25px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                        box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: cardFadeIn 0.6s ease-out forwards;
+        }
+
+        /* Staggered animation delays */
+        .app-card:nth-child(1) { animation-delay: 0.1s; }
+        .app-card:nth-child(2) { animation-delay: 0.2s; }
+        .app-card:nth-child(3) { animation-delay: 0.3s; }
+        .app-card:nth-child(4) { animation-delay: 0.4s; }
+        /* Add more if you have more cards */
+
+
+        @keyframes cardFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .app-card:hover,
+        .app-card:focus { /* Added focus for accessibility */
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 10px 30px var(--card-hover-glow), 0 0 15px var(--card-hover-glow);
+            outline: 2px solid var(--primary-accent-color); /* Focus outline */
+            outline-offset: 3px;
+        }
+
+        .app-icon {
+            width: 90px;
+            height: 90px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            object-fit: cover;
+            background-color: #333; /* Placeholder background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem; /* For SVG text */
+            color: var(--primary-accent-color);
+        }
+        .app-icon svg {
+            width: 60%;
+            height: 60%;
+        }
+
+
+        .app-card h2 {
+            font-size: clamp(1.3rem, 4vw, 1.6rem);
+            color: #ffffff; /* Brighter for titles */
+            margin-bottom: 10px;
+        }
+
+        .app-card p {
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            color: #c0c0c0; /* Slightly lighter than general text */
+            flex-grow: 1; /* Allows description to take space if titles are short */
+            margin-bottom: 15px;
+        }
+
+        .app-card .launch-text {
+            font-weight: bold;
+            color: var(--secondary-accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9em;
+            margin-top: auto; /* Pushes it to the bottom if content above is short */
+        }
+
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #333;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        /* Optional: Add Noto Sans Telugu font if not system default */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap');
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="page-title">నా తెలుగు యాప్ గ్యాలరీ</h1>
+        <p class="page-subtitle">నా కొత్త తెలుగు యాప్‌లను అన్వేషించండి! నేర్చుకోవడానికి మరియు ఆనందించడానికి రూపొందించబడ్డాయి.</p>
+    </header>
+
+    <main class="app-grid">
+        <a href="./aksharanusarika.html" class="app-card" id="card-aksharanusarika">
+            <div class="app-icon">
+                <!-- Placeholder SVG Icon -->
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">అ</text></svg>
+            </div>
+            <h2>అక్షరానుసారిక</h2>
+            <p>తెలుగు వచనాన్ని విశ్లేషించి, అక్షరాల వర్గీకరణ మరియు గణాంకాలను పొందండి.</p>
+            <span class="launch-text">ప్రారంభించండి →</span>
+        </a>
+
+        <a href="./aksharaveta.html" class="app-card" id="card-aksharaveta">
+            <div class="app-icon">
+                 <!-- Placeholder SVG Icon -->
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">వే</text></svg>
+            </div>
+            <h2>అక్షరాల వేట</h2>
+            <p>ఈ సరదా పాక్‌మన్-శైలి గేమ్‌లో సరైన తెలుగు అక్షరాలను సేకరించండి!</p>
+            <span class="launch-text">ఆట ఆడండి →</span>
+        </a>
+
+        <a href="./carushikaru.html" class="app-card" id="card-carushikaru">
+             <div class="app-icon">
+                 <!-- Placeholder SVG Icon -->
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><path d="M20 80 L50 20 L80 80 Z M30 70 L70 70" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h2>తెలుగు పదాల వేట (Car Racer)</h2>
+            <p>కారు నడుపుతూ సరైన అక్షరాలను పట్టుకుని తెలుగు పదాలను పూర్తి చేయండి.</p>
+            <span class="launch-text">రేస్ చేయండి →</span>
+        </a>
+
+        <a href="./flappyka.html" class="app-card" id="card-flappyka">
+            <div class="app-icon">
+                <!-- Placeholder SVG Icon -->
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">క</text><path d="M70 40 Q80 50 70 60" stroke="currentColor" stroke-width="5" fill="none"/><path d="M30 40 Q20 50 30 60" stroke="currentColor" stroke-width="5" fill="none"/></svg>
+            </div>
+            <h2>ఫ్లాపీ 'క' (FlappyKa)</h2>
+            <p>ఫ్లాపీ బర్డ్ నుండి ప్రేరణ పొందిన ఈ గేమ్‌లో 'క' అక్షరంతో అడ్డంకులను దాటండి.</p>
+            <span class="launch-text">ఎగరండి →</span>
+        </a>
+    </main>
+
+    <footer class="page-footer">
+        <p>© <span id="currentYear"></span> మీ పేరు లేదా ప్రాజెక్ట్ పేరు. అన్ని హక్కులు ప్రత్యేకించబడ్డాయి.</p>
+    </footer>
+
+    <script>
+        // Simple script to set the current year in the footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Optional: Add a little more dynamic feel to cards if desired
+        // For example, a slight parallax effect on mouse move (can be more complex)
+        // For "simple and standalone", CSS animations are often sufficient.
+        // The current CSS provides a fade-in and hover effect.
+    </script>
+
+</body>
+</html>
