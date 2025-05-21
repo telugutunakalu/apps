@@ -2,118 +2,155 @@
 <html lang="te">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>తెలుగు పదాల వేట (Telugu Word Racer)</title>
     <style>
+        :root {
+            --primary-text-color: #eef0f1;
+            --highlight-color: #f1c40f; /* Gold */
+            --accent-color: #3498db; /* Blue */
+            --danger-color: #e74c3c; /* Red */
+            --success-color: #2ecc71; /* Green */
+            --bg-dark: #232931;
+            --bg-medium: #393e46;
+            --bg-light: #4a5568;
+            --road-color: #6c7a89;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+
         body {
             margin: 0;
             font-family: 'Noto Sans Telugu', Arial, sans-serif;
-            background-color: #232931; /* Darker, cooler background */
-            color: #eef0f1; /* Slightly off-white for text */
+            background-color: var(--bg-dark);
+            color: var(--primary-text-color);
+            display: flex; /* For centering appWrapper if it has a max-width */
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Fallback for older browsers */
+            height: 100dvh; /* Dynamic viewport height, better for mobile toolbars */
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        #appWrapper {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            max-width: 500px; /* Max width for very wide screens, game scales within */
+            margin: 0 auto; /* Center if max-width is applied */
+            background-color: var(--bg-dark); /* Match body */
+            overflow: hidden; /* Important to contain content */
         }
-        #gameContainer {
-            border: 2px solid #4a5568; /* Softer border */
-            position: relative;
-            overflow: hidden;
-            background-color: #393e46; /* Game area background */
-            border-radius: 10px; /* Rounded corners for the container */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); /* More pronounced shadow */
-        }
-        canvas {
-            display: block;
-            background-color: #6c7a89; /* Road color - a bit desaturated */
-        }
+
         #uiContainer {
             width: 100%;
-            padding: 12px 0; /* Increased padding */
-            background: linear-gradient(to bottom, rgba(44, 62, 80, 0.95), rgba(52, 73, 94, 0.9)); /* Gradient UI panel */
+            padding: clamp(8px, 2vh, 12px) 0; /* Responsive padding */
+            background: linear-gradient(to bottom, rgba(44, 62, 80, 0.95), rgba(52, 73, 94, 0.9));
             text-align: center;
-            position: absolute;
-            top: 0;
-            left: 0;
             z-index: 10;
-            border-bottom: 2px solid #2c3e50; /* Separator line */
+            border-bottom: 2px solid #2c3e50;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0; /* Prevent this from shrinking */
         }
+
         #wordDisplay {
-            font-size: 30px; /* Slightly larger */
-            margin-bottom: 8px; /* More space */
+            font-size: clamp(20px, 5vw, 30px); /* Responsive font size */
+            margin-bottom: clamp(4px, 1vh, 8px);
             letter-spacing: 2px;
-            color: #f1c40f; /* Gold color for the word */
+            color: var(--highlight-color);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            padding: 0 10px; /* Prevent text touching edges */
+            word-break: break-all; /* In case a very long word is displayed */
         }
         .highlight {
-            color: #2ecc71; /* Bright green for collected letters */
+            color: var(--success-color);
             font-weight: bold;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
         }
         #statsDisplay {
-            font-size: 18px;
-            color: #bdc3c7; /* Lighter grey for stats */
+            font-size: clamp(14px, 3.5vw, 18px);
+            color: #bdc3c7;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
         }
         #statsDisplay span {
-            color: #ffffff; /* White for the actual numbers */
+            color: #ffffff;
             font-weight: bold;
+        }
+
+        #gameContainer {
+            flex-grow: 1; /* Takes up available vertical space */
+            width: 100%;
+            position: relative; /* For overlays and warning message */
+            overflow: hidden; /* Crucial for canvas aspect ratio */
+            background-color: var(--bg-medium); /* Visible if canvas aspect ratio differs */
+            display: flex; /* To center canvas */
+            justify-content: center;
+            align-items: center;
+            border-radius: 0; /* If appWrapper controls outer look */
+            /* Original border was on gameContainer, if desired:
+            border-left: 2px solid var(--bg-light);
+            border-right: 2px solid var(--bg-light);
+            */
+        }
+        canvas {
+            display: block;
+            background-color: var(--road-color); /* Road color */
+            max-width: 100%;
+            max-height: 100%;
+            /* aspect-ratio: attr(width) / attr(height); */ /* Modern way, but max-width/height is fine */
+            object-fit: contain; /* Ensures aspect ratio is maintained */
         }
 
         .messageOverlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(30, 30, 40, 0.85); /* Darker, more translucent overlay */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(30, 30, 40, 0.9); /* Slightly more opaque */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
             z-index: 20;
-            font-size: 22px; /* Adjusted base font size */
             color: white;
-            padding: 20px;
-            box-sizing: border-box;
-            border-radius: इन्हेरिट; /* Inherit from gameContainer if needed, or set specific */
+            padding: clamp(15px, 4vw, 20px);
         }
         .messageOverlay h1 {
-            font-size: 36px;
-            color: #f1c40f; /* Gold for title */
-            margin-bottom: 15px;
+            font-size: clamp(28px, 7vw, 36px);
+            color: var(--highlight-color);
+            margin-bottom: clamp(10px, 2vh, 15px);
             text-shadow: 2px 2px 3px rgba(0,0,0,0.5);
         }
-         .messageOverlay h2 {
-            font-size: 32px;
-            color: #e74c3c; /* Red for Game Over */
-            margin-bottom: 15px;
+         .messageOverlay h2 { /* For Game Over */
+            font-size: clamp(26px, 6.5vw, 32px);
+            color: var(--danger-color);
+            margin-bottom: clamp(10px, 2vh, 15px);
             text-shadow: 2px 2px 3px rgba(0,0,0,0.5);
         }
         .messageOverlay p {
-            font-size: 18px;
-            line-height: 1.6;
-            margin-bottom: 10px;
+            font-size: clamp(14px, 3.5vw, 18px);
+            line-height: 1.5;
+            margin-bottom: clamp(8px, 1.5vh, 10px);
         }
         .messageOverlay button {
-            padding: 14px 30px; /* Larger buttons */
-            font-size: 20px;
-            margin-top: 25px; /* More space above button */
+            padding: clamp(10px, 3vh, 14px) clamp(20px, 5vw, 30px);
+            font-size: clamp(16px, 4vw, 20px);
+            margin-top: clamp(15px, 3vh, 25px);
             cursor: pointer;
-            background: linear-gradient(to bottom, #3498db, #2980b9); /* Gradient button */
+            background: linear-gradient(to bottom, var(--accent-color), #2980b9);
             border: 1px solid #2980b9;
             color: white;
-            border-radius: 8px; /* More rounded buttons */
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            transition: all 0.2s ease;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            touch-action: manipulation; /* Improve touch responsiveness */
         }
         .messageOverlay button:hover {
-            background: linear-gradient(to bottom, #2980b9, #3498db);
+            background: linear-gradient(to bottom, #2980b9, var(--accent-color));
             box-shadow: 0 6px 8px rgba(0,0,0,0.3);
             transform: translateY(-2px);
         }
@@ -121,64 +158,97 @@
             transform: translateY(0px);
             box-shadow: 0 2px 3px rgba(0,0,0,0.2);
         }
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none !important; } /* Use !important to override inline styles if any (though not ideal) */
+
         #warningMessage {
             position: absolute;
-            top: 25%; /* Adjusted position */
+            top: 10%; /* Closer to top of game area */
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(231, 76, 60, 0.9); /* Slightly more opaque red */
+            background-color: rgba(231, 76, 60, 0.9);
             color: white;
-            padding: 12px 20px; /* More padding */
+            padding: clamp(8px, 2vw, 12px) clamp(15px, 4vw, 20px);
             border-radius: 8px;
-            font-size: 17px; /* Slightly larger */
+            font-size: clamp(13px, 3vw, 17px);
             font-weight: bold;
             z-index: 15;
             text-align: center;
             opacity: 0;
-            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
             box-shadow: 0 3px 7px rgba(0,0,0,0.3);
             text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+            pointer-events: none; /* Don't intercept clicks */
         }
         #warningMessage.visible {
             opacity: 1;
-            transform: translateX(-50%) translateY(-10px); /* Slight upward movement when visible */
+            transform: translateX(-50%) translateY(0); /* No extra Y movement needed */
+        }
+
+        #controlsContainer {
+            width: 100%;
+            padding: clamp(8px, 2vh, 12px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: rgba(44, 62, 80, 0.85); /* Match UI panel */
+            border-top: 2px solid #2c3e50;
+            flex-shrink: 0; /* Prevent shrinking */
+            user-select: none; /* Prevent text selection */
+            -webkit-user-select: none;
+        }
+        #controlsContainer button {
+            font-size: clamp(22px, 6vw, 32px); /* Larger symbols */
+            padding: clamp(8px, 2vh, 12px) clamp(25px, 7vw, 40px); /* Wider buttons */
+            min-width: clamp(70px, 20vw, 100px); /* Ensure good tap area */
+            background-color: var(--accent-color);
+            color: white;
+            border: 1px solid #2980b9;
+            border-radius: 8px;
+            cursor: pointer;
+            touch-action: manipulation; /* Crucial for responsive touch */
+            font-weight: bold;
+        }
+        #controlsContainer button:active {
+            background-color: #2980b9;
         }
     </style>
 </head>
 <body>
-
-    <div id="uiContainer">
-        <div id="wordDisplay"></div>
-        <div id="statsDisplay">
-            Level: <span id="level">1</span> | Lives: <span id="lives">3</span>
+    <div id="appWrapper">
+        <div id="uiContainer">
+            <div id="wordDisplay"></div>
+            <div id="statsDisplay">
+                Level: <span id="level">1</span> | Lives: <span id="lives">3</span>
+            </div>
         </div>
-    </div>
 
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <div id="warningMessage">తప్పు అక్షరం లేదా అడ్డంకిని తాకారు, జాగ్రత్త!</div>
-
-        <div id="startScreen" class="messageOverlay">
-            <h1>తెలుగు పదాల వేట</h1>
-            <p>రోడ్డుపై సరైన తెలుగు అక్షరాలను సేకరించి పదాన్ని పూర్తి చేయండి.</p>
-            <p>అడ్డంకులను మరియు తప్పు అక్షరాలను తాకొద్దు!</p>
-            <p>Use ARROW KEYS to move.</p>
-            <button id="startButton">Start Game</button>
+        <div id="gameContainer">
+            <canvas id="gameCanvas"></canvas>
+            <div id="warningMessage">తప్పు అక్షరం లేదా అడ్డంకిని తాకారు, జాగ్రత్త!</div>
+            <div id="startScreen" class="messageOverlay">
+                <h1>తెలుగు పదాల వేట</h1>
+                <p>రోడ్డుపై సరైన తెలుగు అక్షరాలను సేకరించి పదాన్ని పూర్తి చేయండి.</p>
+                <p>అడ్డంకులను మరియు తప్పు అక్షరాలను తాకొద్దు!</p>
+                <p id="controlInstructionsP">Use ARROW KEYS or A/D to move.</p>
+                <button id="startButton">Start Game</button>
+            </div>
+            <div id="gameOverScreen" class="messageOverlay hidden">
+                <h2 id="gameOverMessage">Game Over!</h2>
+                <p>ఆట ముగిసింది!</p>
+                <button id="restartButton">Play Again</button>
+            </div>
         </div>
-        <div id="gameOverScreen" class="messageOverlay hidden">
-            <h2 id="gameOverMessage">Game Over!</h2>
-            <p>ఆట ముగిసింది!</p>
-            <button id="restartButton">Play Again</button>
+
+        <div id="controlsContainer">
+            <button id="btnLeft" aria-label="Move Left">◀</button>
+            <button id="btnRight" aria-label="Move Right">▶</button>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const gameContainer = document.getElementById('gameContainer');
+        // const gameContainer = document.getElementById('gameContainer'); // No longer needed for sizing
         const wordDisplay = document.getElementById('wordDisplay');
         const livesDisplay = document.getElementById('lives');
         const levelDisplay = document.getElementById('level');
@@ -188,13 +258,16 @@
         const gameOverMessage = document.getElementById('gameOverMessage');
         const startButton = document.getElementById('startButton');
         const restartButton = document.getElementById('restartButton');
+        const controlInstructionsP = document.getElementById('controlInstructionsP');
 
-        const GAME_WIDTH = 400;
-        const GAME_HEIGHT = 600;
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+
+        const GAME_WIDTH = 400; // Internal game resolution
+        const GAME_HEIGHT = 600; // Internal game resolution
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;
-        gameContainer.style.width = GAME_WIDTH + 'px';
-        gameContainer.style.height = GAME_HEIGHT + 'px';
+        // REMOVED: gameContainer.style.width and height settings
 
         const TELUGU_WORDS = [
             { word: "పలక", meaning: "Slate" }, { word: "నగ", meaning: "Jewel" },
@@ -217,74 +290,45 @@
         let warningTimeoutId = null;
 
         const PLAYER_WIDTH = 40;
-        const PLAYER_HEIGHT = 55; // Slightly adjusted height
-        const PLAYER_COLOR = '#3498db'; // Main player color
-        const PLAYER_ACCENT_COLOR = '#2980b9'; // Darker blue for details
-        const PLAYER_WHEEL_COLOR = '#333'; // Dark grey for wheels
+        const PLAYER_HEIGHT = 55;
+        const PLAYER_COLOR = '#3498db';
+        const PLAYER_ACCENT_COLOR = '#2980b9';
+        const PLAYER_WHEEL_COLOR = '#333';
 
-        const OBSTACLE_COLOR = '#c0392b'; // Main obstacle color
-        const OBSTACLE_BORDER_COLOR = '#a12f23'; // Darker border for obstacle
+        const OBSTACLE_COLOR = '#c0392b';
+        const OBSTACLE_BORDER_COLOR = '#a12f23';
 
-        const LETTER_COLOR = '#f1c40f'; // Main letter color
+        const LETTER_COLOR = '#f1c40f';
         const LETTER_SHADOW_COLOR = 'rgba(0,0,0,0.3)';
-
 
         class Player {
             constructor() {
-                this.width = PLAYER_WIDTH;
-                this.height = PLAYER_HEIGHT;
-                this.x = GAME_WIDTH / 2 - this.width / 2;
-                this.y = GAME_HEIGHT - this.height - 20;
-                this.speed = 5.5; // Slightly increased speed
-                this.color = PLAYER_COLOR;
+                this.width = PLAYER_WIDTH; this.height = PLAYER_HEIGHT;
+                this.x = GAME_WIDTH / 2 - this.width / 2; this.y = GAME_HEIGHT - this.height - 20;
+                this.speed = 5.5; this.color = PLAYER_COLOR;
             }
             draw() {
-                // Main body
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-
-                // Roof
-                ctx.fillStyle = PLAYER_ACCENT_COLOR;
-                ctx.fillRect(this.x + 5, this.y - 8, this.width - 10, 10); // Roof part on top
-                ctx.beginPath();
-                ctx.moveTo(this.x+5, this.y);
-                ctx.lineTo(this.x+8, this.y-8);
-                ctx.lineTo(this.x+this.width-8, this.y-8);
-                ctx.lineTo(this.x+this.width-5, this.y);
-                ctx.closePath();
-                ctx.fill();
-
-
-                // Windshield (front)
-                ctx.fillStyle = '#aed6f1'; // Light blue for glass
-                ctx.beginPath();
-                ctx.moveTo(this.x + 7, this.y + 5);
-                ctx.lineTo(this.x + 10, this.y - 2);
-                ctx.lineTo(this.x + this.width - 10, this.y - 2);
-                ctx.lineTo(this.x + this.width - 7, this.y + 5);
-                ctx.closePath();
-                ctx.fill();
-
-
-                // Wheels
-                const wheelWidth = 8;
-                const wheelHeight = 18;
-                ctx.fillStyle = PLAYER_WHEEL_COLOR;
-                // Front wheels
+                ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillStyle = PLAYER_ACCENT_COLOR; ctx.fillRect(this.x + 5, this.y - 8, this.width - 10, 10);
+                ctx.beginPath(); ctx.moveTo(this.x+5, this.y); ctx.lineTo(this.x+8, this.y-8);
+                ctx.lineTo(this.x+this.width-8, this.y-8); ctx.lineTo(this.x+this.width-5, this.y);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#aed6f1'; ctx.beginPath(); ctx.moveTo(this.x + 7, this.y + 5);
+                ctx.lineTo(this.x + 10, this.y - 2); ctx.lineTo(this.x + this.width - 10, this.y - 2);
+                ctx.lineTo(this.x + this.width - 7, this.y + 5); ctx.closePath(); ctx.fill();
+                const wheelWidth = 8; const wheelHeight = 18; ctx.fillStyle = PLAYER_WHEEL_COLOR;
                 ctx.fillRect(this.x - wheelWidth/2 +2, this.y + 8, wheelWidth, wheelHeight);
                 ctx.fillRect(this.x + this.width - wheelWidth/2 -2, this.y + 8, wheelWidth, wheelHeight);
-                // Rear wheels
                 ctx.fillRect(this.x - wheelWidth/2 +2, this.y + this.height - wheelHeight - 5, wheelWidth, wheelHeight);
                 ctx.fillRect(this.x + this.width - wheelWidth/2 -2, this.y + this.height - wheelHeight - 5, wheelWidth, wheelHeight);
             }
             move(direction) {
                 if (direction === 'left') this.x -= this.speed;
                 else if (direction === 'right') this.x += this.speed;
-                if (this.x < 5) this.x = 5; // Keep some distance from edge
+                if (this.x < 5) this.x = 5;
                 if (this.x + this.width > GAME_WIDTH - 5) this.x = GAME_WIDTH - this.width - 5;
             }
         }
-
         class Road {
             constructor() {
                 this.stripeHeight = 50; this.stripeGap = 30; this.stripeWidth = 12;
@@ -293,56 +337,38 @@
                     this.stripes.push(i * (this.stripeHeight + this.stripeGap));
                 }
             }
-            update(speed) { this.offset = (this.offset + speed * 1.2) % (this.stripeHeight + this.stripeGap); } // Faster stripes
+            update(speed) { this.offset = (this.offset + speed * 1.2) % (this.stripeHeight + this.stripeGap); }
             draw() {
                 for (let i = 0; i < this.stripes.length; i++) {
                     const yPos = this.stripes[i] - this.offset;
                     ctx.fillStyle = this.stripeColor;
                     ctx.fillRect(GAME_WIDTH / 2 - this.stripeWidth / 2, yPos, this.stripeWidth, this.stripeHeight);
                 }
-                ctx.fillStyle = '#f39c12'; // Brighter yellow side lines
-                ctx.fillRect(15, 0, 8, GAME_HEIGHT); // Thicker left
-                ctx.fillRect(GAME_WIDTH - 15 - 8, 0, 8, GAME_HEIGHT); // Thicker right
+                ctx.fillStyle = '#f39c12'; ctx.fillRect(15, 0, 8, GAME_HEIGHT);
+                ctx.fillRect(GAME_WIDTH - 15 - 8, 0, 8, GAME_HEIGHT);
             }
         }
-
         class Obstacle {
             constructor(x, y, width, height, color) {
                 this.x = x; this.y = y; this.width = width; this.height = height; this.color = color;
                 this.borderColor = OBSTACLE_BORDER_COLOR;
             }
             draw() {
-                // Draw border first
-                ctx.fillStyle = this.borderColor;
-                ctx.fillRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
-                // Draw main body
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillStyle = this.borderColor; ctx.fillRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
+                ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.width, this.height);
             }
             update(speed) { this.y += speed; }
         }
-
         class Letter {
             constructor(char, x, y, isTarget) {
-                this.char = char; this.x = x; this.y = y; this.size = 32; // Slightly larger font
+                this.char = char; this.x = x; this.y = y; this.size = 32;
                 this.width = 30; this.height = 30; this.color = LETTER_COLOR; this.isTarget = isTarget;
             }
             draw() {
-                ctx.font = `bold ${this.size}px 'Noto Sans Telugu'`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                // Adding a subtle shadow for better visibility
-                ctx.shadowColor = LETTER_SHADOW_COLOR;
-                ctx.shadowBlur = 3;
-                ctx.shadowOffsetX = 1;
-                ctx.shadowOffsetY = 1;
-                ctx.fillStyle = this.color;
-                ctx.fillText(this.char, this.x + this.width / 2, this.y + this.height / 2 + 3);
-                // Reset shadow for other drawings
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
+                ctx.font = `bold ${this.size}px 'Noto Sans Telugu'`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = LETTER_SHADOW_COLOR; ctx.shadowBlur = 3; ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 1;
+                ctx.fillStyle = this.color; ctx.fillText(this.char, this.x + this.width / 2, this.y + this.height / 2 + 3);
+                ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
             }
             update(speed) { this.y += speed; }
         }
@@ -353,11 +379,9 @@
             startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden');
             warningMessageElement.classList.remove('visible');
             if(warningTimeoutId) clearTimeout(warningTimeoutId);
-
             startNextLevel();
             if (!gameRunning) { gameRunning = true; mainGameLoop(); }
         }
-
         function startNextLevel() {
             currentLevel++;
             if (currentLevel > TELUGU_WORDS.length) { winGame(); return; }
@@ -367,69 +391,57 @@
                 lettersToCollect: wordInfo.word.split(''),
                 collectedStatus: Array(wordInfo.word.length).fill(false)
             };
-            baseSpeed = 2.5 + (currentLevel - 1) * 0.8; // Slightly adjusted speed progression
-            obstacles = []; letters = [];
-            updateUIDisplay();
+            baseSpeed = 2.5 + (currentLevel - 1) * 0.8;
+            obstacles = []; letters = []; updateUIDisplay();
         }
-
         function winGame() {
             gameRunning = false; cancelAnimationFrame(animationFrameId);
             gameOverMessage.innerHTML = `Congratulations! <br>అభినందనలు! <br>You completed all ${TELUGU_WORDS.length} words!`;
             gameOverScreen.classList.remove('hidden');
         }
-
         function showWarningMessage() {
             if (warningTimeoutId) clearTimeout(warningTimeoutId);
             warningMessageElement.classList.add('visible');
             warningTimeoutId = setTimeout(() => {
                 warningMessageElement.classList.remove('visible');
                 warningTimeoutId = null;
-            }, 1800); // Slightly shorter duration
+            }, 1800);
         }
-
-        function loseLife() {
-            lives--; updateUIDisplay(); showWarningMessage();
-            if (lives <= 0) gameOver();
-        }
-
+        function loseLife() { lives--; updateUIDisplay(); showWarningMessage(); if (lives <= 0) gameOver(); }
         function gameOver() {
             gameRunning = false; cancelAnimationFrame(animationFrameId);
             gameOverMessage.innerHTML = `Game Over! <br> ఆట ముగిసింది! <br> Level Reached: ${currentLevel}`;
             gameOverScreen.classList.remove('hidden');
         }
 
-        let obstacleSpawnTimer = 0; const OBSTACLE_SPAWN_INTERVAL = 95; // Adjusted
-        let letterSpawnTimer = 0; const LETTER_SPAWN_INTERVAL = 75; // Adjusted
+        let obstacleSpawnTimer = 0; const OBSTACLE_SPAWN_INTERVAL = 95;
+        let letterSpawnTimer = 0; const LETTER_SPAWN_INTERVAL = 75;
 
         function spawnObstacle() {
-            const obstacleWidth = Math.random() * 25 + 30;
-            const obstacleHeight = Math.random() * 25 + 20;
+            const obstacleWidth = Math.random() * 25 + 30; const obstacleHeight = Math.random() * 25 + 20;
             const laneWidth = GAME_WIDTH / 3; const lane = Math.floor(Math.random() * 3);
             const x = (lane * laneWidth) + (laneWidth / 2) - (obstacleWidth / 2);
             obstacles.push(new Obstacle(x, -obstacleHeight, obstacleWidth, obstacleHeight, OBSTACLE_COLOR));
         }
-
         function spawnLetter() {
             let char; let isTargetLetter = false; const uncollectedTargetLetters = [];
             currentWordData.lettersToCollect.forEach((letterChar, index) => {
                 if (!currentWordData.collectedStatus[index]) uncollectedTargetLetters.push(letterChar);
             });
-            if (uncollectedTargetLetters.length > 0 && Math.random() < 0.7) { // Higher chance for target
+            if (uncollectedTargetLetters.length > 0 && Math.random() < 0.7) {
                 char = uncollectedTargetLetters[Math.floor(Math.random() * uncollectedTargetLetters.length)];
                 isTargetLetter = true;
             } else {
                 char = ALL_TELUGU_CHARS[Math.floor(Math.random() * ALL_TELUGU_CHARS.length)];
-                isTargetLetter = uncollectedTargetLetters.includes(char);
+                isTargetLetter = uncollectedTargetLetters.includes(char); // Could still be a target by chance
             }
-            const letterSize = 30; const x = Math.random() * (GAME_WIDTH - letterSize - 30) + 15; // Keep further from edges
+            const letterSize = 30; const x = Math.random() * (GAME_WIDTH - letterSize - 30) + 15;
             letters.push(new Letter(char, x, -letterSize, isTargetLetter));
         }
-
         function checkCollision(rect1, rect2) {
             return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x &&
                    rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
         }
-
         function updateUIDisplay() {
             let displayString = "";
             currentWordData.lettersToCollect.forEach((char, index) => {
@@ -438,26 +450,18 @@
             wordDisplay.innerHTML = displayString;
             livesDisplay.textContent = lives; levelDisplay.textContent = currentLevel;
         }
-
         function mainGameLoop() {
             if (!gameRunning) return;
-            handleInput();
-            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-            road.update(baseSpeed); road.draw();
-            player.draw();
-
+            handleInput(); ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            road.update(baseSpeed); road.draw(); player.draw();
             const speedFactor = baseSpeed / 2.5;
-            obstacleSpawnTimer++;
-            if (obstacleSpawnTimer > OBSTACLE_SPAWN_INTERVAL / speedFactor) { spawnObstacle(); obstacleSpawnTimer = 0; }
-            letterSpawnTimer++;
-            if (letterSpawnTimer > LETTER_SPAWN_INTERVAL / speedFactor) { spawnLetter(); letterSpawnTimer = 0; }
-
+            obstacleSpawnTimer++; if (obstacleSpawnTimer > OBSTACLE_SPAWN_INTERVAL / speedFactor) { spawnObstacle(); obstacleSpawnTimer = 0; }
+            letterSpawnTimer++; if (letterSpawnTimer > LETTER_SPAWN_INTERVAL / speedFactor) { spawnLetter(); letterSpawnTimer = 0; }
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obs = obstacles[i]; obs.update(baseSpeed); obs.draw();
                 if (checkCollision(player, obs)) { obstacles.splice(i, 1); loseLife(); }
                 else if (obs.y > GAME_HEIGHT) obstacles.splice(i, 1);
             }
-
             for (let i = letters.length - 1; i >= 0; i--) {
                 const letterObj = letters[i]; letterObj.update(baseSpeed); letterObj.draw();
                 if (checkCollision(player, letterObj)) {
@@ -470,7 +474,7 @@
                             currentWordData.collectedStatus[firstNeededIndex] = true;
                             letterWasNeededAndCorrectlyCollected = true; updateUIDisplay();
                             if (currentWordData.collectedStatus.every(status => status === true)) {
-                                setTimeout(() => { if(gameRunning) startNextLevel(); }, 600); // Slightly longer pause
+                                setTimeout(() => { if(gameRunning) startNextLevel(); }, 600);
                             }
                         }
                     }
@@ -483,8 +487,8 @@
 
         const keyState = {};
         window.addEventListener('keydown', (e) => {
-            keyState[e.key] = true;
-            if (gameRunning && (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown")) {
+            keyState[e.key] = true; // For 'a' and 'd' as well
+            if (gameRunning && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { // Only prevent default for arrows if game is running
                 e.preventDefault();
             }
         });
@@ -492,17 +496,39 @@
 
         function handleInput(){
             if (!gameRunning) return;
-            if (keyState['ArrowLeft'] || keyState['a']) player.move('left');
-            if (keyState['ArrowRight'] || keyState['d']) player.move('right');
+            if (keyState['ArrowLeft'] || keyState['a'] || keyState['A']) player.move('left');
+            if (keyState['ArrowRight'] || keyState['d'] || keyState['D']) player.move('right');
         }
+
+        // Touch Controls
+        function handleTouch(event, key, isPressed) {
+            event.preventDefault();
+            keyState[key] = isPressed;
+        }
+        btnLeft.addEventListener('touchstart', (e) => handleTouch(e, 'ArrowLeft', true));
+        btnLeft.addEventListener('touchend', (e) => handleTouch(e, 'ArrowLeft', false));
+        btnLeft.addEventListener('touchcancel', (e) => handleTouch(e, 'ArrowLeft', false)); // Handle unexpected touch end
+
+        btnRight.addEventListener('touchstart', (e) => handleTouch(e, 'ArrowRight', true));
+        btnRight.addEventListener('touchend', (e) => handleTouch(e, 'ArrowRight', false));
+        btnRight.addEventListener('touchcancel', (e) => handleTouch(e, 'ArrowRight', false));
 
         startButton.addEventListener('click', initGame);
         restartButton.addEventListener('click', initGame);
 
         window.onload = () => {
             startScreen.classList.remove('hidden');
-            document.getElementById('uiContainer').style.width = GAME_WIDTH + 'px';
             warningMessageElement.classList.remove('visible');
+            // REMOVED: document.getElementById('uiContainer').style.width setting
+
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+            if (controlInstructionsP) {
+                controlInstructionsP.textContent = isTouchDevice ? "Use ON-SCREEN BUTTONS to move." : "Use ARROW KEYS or A/D to move.";
+            }
+            // Hide on-screen controls if not a touch device (optional)
+            if (!isTouchDevice) {
+                document.getElementById('controlsContainer').style.display = 'none';
+            }
         };
     </script>
 </body>
