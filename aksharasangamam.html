@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>తెలుగు టెట్రిస్ (Telugu Tetris) - అక్షర సంగమం (5 అక్షరాల గొలుసు - అడ్డం/నిలువు)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Telugu', 'Inter', sans-serif;
+            touch-action: manipulation; /* Prevent zoom on touch devices */
+            overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
+        }
+        .game-canvas {
+            border: 2px solid #333;
+            background-color: #f0f0f0;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            position: relative; 
+        }
+        .next-canvas {
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .btn {
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        #touchControls button {
+            width: 70px; /* Slightly larger for easier touch */
+            height: 70px;
+            font-size: 28px; /* Slightly larger font */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .game-container-parent {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            max-width: 600px; /* Max width for game area on larger screens */
+        }
+        @media (min-width: 768px) { /* md breakpoint in Tailwind */
+            .game-container {
+                flex-direction: row;
+                align-items: flex-start;
+                max-width: none; /* Allow wider layout on desktop */
+            }
+            .game-board-area {
+                flex-shrink: 0; /* Prevent canvas from shrinking too much */
+            }
+            .info-panel-area {
+                width: 250px; /* Fixed width for info panel on desktop */
+                flex-shrink: 0;
+            }
+        }
+        #spotlightLetterContainer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(60px, 15vw, 100px); /* Responsive font size */
+            font-weight: bold;
+            color: rgba(255, 165, 0, 0.8); 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 100;
+            pointer-events: none; 
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #bonusMessageContainer {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(18px, 5vw, 24px); /* Responsive font size */
+            font-weight: bold;
+            color: #4CAF50; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, top 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-orange-100 to-amber-200 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+
+    <div class="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-5xl">
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-orange-600 mb-4 sm:mb-6">తెలుగు టెట్రిస్ - అక్షర సంగమం</h1>
+        <p class="text-center text-sm sm:text-base text-gray-600 mb-4">5+ ఒకేలాంటి అక్షరాలను అడ్డంగా లేదా నిలువుగా పేర్చండి!</p>
+
+
+        <div class="game-container-parent">
+            <div class="game-container">
+                <div class="relative game-board-area"> 
+                    <canvas id="tetrisCanvas" class="game-canvas rounded-lg"></canvas>
+                    <div id="spotlightLetterContainer"></div>
+                    <div id="bonusMessageContainer"></div>
+                    <div id="messageOverlay" class="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center text-white text-xl sm:text-2xl font-bold rounded-lg hidden p-4 text-center">
+                        <p id="messageText"></p>
+                        <button id="messageButton" class="mt-4 px-6 py-2 bg-orange-500 hover:bg-orange-600 rounded-md text-lg btn">OK</button>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-auto info-panel-area space-y-3 sm:space-y-4 text-gray-700">
+                    <div class="bg-orange-50 p-3 sm:p-4 rounded-lg shadow">
+                        <h2 class="text-lg sm:text-xl font-semibold">Score: <span id="score" class="font-bold text-orange-600">0</span></h2>
+                    </div>
+                    <div class="bg-orange-50 p-3 sm:p-4 rounded-lg shadow">
+                        <h2 class="text-lg sm:text-xl font-semibold">Chains: <span id="chains" class="font-bold text-orange-600">0</span></h2>
+                    </div>
+                    <div class="bg-orange-50 p-3 sm:p-4 rounded-lg shadow">
+                        <h2 class="text-lg sm:text-xl font-semibold">Level: <span id="level" class="font-bold text-orange-600">1</span></h2>
+                    </div>
+                    
+                    <div class="bg-orange-50 p-3 sm:p-4 rounded-lg shadow">
+                        <h3 class="text-md sm:text-lg font-semibold mb-1 sm:mb-2">Next Piece:</h3>
+                        <canvas id="nextPieceCanvas" class="next-canvas rounded-md mx-auto"></canvas>
+                    </div>
+
+                    <button id="startButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 sm:py-3 px-4 rounded-lg shadow-md btn">Start Game</button>
+                    <button id="pauseButton" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 sm:py-3 px-4 rounded-lg shadow-md btn" disabled>Pause</button>
+                    
+                    <div id="gameOverMessage" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 sm:p-4 rounded-lg shadow hidden">
+                        <h2 class="text-xl sm:text-2xl font-bold mb-2">Game Over!</h2>
+                        <p>Final Score: <span id="finalScore" class="font-bold">0</span></p>
+                        <button id="restartButton" class="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow-md btn">Play Again</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 sm:mt-6 text-center text-gray-600">
+            <p class="mb-2 text-xs sm:text-sm md:text-base"><b>Controls:</b> Left/Right Arrows (Move), Up Arrow (Rotate), Down Arrow (Soft Drop), Space (Hard Drop)</p>
+            <div id="touchControls" class="md:hidden mt-3 sm:mt-4 space-y-2">
+                <div class="flex justify-center space-x-2">
+                    <button id="touchRotate" class="bg-blue-500 text-white p-3 rounded-lg btn">⬆️</button>
+                </div>
+                <div class="flex justify-center space-x-2">
+                    <button id="touchLeft" class="bg-gray-500 text-white p-3 rounded-lg btn">⬅️</button>
+                    <button id="touchRight" class="bg-gray-500 text-white p-3 rounded-lg btn">➡️</button>
+                </div>
+                <div class="flex justify-center space-x-2">
+                     <button id="touchDown" class="bg-gray-500 text-white p-3 rounded-lg btn">⬇️</button>
+                     <button id="touchHardDrop" class="bg-red-500 text-white p-3 rounded-lg btn">💥</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('tetrisCanvas');
+        const ctx = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('nextPieceCanvas');
+        const nextCtx = nextCanvas.getContext('2d');
+
+        const spotlightLetterContainer = document.getElementById('spotlightLetterContainer');
+        const bonusMessageContainer = document.getElementById('bonusMessageContainer');
+
+        const scoreElement = document.getElementById('score');
+        const chainsElement = document.getElementById('chains');
+        const levelElement = document.getElementById('level');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const finalScoreElement = document.getElementById('finalScore');
+        const restartButton = document.getElementById('restartButton');
+        
+        const messageOverlay = document.getElementById('messageOverlay');
+        const messageTextElement = document.getElementById('messageText');
+        const messageButton = document.getElementById('messageButton');
+
+        const BLOCK_SIZE_DESKTOP = 30;
+        const BLOCK_SIZE_MOBILE = Math.floor(window.innerWidth / 14); 
+        const BLOCK_SIZE = window.innerWidth < 768 ? BLOCK_SIZE_MOBILE : BLOCK_SIZE_DESKTOP;
+
+        const BOARD_WIDTH = 10; 
+        const BOARD_HEIGHT = 20; 
+        const CHAIN_MATCH_LENGTH = 5; 
+        const CHAIN_BASE_SCORE = 100; 
+
+        canvas.width = BLOCK_SIZE * BOARD_WIDTH;
+        canvas.height = BLOCK_SIZE * BOARD_HEIGHT;
+        
+        nextCanvas.width = 4 * BLOCK_SIZE; 
+        nextCanvas.height = 4 * BLOCK_SIZE;
+
+
+        const TETROMINOES = {
+            'I': { shape: [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], color: '#00BCD4', letter: 'అ'},
+            'J': { shape: [[1,0,0], [1,1,1], [0,0,0]], color: '#2196F3', letter: 'ఆ'},
+            'L': { shape: [[0,0,1], [1,1,1], [0,0,0]], color: '#FF9800', letter: 'ఇ'},
+            'O': { shape: [[1,1], [1,1]], color: '#FFEB3B', letter: 'ఉ'},
+            'S': { shape: [[0,1,1], [1,1,0], [0,0,0]], color: '#4CAF50', letter: 'ఎ'},
+            'T': { shape: [[0,1,0], [1,1,1], [0,0,0]], color: '#9C27B0', letter: 'క'},
+            'Z': { shape: [[1,1,0], [0,1,1], [0,0,0]], color: '#F44336', letter: 'గ'}
+        };
+        const TETROMINO_KEYS = Object.keys(TETROMINOES);
+
+        let board; 
+        let currentPiece;
+        let nextPiece;
+        let score;
+        let chains; 
+        let level;
+        let dropCounter;
+        let dropInterval; 
+        let lastTime;
+        let animationFrameId;
+        let isGameOver;
+        let isPaused;
+        let spotlightTimeoutId = null; 
+        let bonusMessageTimeoutId = null; 
+
+        function createBoard() {
+            return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
+        }
+
+        function getRandomPiece() {
+            const key = TETROMINO_KEYS[Math.floor(Math.random() * TETROMINO_KEYS.length)];
+            const tetromino = TETROMINOES[key];
+            const shapeCopy = tetromino.shape.map(row => [...row]);
+            return {
+                x: Math.floor(BOARD_WIDTH / 2) - Math.floor(shapeCopy[0].length / 2),
+                y: 0,
+                shape: shapeCopy,
+                color: tetromino.color,
+                letter: tetromino.letter
+            };
+        }
+        
+        function drawSquare(x, y, color, letter, context, currentBlockSize = BLOCK_SIZE) {
+            context.fillStyle = color;
+            context.fillRect(x * currentBlockSize, y * currentBlockSize, currentBlockSize, currentBlockSize);
+            context.strokeStyle = 'rgba(0,0,0,0.2)';
+            context.strokeRect(x * currentBlockSize, y * currentBlockSize, currentBlockSize, currentBlockSize);
+
+            if (letter) {
+                context.fillStyle = '#000000';
+                const fontSize = currentBlockSize * 0.60; 
+                context.font = `bold ${fontSize}px "Noto Sans Telugu", Arial, sans-serif`;
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.fillText(letter, x * currentBlockSize + currentBlockSize / 2, y * currentBlockSize + currentBlockSize / 2 + fontSize * 0.05);
+            }
+        }
+
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (board) {
+                board.forEach((row, y) => {
+                    row.forEach((cell, x) => {
+                        if (cell) {
+                            drawSquare(x, y, cell.color, cell.letter, ctx);
+                        }
+                    });
+                });
+            }
+        }
+
+        function drawPiece(piece, context, offsetX = 0, offsetY = 0, customBlockSize = BLOCK_SIZE) {
+            if (!piece || !piece.shape) return; 
+            piece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value === 1) {
+                        drawSquare(piece.x + x + offsetX, piece.y + y + offsetY, piece.color, piece.letter, context, customBlockSize);
+                    }
+                });
+            });
+        }
+        
+        function drawNextPiece() {
+            nextCtx.fillStyle = '#f9f9f9'; 
+            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+            if (nextPiece) {
+                const shape = nextPiece.shape;
+                const shapeWidth = shape[0].length;
+                const shapeHeight = shape.reduce((h, row) => h + (row.some(cell => cell === 1) ? 1 : 0), 0);
+                
+                const offsetX = Math.floor((nextCanvas.width / BLOCK_SIZE - shapeWidth) / 2);
+                const offsetY = Math.floor((nextCanvas.height / BLOCK_SIZE - shapeHeight) / 2);
+                
+                const tempPiece = { ...nextPiece, x: 0, y: 0 }; 
+                drawPiece(tempPiece, nextCtx, offsetX, offsetY, BLOCK_SIZE); 
+            }
+        }
+
+
+        function isValidMove(piece, newX, newY, newShape) {
+            const shapeToTest = newShape || piece.shape;
+            for (let y = 0; y < shapeToTest.length; y++) {
+                for (let x = 0; x < shapeToTest[y].length; x++) {
+                    if (shapeToTest[y][x] === 1) {
+                        const boardX = newX + x;
+                        const boardY = newY + y;
+                        if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT || (boardY >= 0 && board[boardY] && board[boardY][boardX])) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        function movePiece(dx, dy) {
+            if (isGameOver || isPaused) return false; 
+            if (!currentPiece) return false; 
+            if (isValidMove(currentPiece, currentPiece.x + dx, currentPiece.y + dy, currentPiece.shape)) {
+                currentPiece.x += dx;
+                currentPiece.y += dy;
+                if (dy > 0) { 
+                    dropCounter = 0;
+                }
+                return true; 
+            }
+            return false; 
+        }
+
+        function rotatePiece() {
+            if (isGameOver || isPaused) return;
+            if (!currentPiece) return; 
+            const shape = currentPiece.shape;
+            const N = shape.length;
+            const newShape = Array.from({ length: N }, () => Array(N).fill(0));
+
+            for (let y = 0; y < N; y++) {
+                for (let x = 0; x < N; x++) {
+                    newShape[x][N - 1 - y] = shape[y][x];
+                }
+            }
+            
+            let kickOffset = 0;
+            if (!isValidMove(currentPiece, currentPiece.x, currentPiece.y, newShape)) {
+                if (isValidMove(currentPiece, currentPiece.x - 1, currentPiece.y, newShape)) kickOffset = -1;
+                else if (isValidMove(currentPiece, currentPiece.x + 1, currentPiece.y, newShape)) kickOffset = 1;
+                else if (currentPiece.letter === 'అ' && isValidMove(currentPiece, currentPiece.x - 2, currentPiece.y, newShape)) kickOffset = -2;
+                else if (currentPiece.letter === 'అ' && isValidMove(currentPiece, currentPiece.x + 2, currentPiece.y, newShape)) kickOffset = 2;
+                else return; 
+            }
+            currentPiece.x += kickOffset;
+            currentPiece.shape = newShape;
+        }
+
+        function hardDrop() {
+            if (isGameOver || isPaused) return;
+            if (!currentPiece) return; 
+            while (movePiece(0, 1)) { /* Keep moving down */ }
+            lockPiece(); 
+        }
+
+        function showSpotlightLetter(letter) {
+            if (spotlightTimeoutId) clearTimeout(spotlightTimeoutId);
+            spotlightLetterContainer.textContent = letter;
+            spotlightLetterContainer.style.opacity = '1';
+            spotlightTimeoutId = setTimeout(() => {
+                spotlightLetterContainer.style.opacity = '0';
+            }, 1500); 
+        }
+        
+        function showBonusMessage(message) {
+            if (bonusMessageTimeoutId) clearTimeout(bonusMessageTimeoutId);
+            bonusMessageContainer.textContent = message;
+            bonusMessageContainer.style.top = '20%';
+            bonusMessageContainer.style.opacity = '1';
+            
+            bonusMessageTimeoutId = setTimeout(() => {
+                bonusMessageContainer.style.opacity = '0';
+                bonusMessageContainer.style.top = '15%'; 
+            }, 1500); 
+        }
+
+
+        function lockPiece() {
+            if (!currentPiece) return; 
+            currentPiece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value === 1) {
+                        const boardX = currentPiece.x + x;
+                        const boardY = currentPiece.y + y;
+                        if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >=0 && boardX < BOARD_WIDTH) {
+                           board[boardY][boardX] = { color: currentPiece.color, letter: currentPiece.letter };
+                        }
+                    }
+                });
+            });
+            processBoardForChains(); 
+            spawnNewPiece();
+        }
+
+        function processBoardForChains() {
+            let chainsFoundThisTurn = 0;
+            let lettersForSpotlight = [];
+            let totalChainScoreThisTurn = 0;
+            // Use a Set to store coordinates of blocks to clear, to avoid duplicates if a block is part of H and V chain
+            let blocksToClearSet = new Set(); 
+
+            // Horizontal chain check
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                let currentLetter = null;
+                let currentStreak = 0;
+                let streakStartIndex = -1;
+                for (let x = 0; x <= BOARD_WIDTH; x++) { 
+                    const cell = (x < BOARD_WIDTH) ? board[y][x] : null; 
+                    
+                    if (cell && cell.letter === currentLetter) {
+                        currentStreak++;
+                    } else {
+                        if (currentStreak >= CHAIN_MATCH_LENGTH) {
+                            chainsFoundThisTurn++;
+                            lettersForSpotlight.push(currentLetter);
+                            totalChainScoreThisTurn += CHAIN_BASE_SCORE * currentStreak; 
+                            for (let k = 0; k < currentStreak; k++) {
+                                blocksToClearSet.add(JSON.stringify({x: streakStartIndex + k, y: y}));
+                            }
+                        }
+                        if (cell) {
+                            currentLetter = cell.letter;
+                            currentStreak = 1;
+                            streakStartIndex = x;
+                        } else {
+                            currentLetter = null;
+                            currentStreak = 0;
+                            streakStartIndex = -1;
+                        }
+                    }
+                }
+            }
+
+            // Vertical chain check
+            for (let x = 0; x < BOARD_WIDTH; x++) {
+                let currentLetter = null;
+                let currentStreak = 0;
+                let streakStartIndex = -1;
+                for (let y = 0; y <= BOARD_HEIGHT; y++) { // Iterate one past board height
+                    const cell = (y < BOARD_HEIGHT) ? board[y][x] : null;
+
+                    if (cell && cell.letter === currentLetter) {
+                        currentStreak++;
+                    } else {
+                        if (currentStreak >= CHAIN_MATCH_LENGTH) {
+                            chainsFoundThisTurn++; // This might double count if a chain is both H and V, consider refining chain counting
+                            lettersForSpotlight.push(currentLetter);
+                            totalChainScoreThisTurn += CHAIN_BASE_SCORE * currentStreak;
+                            for (let k = 0; k < currentStreak; k++) {
+                                blocksToClearSet.add(JSON.stringify({x: x, y: streakStartIndex + k}));
+                            }
+                        }
+                        if (cell) {
+                            currentLetter = cell.letter;
+                            currentStreak = 1;
+                            streakStartIndex = y;
+                        } else {
+                            currentLetter = null;
+                            currentStreak = 0;
+                            streakStartIndex = -1;
+                        }
+                    }
+                }
+            }
+            
+            // Convert Set of stringified coordinates back to array of objects
+            const blocksToClear = Array.from(blocksToClearSet).map(str => JSON.parse(str));
+
+            if (blocksToClear.length > 0) {
+                blocksToClear.forEach(block => {
+                    board[block.y][block.x] = null;
+                });
+
+                applyGravity(); 
+
+                // Refine chain counting if needed, for now, sum of scores is primary
+                // The `chainsFoundThisTurn` might be higher than actual distinct visual chains if overlaps are significant.
+                // For simplicity, we'll use the current `chainsFoundThisTurn` for level progression.
+                // A more complex approach would be to identify connected components of cleared blocks.
+
+                score += totalChainScoreThisTurn;
+                chains += chainsFoundThisTurn; // This is a simple sum of H and V chains found.
+                                            // If a 5x5 cross of same letters is made, it counts as 2 chains.
+                
+                if (totalChainScoreThisTurn > 0) { // Only show bonus if score was added
+                    showBonusMessage(`+${totalChainScoreThisTurn} అక్షర గొలుసు!`);
+                }
+
+                if (lettersForSpotlight.length > 0) {
+                    const uniqueLetters = [...new Set(lettersForSpotlight)];
+                    const randomLetterToSpotlight = uniqueLetters[Math.floor(Math.random() * uniqueLetters.length)];
+                    showSpotlightLetter(randomLetterToSpotlight);
+                }
+                
+                updateScoreDisplay();
+
+                if (chains >= level * 5) { 
+                    level++;
+                    dropInterval = Math.max(100, 1000 - (level - 1) * 60); 
+                    levelElement.textContent = level;
+                }
+            }
+        }
+
+        function applyGravity() {
+            for (let x = 0; x < BOARD_WIDTH; x++) { 
+                let emptyRowInCol = -1; 
+                for (let y = BOARD_HEIGHT - 1; y >= 0; y--) { 
+                    if (board[y][x] === null) { 
+                        if (emptyRowInCol === -1) { 
+                            emptyRowInCol = y; 
+                        }
+                    } else if (emptyRowInCol !== -1) { 
+                        board[emptyRowInCol][x] = board[y][x]; 
+                        board[y][x] = null; 
+                        emptyRowInCol--; 
+                    }
+                }
+            }
+        }
+
+
+        function spawnNewPiece() {
+            currentPiece = nextPiece;
+            nextPiece = getRandomPiece();
+            drawNextPiece();
+
+            if (currentPiece && !isValidMove(currentPiece, currentPiece.x, currentPiece.y, currentPiece.shape)) {
+                gameOver();
+            }
+        }
+        
+        function updateScoreDisplay() {
+            scoreElement.textContent = score;
+            chainsElement.textContent = chains;
+            levelElement.textContent = level;
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = null; 
+            gameOverMessage.style.display = 'block';
+            finalScoreElement.textContent = score;
+            startButton.disabled = false;
+            startButton.textContent = "Restart Game";
+            pauseButton.disabled = true;
+            pauseButton.textContent = "Pause";
+            showMessage("Game Over!", "Play Again?");
+            messageButton.onclick = resetGame;
+        }
+        
+        function showMessage(text, buttonText = "OK") {
+            messageTextElement.textContent = text;
+            messageButton.textContent = buttonText;
+            messageOverlay.style.display = 'flex';
+        }
+
+        messageButton.addEventListener('click', () => {
+            messageOverlay.style.display = 'none';
+        });
+
+
+        function gameLoop(timestamp) {
+            if (isGameOver) return;
+            if (isPaused) {
+                animationFrameId = requestAnimationFrame(gameLoop); 
+                return;
+            }
+
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) {
+                if (currentPiece && !movePiece(0, 1)) { 
+                    lockPiece();
+                }
+                dropCounter = 0;
+            }
+
+            drawBoard();
+            if (currentPiece) {
+                drawPiece(currentPiece, ctx);
+            }
+            
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function initGame() {
+            board = createBoard(); 
+            score = 0;
+            chains = 0; 
+            level = 1;
+            dropCounter = 0;
+            dropInterval = 1000; 
+            lastTime = 0;
+            isGameOver = false;
+            isPaused = false;
+
+            nextPiece = getRandomPiece(); 
+            spawnNewPiece(); 
+            
+            updateScoreDisplay();
+            drawNextPiece(); 
+
+            gameOverMessage.style.display = 'none';
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            pauseButton.textContent = "Pause";
+            messageOverlay.style.display = 'none'; 
+
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function resetGame() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (spotlightTimeoutId) clearTimeout(spotlightTimeoutId);
+            spotlightLetterContainer.style.opacity = '0';
+            if (bonusMessageTimeoutId) clearTimeout(bonusMessageTimeoutId);
+            bonusMessageContainer.style.opacity = '0';
+            initGame();
+        }
+        
+        function handleResize() {
+            const newBlockSize = window.innerWidth < 768 ? Math.floor(window.innerWidth / 15) : BLOCK_SIZE_DESKTOP;
+            // For simplicity, block size is fixed after init. True dynamic resizing is complex.
+            // Update next piece canvas size based on the initially determined BLOCK_SIZE.
+            nextCanvas.width = 4 * BLOCK_SIZE;
+            nextCanvas.height = 4 * BLOCK_SIZE;
+            if(!isGameOver && nextPiece) { // Redraw next piece only if game is active
+                 drawNextPiece();
+            }
+        }
+        window.addEventListener('resize', handleResize);
+
+
+        startButton.addEventListener('click', () => {
+            initGame();
+        });
+        
+        pauseButton.addEventListener('click', () => {
+            if (isGameOver) return;
+            isPaused = !isPaused;
+            if (isPaused) {
+                pauseButton.textContent = "Resume";
+                pauseButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                pauseButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                showMessage("Paused", "Resume");
+                messageButton.onclick = () => { 
+                    isPaused = false; 
+                    pauseButton.textContent = "Pause";
+                    pauseButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    pauseButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                    messageOverlay.style.display = 'none';
+                    lastTime = performance.now(); 
+                    if (!animationFrameId && !isGameOver) {
+                         animationFrameId = requestAnimationFrame(gameLoop);
+                    }
+                };
+            } else {
+                pauseButton.textContent = "Pause";
+                pauseButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                pauseButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                messageOverlay.style.display = 'none'; 
+                lastTime = performance.now(); 
+                if (!animationFrameId && !isGameOver) { 
+                     animationFrameId = requestAnimationFrame(gameLoop);
+                }
+            }
+        });
+
+        restartButton.addEventListener('click', resetGame);
+
+        document.addEventListener('keydown', event => {
+            if (isGameOver || isPaused) return;
+            if (!currentPiece) return; 
+
+            switch (event.key) {
+                case 'ArrowLeft': case 'a': movePiece(-1, 0); break;
+                case 'ArrowRight': case 'd': movePiece(1, 0); break;
+                case 'ArrowDown': case 's': if (movePiece(0, 1)) dropCounter = 0; break;
+                case 'ArrowUp': case 'w': rotatePiece(); break;
+                case ' ': event.preventDefault(); hardDrop(); break;
+            }
+        });
+
+        const touchLeftButton = document.getElementById('touchLeft');
+        const touchRightButton = document.getElementById('touchRight');
+        const touchRotateButton = document.getElementById('touchRotate');
+        const touchDownButton = document.getElementById('touchDown');
+        const touchHardDropButton = document.getElementById('touchHardDrop');
+
+        if (touchLeftButton) touchLeftButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) movePiece(-1, 0); });
+        if (touchRightButton) touchRightButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) movePiece(1, 0); });
+        if (touchRotateButton) touchRotateButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) rotatePiece(); });
+        if (touchDownButton) touchDownButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) { if(movePiece(0, 1)) dropCounter = 0; } });
+        if (touchHardDropButton) touchHardDropButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) hardDrop(); });
+
+        board = createBoard(); 
+        drawBoard(); 
+        nextPiece = getRandomPiece(); 
+        drawNextPiece(); 
+        handleResize(); 
+
+        showMessage("తెలుగు టెట్రిస్ కు స్వాగతం!", "Start Game");
+        messageButton.onclick = () => {
+            messageOverlay.style.display = 'none';
+            initGame(); 
+        };
+        
+    </script>
+</body>
+</html>
