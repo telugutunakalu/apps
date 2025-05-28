@@ -11,12 +11,15 @@
             font-family: 'Noto Sans Telugu', 'Inter', sans-serif;
             touch-action: manipulation; /* Prevent zoom on touch devices */
             overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
+            overflow: hidden; /* Prevent scrolling of the page itself */
         }
         .game-canvas {
             border: 2px solid #333;
             background-color: #f0f0f0;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
             position: relative; 
+            /* Make canvas itself the touch target for gestures */
+            touch-action: none; /* Disable default browser gestures like pinch-zoom on the canvas */
         }
         .next-canvas {
             border: 1px solid #ccc;
@@ -29,14 +32,15 @@
         .btn:active {
             transform: scale(0.95);
         }
-        #touchControls button {
-            width: 70px; /* Slightly larger for easier touch */
+        /* Hide old touch controls if gesture controls are active */
+        /* #touchControls button {
+            width: 70px; 
             height: 70px;
-            font-size: 28px; /* Slightly larger font */
+            font-size: 28px; 
             display: flex;
             align-items: center;
             justify-content: center;
-        }
+        } */
         .game-container-parent {
             display: flex;
             justify-content: center;
@@ -48,19 +52,19 @@
             align-items: center;
             gap: 1rem;
             width: 100%;
-            max-width: 600px; /* Max width for game area on larger screens */
+            max-width: 600px; 
         }
-        @media (min-width: 768px) { /* md breakpoint in Tailwind */
+        @media (min-width: 768px) { 
             .game-container {
                 flex-direction: row;
                 align-items: flex-start;
-                max-width: none; /* Allow wider layout on desktop */
+                max-width: none; 
             }
             .game-board-area {
-                flex-shrink: 0; /* Prevent canvas from shrinking too much */
+                flex-shrink: 0; 
             }
             .info-panel-area {
-                width: 250px; /* Fixed width for info panel on desktop */
+                width: 250px; 
                 flex-shrink: 0;
             }
         }
@@ -69,7 +73,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: clamp(60px, 15vw, 100px); /* Responsive font size */
+            font-size: clamp(60px, 15vw, 100px); 
             font-weight: bold;
             color: rgba(255, 165, 0, 0.8); 
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
@@ -83,7 +87,7 @@
             top: 20%;
             left: 50%;
             transform: translateX(-50%);
-            font-size: clamp(18px, 5vw, 24px); /* Responsive font size */
+            font-size: clamp(18px, 5vw, 24px); 
             font-weight: bold;
             color: #4CAF50; 
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
@@ -142,8 +146,9 @@
         </div>
 
         <div class="mt-4 sm:mt-6 text-center text-gray-600">
-            <p class="mb-2 text-xs sm:text-sm md:text-base"><b>Controls:</b> Left/Right Arrows (Move), Up Arrow (Rotate), Down Arrow (Soft Drop), Space (Hard Drop)</p>
-            <div id="touchControls" class="md:hidden mt-3 sm:mt-4 space-y-2">
+            <p class="mb-2 text-xs sm:text-sm md:text-base"><b>Keyboard:</b> Left/Right (Move), Up (Rotate), Down (Soft Drop), Space (Hard Drop)</p>
+            <p class="mb-2 text-xs sm:text-sm md:text-base"><b>Touch:</b> Swipe Left/Right (Move), Tap (Rotate), Swipe Down (Soft Drop), Quick Flick Down (Hard Drop)</p>
+            <div id="touchControls" class="md:hidden mt-3 sm:mt-4 space-y-2" style="display: none;"> 
                 <div class="flex justify-center space-x-2">
                     <button id="touchRotate" class="bg-blue-500 text-white p-3 rounded-lg btn">⬆️</button>
                 </div>
@@ -182,7 +187,11 @@
         const messageButton = document.getElementById('messageButton');
 
         const BLOCK_SIZE_DESKTOP = 30;
-        const BLOCK_SIZE_MOBILE = Math.floor(window.innerWidth / 14); 
+        // Calculate mobile block size based on available width, ensuring it's not too small
+        const MOBILE_CANVAS_WIDTH_RATIO = 0.7; // Use 70% of screen width for canvas on mobile
+        const availableMobileWidth = window.innerWidth * MOBILE_CANVAS_WIDTH_RATIO;
+        const BLOCK_SIZE_MOBILE = Math.max(15, Math.floor(availableMobileWidth / 10)); // Min block size 15px
+        
         const BLOCK_SIZE = window.innerWidth < 768 ? BLOCK_SIZE_MOBILE : BLOCK_SIZE_DESKTOP;
 
         const BOARD_WIDTH = 10; 
@@ -222,6 +231,16 @@
         let isPaused;
         let spotlightTimeoutId = null; 
         let bonusMessageTimeoutId = null; 
+
+        // Touch gesture state variables
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        const SWIPE_THRESHOLD = 30; // Minimum distance for a swipe
+        const TAP_THRESHOLD_TIME = 200; // Max time for a tap (ms)
+        const TAP_THRESHOLD_DISTANCE = 10; // Max distance for a tap
+        const QUICK_FLICK_TIME = 250; // Max time for a quick flick down (hard drop)
+
 
         function createBoard() {
             return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
@@ -320,7 +339,7 @@
                 currentPiece.x += dx;
                 currentPiece.y += dy;
                 if (dy > 0) { 
-                    dropCounter = 0;
+                    dropCounter = 0; // Reset drop counter for soft/hard drops
                 }
                 return true; 
             }
@@ -402,7 +421,6 @@
             let chainsFoundThisTurn = 0;
             let lettersForSpotlight = [];
             let totalChainScoreThisTurn = 0;
-            // Use a Set to store coordinates of blocks to clear, to avoid duplicates if a block is part of H and V chain
             let blocksToClearSet = new Set(); 
 
             // Horizontal chain check
@@ -442,14 +460,14 @@
                 let currentLetter = null;
                 let currentStreak = 0;
                 let streakStartIndex = -1;
-                for (let y = 0; y <= BOARD_HEIGHT; y++) { // Iterate one past board height
+                for (let y = 0; y <= BOARD_HEIGHT; y++) { 
                     const cell = (y < BOARD_HEIGHT) ? board[y][x] : null;
 
                     if (cell && cell.letter === currentLetter) {
                         currentStreak++;
                     } else {
                         if (currentStreak >= CHAIN_MATCH_LENGTH) {
-                            chainsFoundThisTurn++; // This might double count if a chain is both H and V, consider refining chain counting
+                            chainsFoundThisTurn++; 
                             lettersForSpotlight.push(currentLetter);
                             totalChainScoreThisTurn += CHAIN_BASE_SCORE * currentStreak;
                             for (let k = 0; k < currentStreak; k++) {
@@ -469,7 +487,6 @@
                 }
             }
             
-            // Convert Set of stringified coordinates back to array of objects
             const blocksToClear = Array.from(blocksToClearSet).map(str => JSON.parse(str));
 
             if (blocksToClear.length > 0) {
@@ -478,17 +495,10 @@
                 });
 
                 applyGravity(); 
-
-                // Refine chain counting if needed, for now, sum of scores is primary
-                // The `chainsFoundThisTurn` might be higher than actual distinct visual chains if overlaps are significant.
-                // For simplicity, we'll use the current `chainsFoundThisTurn` for level progression.
-                // A more complex approach would be to identify connected components of cleared blocks.
-
                 score += totalChainScoreThisTurn;
-                chains += chainsFoundThisTurn; // This is a simple sum of H and V chains found.
-                                            // If a 5x5 cross of same letters is made, it counts as 2 chains.
+                chains += chainsFoundThisTurn; 
                 
-                if (totalChainScoreThisTurn > 0) { // Only show bonus if score was added
+                if (totalChainScoreThisTurn > 0) { 
                     showBonusMessage(`+${totalChainScoreThisTurn} అక్షర గొలుసు!`);
                 }
 
@@ -634,13 +644,30 @@
         }
         
         function handleResize() {
-            const newBlockSize = window.innerWidth < 768 ? Math.floor(window.innerWidth / 15) : BLOCK_SIZE_DESKTOP;
-            // For simplicity, block size is fixed after init. True dynamic resizing is complex.
-            // Update next piece canvas size based on the initially determined BLOCK_SIZE.
+            // Recalculate block size and canvas dimensions for responsiveness
+            const newBlockSize = window.innerWidth < 768 ? 
+                                 Math.max(15, Math.floor((window.innerWidth * MOBILE_CANVAS_WIDTH_RATIO) / BOARD_WIDTH)) : 
+                                 BLOCK_SIZE_DESKTOP;
+
+            // Only update if block size actually changes significantly to avoid performance issues.
+            // This simple check might not be enough for perfect dynamic resizing during gameplay.
+            // A full redraw or game state adjustment would be needed.
+            // For now, we primarily set it on load and adjust next piece canvas.
+            if (Math.abs(BLOCK_SIZE - newBlockSize) > 1 || canvas.width !== newBlockSize * BOARD_WIDTH) {
+                // console.log("Resizing logic would go here if we dynamically change BLOCK_SIZE mid-game");
+                // To truly make BLOCK_SIZE dynamic mid-game, we'd need to update it globally
+                // and then call initGame() or a similar function to redraw everything based on new BLOCK_SIZE.
+                // This is complex, so we'll stick to the initial calculation for BLOCK_SIZE.
+            }
+            
+            // Update next piece canvas size based on the *current* BLOCK_SIZE (which is set on load)
             nextCanvas.width = 4 * BLOCK_SIZE;
             nextCanvas.height = 4 * BLOCK_SIZE;
-            if(!isGameOver && nextPiece) { // Redraw next piece only if game is active
-                 drawNextPiece();
+
+            if(!isGameOver && nextPiece) { 
+                 drawBoard(); // Redraw main board if needed
+                 if(currentPiece) drawPiece(currentPiece, ctx); // Redraw current piece
+                 drawNextPiece(); // Redraw next piece
             }
         }
         window.addEventListener('resize', handleResize);
@@ -683,6 +710,7 @@
 
         restartButton.addEventListener('click', resetGame);
 
+        // Keyboard Controls
         document.addEventListener('keydown', event => {
             if (isGameOver || isPaused) return;
             if (!currentPiece) return; 
@@ -690,29 +718,67 @@
             switch (event.key) {
                 case 'ArrowLeft': case 'a': movePiece(-1, 0); break;
                 case 'ArrowRight': case 'd': movePiece(1, 0); break;
-                case 'ArrowDown': case 's': if (movePiece(0, 1)) dropCounter = 0; break;
+                case 'ArrowDown': case 's': if (movePiece(0, 1)) dropCounter = 0; break; // Soft drop
                 case 'ArrowUp': case 'w': rotatePiece(); break;
-                case ' ': event.preventDefault(); hardDrop(); break;
+                case ' ': event.preventDefault(); hardDrop(); break; // Hard drop
             }
         });
 
-        const touchLeftButton = document.getElementById('touchLeft');
-        const touchRightButton = document.getElementById('touchRight');
-        const touchRotateButton = document.getElementById('touchRotate');
-        const touchDownButton = document.getElementById('touchDown');
-        const touchHardDropButton = document.getElementById('touchHardDrop');
+        // Touch Gesture Controls
+        canvas.addEventListener('touchstart', (event) => {
+            if (isGameOver || isPaused || !currentPiece) return;
+            event.preventDefault(); // Prevent default touch actions like scrolling
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+            touchStartTime = new Date().getTime();
+        }, { passive: false });
 
-        if (touchLeftButton) touchLeftButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) movePiece(-1, 0); });
-        if (touchRightButton) touchRightButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) movePiece(1, 0); });
-        if (touchRotateButton) touchRotateButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) rotatePiece(); });
-        if (touchDownButton) touchDownButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) { if(movePiece(0, 1)) dropCounter = 0; } });
-        if (touchHardDropButton) touchHardDropButton.addEventListener('click', () => { if(!isPaused && !isGameOver && currentPiece) hardDrop(); });
+        canvas.addEventListener('touchend', (event) => {
+            if (isGameOver || isPaused || !currentPiece) return;
+            event.preventDefault();
+            
+            const touchEndX = event.changedTouches[0].clientX;
+            const touchEndY = event.changedTouches[0].clientY;
+            const touchEndTime = new Date().getTime();
 
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const elapsedTime = touchEndTime - touchStartTime;
+
+            // Check for Tap (Rotate)
+            if (elapsedTime < TAP_THRESHOLD_TIME && Math.abs(deltaX) < TAP_THRESHOLD_DISTANCE && Math.abs(deltaY) < TAP_THRESHOLD_DISTANCE) {
+                rotatePiece();
+                return;
+            }
+
+            // Check for Swipes
+            if (Math.abs(deltaX) > Math.abs(deltaY)) { // Horizontal swipe
+                if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+                    if (deltaX > 0) {
+                        movePiece(1, 0); // Swipe Right
+                    } else {
+                        movePiece(-1, 0); // Swipe Left
+                    }
+                }
+            } else { // Vertical swipe
+                if (deltaY > SWIPE_THRESHOLD) { // Swipe Down
+                    if (elapsedTime < QUICK_FLICK_TIME && deltaY > SWIPE_THRESHOLD * 1.5) { // Quick Flick Down for Hard Drop
+                        hardDrop();
+                    } else { // Regular Swipe Down for Soft Drop
+                        if(movePiece(0, 1)) dropCounter = 0;
+                    }
+                }
+                // No swipe up action for now
+            }
+        }, { passive: false });
+
+
+        // --- Initial Setup ---
         board = createBoard(); 
         drawBoard(); 
         nextPiece = getRandomPiece(); 
         drawNextPiece(); 
-        handleResize(); 
+        handleResize(); // Call once on load to set initial sizes
 
         showMessage("తెలుగు టెట్రిస్ కు స్వాగతం!", "Start Game");
         messageButton.onclick = () => {
