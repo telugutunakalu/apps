@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>అంకెల వేట (Ankela Veta) - Telugu Number Hunt</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            background-color: #f0f0f0; /* Light gray background for the page */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Noto Sans Telugu', Arial, sans-serif; /* Added Noto Sans Telugu */
+        }
+        canvas {
+            display: block;
+            box-shadow: 0 0 20px rgba(0,0,0,0.15);
+        }
+        /* Fallback font if Noto Sans Telugu is not available or for broader compatibility */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap');
+    </style>
+</head>
+<body>
+    <script>
+        // --- Game Configuration & Global Variables ---
+        let gameState = 'start'; // 'start', 'playing', 'levelComplete', 'gameOver', 'gameWon'
+        let currentLevel = 1;
+        let score = 0;
+        let lives = 3;
+        let questionsAnsweredInLevel = 0;
+
+        let targetTeluguNumberStr = '';
+        let targetArabicNumber = 0;
+        let choiceBubbles = []; // { x, y, radius, value, isCorrect, displayValue }
+        let feedbackMessage = ''; // For "సరి!" or "కాదు!"
+        let feedbackColor = [0,0,0];
+        let feedbackTimer = 0;
+
+        const TELUGU_DIGITS = ['౦', '౧', '౨', '౩', '౪', '౫', '౬', '౭', '౮', '౯'];
+        const MAX_LEVELS = 5;
+
+        let levelConfig = [
+            // Level 1: Single digit
+            { level: 1, min: 1, max: 9, choices: 3, goal: 5, name: "మొదటి స్థాయి: ఒక అంకె" },
+            // Level 2: Two digits (easy)
+            { level: 2, min: 10, max: 30, choices: 3, goal: 7, name: "రెండవ స్థాయి: రెండు అంకెలు (సులువు)" },
+            // Level 3: Two digits (medium)
+            { level: 3, min: 31, max: 99, choices: 4, goal: 7, name: "మూడవ స్థాయి: రెండు అంకెలు (మధ్యస్థం)" },
+            // Level 4: Three digits (introduction)
+            { level: 4, min: 100, max: 300, choices: 4, goal: 10, name: "నాలుగవ స్థాయి: మూడు అంకెలు (పరిచయం)" },
+            // Level 5: Three digits (practice)
+            { level: 5, min: 301, max: 999, choices: 4, goal: 10, name: "ఐదవ స్థాయి: మూడు అంకెలు (అభ్యాసం)" }
+        ];
+
+        let startButton, nextLevelButton, playAgainButton;
+        let canvasWidth, canvasHeight;
+
+        // --- P5.js Functions ---
+        function setup() {
+            canvasWidth = min(windowWidth * 0.9, 800); // Max width 800px or 90% of window
+            canvasHeight = min(windowHeight * 0.9, 600); // Max height 600px or 90% of window
+            let canvas = createCanvas(canvasWidth, canvasHeight);
+            canvas.parent(document.body); // Ensure canvas is centered by flexbox
+
+            textFont('Noto Sans Telugu'); // Set default font
+            textAlign(CENTER, CENTER);
+            
+            // Define button properties
+            let buttonWidth = canvasWidth * 0.3;
+            let buttonHeight = canvasHeight * 0.08;
+            startButton = { x: canvasWidth / 2, y: canvasHeight * 0.65, w: buttonWidth, h: buttonHeight, text: "ఆరంభించు" };
+            nextLevelButton = { x: canvasWidth / 2, y: canvasHeight * 0.65, w: buttonWidth, h: buttonHeight, text: "తదుపరి స్థాయి" };
+            playAgainButton = { x: canvasWidth / 2, y: canvasHeight * 0.65, w: buttonWidth, h: buttonHeight, text: "మళ్ళీ ఆడు" };
+        }
+
+        function draw() {
+            background(230, 240, 255); // Light blue background
+
+            if (gameState === 'start') {
+                displayStartScreen();
+            } else if (gameState === 'playing') {
+                displayPlayingScreen();
+            } else if (gameState === 'levelComplete') {
+                displayLevelCompleteScreen();
+            } else if (gameState === 'gameOver') {
+                displayGameOverScreen();
+            } else if (gameState === 'gameWon') {
+                displayGameWonScreen();
+            }
+
+            if (feedbackTimer > 0) {
+                displayFeedback();
+                feedbackTimer--;
+            }
+        }
+
+        function mousePressed() {
+            if (gameState === 'start') {
+                if (isButtonClicked(startButton, mouseX, mouseY)) {
+                    startGame();
+                }
+            } else if (gameState === 'playing') {
+                choiceBubbles.forEach(bubble => {
+                    if (dist(mouseX, mouseY, bubble.x, bubble.y) < bubble.radius) {
+                        checkAnswer(bubble);
+                    }
+                });
+            } else if (gameState === 'levelComplete') {
+                if (isButtonClicked(nextLevelButton, mouseX, mouseY)) {
+                    startNextLevel();
+                }
+            } else if (gameState === 'gameOver' || gameState === 'gameWon') {
+                if (isButtonClicked(playAgainButton, mouseX, mouseY)) {
+                    resetGame();
+                }
+            }
+        }
+        
+        function windowResized() {
+            canvasWidth = min(windowWidth * 0.9, 800);
+            canvasHeight = min(windowHeight * 0.9, 600);
+            resizeCanvas(canvasWidth, canvasHeight);
+
+            // Update button positions/sizes if they are relative to canvas size
+            let buttonWidth = canvasWidth * 0.3;
+            let buttonHeight = canvasHeight * 0.08;
+            startButton.w = buttonWidth; startButton.h = buttonHeight; startButton.x = canvasWidth / 2; startButton.y = canvasHeight * 0.65;
+            nextLevelButton.w = buttonWidth; nextLevelButton.h = buttonHeight; nextLevelButton.x = canvasWidth / 2; nextLevelButton.y = canvasHeight * 0.65;
+            playAgainButton.w = buttonWidth; playAgainButton.h = buttonHeight; playAgainButton.x = canvasWidth / 2; playAgainButton.y = canvasHeight * 0.65;
+        }
+
+        // --- Game State Display Functions ---
+        function displayStartScreen() {
+            fill(50, 50, 150); // Dark blue
+            textSize(canvasHeight * 0.1);
+            text("అంకెల వేట", canvasWidth / 2, canvasHeight * 0.3);
+            
+            textSize(canvasHeight * 0.04);
+            text("తెలుగు అంకెలను గుర్తించండి!", canvasWidth / 2, canvasHeight * 0.45);
+
+            drawButton(startButton);
+        }
+
+        function displayPlayingScreen() {
+            // Display Level Name
+            fill(0);
+            textSize(canvasHeight * 0.04);
+            text(levelConfig[currentLevel - 1].name, canvasWidth / 2, canvasHeight * 0.1);
+
+            // Display Target Telugu Number
+            fill(200, 0, 0); // Red for target
+            textSize(canvasHeight * 0.15);
+            text(targetTeluguNumberStr, canvasWidth / 2, canvasHeight * 0.3);
+
+            // Display Score and Lives
+            fill(0);
+            textSize(canvasHeight * 0.035);
+            textAlign(LEFT, TOP);
+            text("పాయింట్లు: " + score, canvasWidth * 0.05, canvasHeight * 0.03);
+            textAlign(RIGHT, TOP);
+            text("జీవితాలు: " + '❤️'.repeat(lives), canvasWidth * 0.95, canvasHeight * 0.03);
+            textAlign(CENTER, CENTER); // Reset alignment
+
+            // Draw Choice Bubbles
+            choiceBubbles.forEach(bubble => {
+                fill(100, 150, 255); // Blue for bubbles
+                stroke(50, 100, 200);
+                strokeWeight(3);
+                ellipse(bubble.x, bubble.y, bubble.radius * 2);
+                noStroke();
+                fill(255);
+                textSize(bubble.radius * 0.6);
+                text(bubble.displayValue, bubble.x, bubble.y);
+            });
+        }
+
+        function displayLevelCompleteScreen() {
+            fill(0, 150, 0); // Green
+            textSize(canvasHeight * 0.08);
+            text("స్థాయి పూర్తయింది!", canvasWidth / 2, canvasHeight * 0.3);
+            
+            fill(0);
+            textSize(canvasHeight * 0.05);
+            text("మీ పాయింట్లు: " + score, canvasWidth / 2, canvasHeight * 0.45);
+            
+            drawButton(nextLevelButton);
+        }
+
+        function displayGameOverScreen() {
+            fill(200, 0, 0); // Red
+            textSize(canvasHeight * 0.1);
+            text("ఆట ముగిసింది!", canvasWidth / 2, canvasHeight * 0.3);
+
+            fill(0);
+            textSize(canvasHeight * 0.05);
+            text("మీ తుది పాయింట్లు: " + score, canvasWidth / 2, canvasHeight * 0.45);
+            
+            drawButton(playAgainButton);
+        }
+
+        function displayGameWonScreen() {
+            fill(255, 165, 0); // Orange/Gold
+            textSize(canvasHeight * 0.1);
+            text("అభినందనలు!", canvasWidth / 2, canvasHeight * 0.25);
+            textSize(canvasHeight * 0.06);
+            text("మీరు అన్ని స్థాయిలను పూర్తి చేసారు!", canvasWidth / 2, canvasHeight * 0.4);
+            
+            fill(0);
+            textSize(canvasHeight * 0.05);
+            text("మీ తుది పాయింట్లు: " + score, canvasWidth / 2, canvasHeight * 0.55);
+            
+            drawButton(playAgainButton);
+        }
+        
+        function displayFeedback() {
+            push();
+            fill(feedbackColor[0], feedbackColor[1], feedbackColor[2], map(feedbackTimer, 60, 0, 255, 0));
+            textSize(canvasHeight * 0.06);
+            text(feedbackMessage, canvasWidth / 2, canvasHeight * 0.45);
+            pop();
+        }
+
+        // --- Game Logic Functions ---
+        function startGame() {
+            currentLevel = 1;
+            score = 0;
+            lives = 3;
+            gameState = 'playing';
+            setupCurrentLevel();
+        }
+        
+        function resetGame() { // Used by playAgainButton
+            currentLevel = 1;
+            score = 0;
+            lives = 3;
+            questionsAnsweredInLevel = 0;
+            gameState = 'playing';
+            setupCurrentLevel();
+        }
+
+        function setupCurrentLevel() {
+            questionsAnsweredInLevel = 0;
+            generateNewQuestion();
+        }
+
+        function generateNewQuestion() {
+            if (lives <= 0) {
+                gameState = 'gameOver';
+                return;
+            }
+            
+            let config = levelConfig[currentLevel - 1];
+            targetArabicNumber = floor(random(config.min, config.max + 1));
+            targetTeluguNumberStr = arabicToTelugu(targetArabicNumber);
+
+            choiceBubbles = [];
+            let answers = [];
+            answers.push(targetArabicNumber);
+
+            // Generate distractors
+            for (let i = 0; i < config.choices - 1; i++) {
+                let distractor;
+                do {
+                    // Ensure distractors are roughly in the same digit category
+                    let distMin = config.min;
+                    let distMax = config.max;
+                    if (String(config.min).length !== String(config.max).length) { // Handle ranges spanning digit counts
+                        let targetDigits = String(targetArabicNumber).length;
+                        distMin = pow(10, targetDigits -1);
+                        distMax = pow(10, targetDigits) -1;
+                        if (targetDigits === 1) {distMin = 1;} // for single digits
+                        distMin = max(distMin, config.min); // clamp to level config
+                        distMax = min(distMax, config.max); // clamp to level config
+                    }
+                    distractor = floor(random(distMin, distMax + 1));
+                } while (answers.includes(distractor) || distractor === targetArabicNumber);
+                answers.push(distractor);
+            }
+
+            shuffleArray(answers); // Randomize order of choices
+
+            let bubbleRadius = canvasWidth * 0.08;
+            let spacing = (canvasWidth - (config.choices * bubbleRadius * 2)) / (config.choices + 1);
+            let startX = spacing + bubbleRadius;
+
+            for (let i = 0; i < config.choices; i++) {
+                choiceBubbles.push({
+                    x: startX + i * (bubbleRadius * 2 + spacing),
+                    y: canvasHeight * 0.7,
+                    radius: bubbleRadius,
+                    value: answers[i],
+                    isCorrect: (answers[i] === targetArabicNumber),
+                    displayValue: String(answers[i]) // Arabic numerals for choices
+                });
+            }
+        }
+
+        function checkAnswer(clickedBubble) {
+            if (feedbackTimer > 0) return; // Prevent multiple clicks while feedback is showing
+
+            if (clickedBubble.isCorrect) {
+                score += 10;
+                questionsAnsweredInLevel++;
+                feedbackMessage = "సరి!";
+                feedbackColor = [0, 180, 0]; // Green
+                if (questionsAnsweredInLevel >= levelConfig[currentLevel - 1].goal) {
+                    if (currentLevel === MAX_LEVELS) {
+                        gameState = 'gameWon';
+                    } else {
+                        gameState = 'levelComplete';
+                    }
+                } else {
+                    generateNewQuestion();
+                }
+            } else {
+                lives--;
+                feedbackMessage = "కాదు!";
+                feedbackColor = [200, 0, 0]; // Red
+                if (lives <= 0) {
+                    gameState = 'gameOver';
+                } else {
+                    // Optionally, regenerate question or let them try again
+                     generateNewQuestion(); // For now, new question on wrong answer
+                }
+            }
+            feedbackTimer = 60; // Show feedback for 1 second (60 frames)
+        }
+
+        function startNextLevel() {
+            currentLevel++;
+            if (currentLevel > MAX_LEVELS) {
+                 gameState = 'gameWon'; // Should have been caught earlier
+            } else {
+                gameState = 'playing';
+                setupCurrentLevel();
+            }
+        }
+
+        // --- Utility Functions ---
+        function arabicToTelugu(num) {
+            let s = String(num);
+            let teluguStr = '';
+            for (let char of s) {
+                teluguStr += TELUGU_DIGITS[parseInt(char)];
+            }
+            return teluguStr;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = floor(random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function drawButton(button) {
+            push();
+            rectMode(CENTER);
+            fill(100, 100, 250); // Button color
+            stroke(50, 50, 150);
+            strokeWeight(2);
+            rect(button.x, button.y, button.w, button.h, 10); // Rounded corners
+            noStroke();
+            fill(255); // Text color
+            textSize(button.h * 0.4);
+            text(button.text, button.x, button.y);
+            pop();
+        }
+
+        function isButtonClicked(button, mx, my) {
+            return mx > button.x - button.w / 2 &&
+                   mx < button.x + button.w / 2 &&
+                   my > button.y - button.h / 2 &&
+                   my < button.y + button.h / 2;
+        }
+
+    </script>
+</body>
+</html>
