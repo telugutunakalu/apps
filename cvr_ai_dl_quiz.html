@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI & Deep Learning Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .option-btn {
+            transition: all 0.3s ease;
+        }
+        .correct {
+            background-color: #2dd4bf !important;
+            color: white !important;
+            border-color: #2dd4bf !important;
+        }
+        .incorrect {
+            background-color: #fb7185 !important;
+            color: white !important;
+            border-color: #fb7185 !important;
+        }
+        .hint-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .hint-icon:hover .hint-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+
+    <div id="quiz-container" class="card w-full max-w-2xl rounded-2xl shadow-2xl p-6 md:p-8">
+        <!-- Quiz Header -->
+        <div id="quiz-header">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-2">CVR FDP --> AI & DL QUIZ </h1>
+            <p class="text-gray-600 text-center mb-6">Test your knowledge on core AI concepts.</p>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Question Area -->
+        <div id="question-area">
+            <div class="flex justify-between items-start mb-4">
+                <h2 id="question-text" class="text-lg md:text-xl font-semibold text-gray-800"></h2>
+                <div class="relative hint-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 hover:text-indigo-600 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div id="hint-text" class="hint-tooltip absolute z-10 w-48 p-2 -ml-24 text-center text-sm text-white bg-gray-800 rounded-lg shadow-lg">
+                        Hint text here
+                    </div>
+                </div>
+            </div>
+            <div id="options-container" class="grid grid-cols-1 gap-4">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Quiz Footer -->
+        <div id="quiz-footer" class="mt-8 flex justify-end">
+            <button id="next-btn" class="hidden bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 transition-colors">Next</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Quiz Complete!</h2>
+            <p class="text-xl text-gray-700 mb-2">Your Score:</p>
+            <p id="score-text" class="text-5xl font-bold text-indigo-600 mb-8"></p>
+            <button id="restart-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { question: "What is the primary purpose of using Google Colab for the deep learning training mentioned in the deck?", options: ["To write and execute Python code in an interactive notebook.", "To get free access to GPUs for accelerating code.", "To store large datasets and files in the cloud.", "To collaborate with other developers on the same code in real-time."], answer: 1, hint: "Think about the special hardware that deep learning often requires." },
+            { question: "What is the fundamental data structure for all operations in PyTorch?", options: ["A NumPy array.", "A Python list.", "A PyTorch Tensor.", "A Pandas DataFrame."], answer: 2, hint: "This structure is described as a multi-dimensional grid of numbers." },
+            { question: "Which feature allows PyTorch Tensors to automatically calculate gradients for model training?", options: ["Hardware Acceleration.", "Autograd.", "The Runtime Menu.", "The optim.Adam optimizer."], answer: 1, hint: "This feature builds a computation graph in the background." },
+            { question: "What is the purpose of calling `loss.backward()` during the training process in PyTorch?", options: ["To update the model's weights with the optimizer.", "To calculate the gradient of the loss with respect to every model parameter.", "To make a prediction with the model.", "To clear the gradients from the previous iteration."], answer: 1, hint: "This step happens after calculating how 'wrong' the model's prediction is." },
+            { question: "In an Artificial Neural Network (ANN), which layer is responsible for receiving the initial data?", options: ["The Hidden Layer.", "The Output Layer.", "The Input Layer.", "The Convolutional Layer."], answer: 2, hint: "Refer to the basic architecture of an ANN shown in the slides." },
+            { question: "What does the `transforms.ToTensor()` function primarily do when preparing the MNIST dataset?", options: ["It downloads the dataset from the internet.", "It shuffles the images to ensure random order.", "It converts an image to a PyTorch Tensor and scales pixel values to [0.0, 1.0].", "It displays the images using Matplotlib for verification."], answer: 2, hint: "Think about the format and value range neural networks prefer." },
+            { question: "In the context of training a neural network, what is an 'epoch'?", options: ["A single pass of one batch of data through the model.", "One complete pass through the entire training dataset.", "The process of evaluating the model on the test set.", "The configuration of the model's learning rate."], answer: 1, hint: "This term relates to how many times the model sees the data." },
+            { question: "Which component of the 'Training Trinity' is responsible for updating the model's weights to minimize the loss?", options: ["The Model itself.", "The Loss Function (e.g., nn.CrossEntropyLoss).", "The Optimizer (e.g., optim.Adam).", "The DataLoader."], answer: 2, hint: "This component uses the gradients calculated during backpropagation." },
+            { question: "What is the main purpose of using an activation function like ReLU in a neural network?", options: ["To flatten the output of a convolutional layer.", "To introduce non-linearity, allowing the network to learn complex patterns.", "To calculate the loss between the prediction and the target.", "To reduce the dimensionality of the feature maps."], answer: 1, hint: "Without this, a deep network would behave like a much simpler model." },
+            { question: "Why is it crucial to call `model.eval()` before checking the model's accuracy on the test set?", options: ["To automatically calculate gradients for the test data.", "To increase the model's learning rate for faster evaluation.", "To ensure layers like Dropout are turned off for consistent predictions.", "To load the test dataset into the GPU's memory."], answer: 2, hint: "Certain layers behave differently during training and testing." },
+            { question: "What is the most likely consequence of setting a learning rate that is too high?", options: ["The model will train very slowly and may get stuck.", "The model will take huge steps and 'overshoot' the optimal solution.", "The model will achieve the best possible performance.", "The model will not use the GPU for training."], answer: 1, hint: "Think about the optimization process as descending into a valley." },
+            { question: "What does a widening gap between training accuracy and test accuracy over time indicate?", options: ["Underfitting.", "A good model fit.", "Overfitting.", "A low learning rate."], answer: 2, hint: "This happens when the model learns the training data too well." },
+            { question: "What is the primary function of Dropout as a regularization technique?", options: ["To speed up the training process by using fewer neurons.", "To prevent overfitting by forcing neurons to learn more robust features.", "To increase the model's capacity by adding more layers.", "To automatically find the best learning rate for the model."], answer: 1, hint: "It's like making the network train with a different 'team' of neurons each time." },
+            { question: "In an autoencoder, what is the role of the 'decoder'?", options: ["To compress the input data into a smaller representation.", "To compare the input and output and calculate the loss.", "To try to reconstruct the original input from the compressed representation.", "To classify the input data into one of ten categories."], answer: 2, hint: "It's the second half of the autoencoder's architecture." },
+            { question: "How does an autoencoder learn without being given explicit labels?", options: ["It uses a pre-trained model to generate labels.", "It learns because the input data itself serves as the target for reconstruction.", "It randomly assigns labels to the data and learns from them.", "It can only learn if it includes a Dropout layer."], answer: 1, hint: "Think about what the model's output is compared against during training." },
+            { question: "What is the purpose of the 'bottleneck' in an autoencoder's architecture?", options: ["To add noise to the input image for denoising.", "To force the network to learn a compressed representation of the data.", "To ensure the output is the exact same size as the input.", "To increase the computational speed of the forward pass."], answer: 1, hint: "This part of the network has significantly fewer neurons than the input." },
+            { question: "What is the core function of a Convolutional Layer (nn.Conv2d) in a CNN?", options: ["To downsample the feature maps and reduce computation.", "To unroll the 2D feature maps into a 1D vector.", "To detect features like edges and patterns by sliding a kernel over the image.", "To perform the final classification of the image."], answer: 2, hint: "This layer uses a small sliding window called a kernel or filter." },
+            { question: "What is the main benefit of using a Max Pooling layer (nn.MaxPool2d) in a CNN?", options: ["It introduces non-linearity into the model.", "It learns the most important features from the input image.", "It reduces the size of feature maps and makes the model more robust to feature location.", "It increases the number of channels in the output."], answer: 2, hint: "This layer helps the model become less sensitive to where a feature is located." },
+            { question: "Which problem does the 'curse of dimensionality' primarily affect in hyperparameter tuning?", options: ["Random Search.", "Grid Search.", "Optuna.", "Manual Tuning."], answer: 1, hint: "This problem becomes apparent when you try to test every possible combination." },
+            { question: "What is the main advantage of using Optuna for hyperparameter tuning over Random Search?", options: ["Optuna is easier to write in Python.", "Optuna can test more combinations in the same amount of time.", "Optuna learns from past trials to inform future searches in promising regions.", "Optuna guarantees finding the absolute best hyperparameter combination."], answer: 2, hint: "Think about how each new trial is chosen." },
+            { question: "In PyTorch, what is the correct way to get a plain Python number from a tensor that has only one element?", options: ["By using the `.get()` method.", "By using the `.item()` method.", "By using the `int()` type conversion.", "By accessing the `.value` attribute."], answer: 1, hint: "Simply accessing the element by index returns another tensor." },
+            { question: "What is the purpose of the `nn.Flatten()` layer in a neural network?", options: ["To reduce the image resolution.", "To convert a multi-dimensional tensor into a 1D vector.", "To set all negative values in a tensor to zero.", "To randomly set some neuron outputs to zero during training."], answer: 1, hint: "This layer acts as a bridge between two different types of layers." },
+            { question: "Which loss function is the standard choice for a multi-class classification problem like MNIST?", options: ["nn.MSELoss (Mean Squared Error Loss).", "nn.BCELoss (Binary Cross Entropy Loss).", "nn.CrossEntropyLoss.", "nn.L1Loss (Mean Absolute Error)."], answer: 2, hint: "This function is highly effective because it combines two operations in one step." },
+            { question: "When evaluating a model, what is the purpose of using the `with torch.no_grad():` context manager?", options: ["To prevent the model from learning during evaluation.", "To disable gradient calculation, which speeds up computation and reduces memory usage.", "To switch the model from using the CPU to the GPU.", "To ensure the test data is properly shuffled."], answer: 1, hint: "This is done for efficiency during the evaluation phase." },
+            { question: "How do you get the predicted class index from the raw output (logits) of a classification model?", options: ["By using `scores.sum(1)`.", "By using `scores.mean(1)`.", "By using `scores.max(1)`.", "By using `scores.squeeze()`."], answer: 2, hint: "The model outputs a score for each class, and the highest score wins." },
+            { question: "What is the term for a model that performs poorly on both training and test data because it's too simple?", options: ["Generalization.", "Overfitting.", "Underfitting.", "Regularization."], answer: 2, hint: "This is the opposite of overfitting." },
+            { question: "When tuning hyperparameters, why is it important to use a logarithmic scale for plotting the learning rate experiment?", options: ["To make the plot more colorful and visually appealing.", "Because the learning rates span several orders of magnitude (e.g., 0.1, 0.01, 0.001).", "To ensure the training process is faster.", "To automatically convert the accuracy to a percentage."], answer: 1, hint: "The tested learning rates often cover a very wide range of values." },
+            { question: "In a denoising autoencoder, what data is used as the input and what is used as the target?", options: ["Input: Clean data, Target: Clean data.", "Input: Noisy data, Target: The noise itself.", "Input: Noisy data, Target: Clean data.", "Input: Clean data, Target: Noisy data."], answer: 2, hint: "The goal is to teach the model to remove corruption." },
+            { question: "Which of these real-world applications is NOT mentioned as an example of CNN usage?", options: ["Automatic photo tagging on social media.", "Analyzing medical scans like MRIs.", "Powering checkout-free retail stores.", "Predicting stock market prices."], answer: 3, hint: "The slides list examples from social media, automotive, healthcare, and retail." },
+            { question: "According to the presentation, what is the 'true measure' of a CNN's performance?", options: ["The speed of the training loop.", "The training accuracy.", "The testing accuracy on an unseen test set.", "The number of layers in the network."], answer: 2, hint: "This involves checking the model on data it hasn't been trained on." },
+            { question: "In the Optuna framework, what is the role of the 'study' object?", options: ["To define a single training and evaluation run.", "To suggest hyperparameter values for a given trial.", "To orchestrate the optimization process, tracking all trials and results.", "To build the neural network model with the chosen parameters."], answer: 2, hint: "It's the main object that manages the entire process." },
+            { question: "What is the key difference between model parameters and hyperparameters?", options: ["There is no difference; the terms are interchangeable.", "Model parameters are learned during training, while hyperparameters are set by the user before training.", "Hyperparameters are only used in CNNs, while model parameters are used in all neural networks.", "Model parameters control the learning process, while hyperparameters define the model's architecture."], answer: 1, hint: "Think about which ones are learned from data and which ones are set beforehand." },
+            { question: "What is the final step recommended by the presentation after Optuna finds the best hyperparameters?", options: ["Publish the results immediately.", "Delete the study to save space.", "Re-train the final model from scratch using the best parameters for a full number of epochs.", "Run another study with a wider range of parameters."], answer: 2, hint: "The search process often uses fewer epochs for speed." },
+            { question: "What does the term 'gradient' represent in the context of training a neural network?", options: ["The final prediction made by the model.", "A measure of the model's overall accuracy.", "The rate at which the model is learning.", "The direction and magnitude of the steepest increase of the loss function."], answer: 3, hint: "It's described as an 'instruction manual' for how to improve." },
+            { question: "Which activation function is most suitable for the output layer of a binary classification problem?", options: ["ReLU.", "Sigmoid.", "Tanh.", "Softmax."], answer: 1, hint: "This function squashes values to a range between 0 and 1, representing a probability." },
+            { question: "What is the primary reason for shuffling the training data using a DataLoader?", options: ["To make the training process faster.", "To ensure the batches have an equal number of samples from each class.", "To prevent the model from learning the order of the data.", "To ensure all data is loaded into the GPU memory at once."], answer: 2, hint: "This prevents the model from learning something unintended about the data." },
+            { question: "In PyTorch's `nn.Linear(in_features, out_features)` layer, what does `out_features` represent?", options: ["The number of input connections from the previous layer.", "The number of neurons in the layer, which determines the size of the output.", "The size of the kernel for the linear transformation.", "The learning rate for this specific layer."], answer: 1, hint: "This corresponds to the number of 'neurons' in the layer." },
+            { question: "What does the CIFAR-10 dataset consist of, as described in the presentation?", options: ["70,000 grayscale images of handwritten digits.", "60,000 small, color images belonging to 10 different classes.", "10,000 high-resolution color photographs of animals.", "60,000 audio clips for speech recognition."], answer: 1, hint: "Think about the image size, color, and number of classes." },
+            { question: "When visualizing the effect of dropout, what is the expected difference in the training loss curve for a model with dropout compared to one without?", options: ["The training loss will be significantly lower with dropout.", "The training loss will be consistently higher with dropout.", "The training loss will be identical in both cases.", "The training loss will fluctuate randomly and show no clear trend."], answer: 1, hint: "Dropout makes the training task more difficult for the model." },
+            { question: "In Optuna, what is the purpose of the `trial.suggest_categorical` function?", options: ["To suggest a floating-point number from a continuous range.", "To suggest an integer from a given range.", "To suggest a value from a predefined list of choices.", "To decide whether to prune the trial early."], answer: 2, hint: "This is used when the hyperparameter must be one of several specific options." }
+        ];
+
+        // DOM Elements
+        const quizContainer = document.getElementById('quiz-container');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const resultsScreen = document.getElementById('results-screen');
+        const scoreText = document.getElementById('score-text');
+        const questionArea = document.getElementById('question-area');
+        const quizHeader = document.getElementById('quiz-header');
+        const quizFooter = document.getElementById('quiz-footer');
+        const progressBar = document.getElementById('progress-bar');
+        const hintText = document.getElementById('hint-text');
+
+        // Quiz State
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // --- FUNCTIONS ---
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            resultsScreen.classList.add('hidden');
+            questionArea.classList.remove('hidden');
+            quizHeader.classList.remove('hidden');
+            quizFooter.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Deselect previous answers
+            const options = document.querySelectorAll('.option-btn');
+            options.forEach(btn => btn.disabled = false);
+
+            // Get current question data
+            const currentQuestion = quizData[currentQuestionIndex];
+            
+            // Update UI with question and options
+            questionText.innerText = currentQuestion.question;
+            hintText.innerText = currentQuestion.hint;
+            optionsContainer.innerHTML = ''; // Clear previous options
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerText = option;
+                button.classList.add('option-btn', 'w-full', 'p-4', 'text-left', 'border', 'border-gray-300', 'rounded-lg', 'hover:bg-indigo-100', 'hover:border-indigo-400');
+                button.dataset.index = index;
+                button.addEventListener('click', selectAnswer);
+                optionsContainer.appendChild(button);
+            });
+            updateProgress();
+        }
+
+        function selectAnswer(e) {
+            const selectedButton = e.target;
+            const selectedAnswerIndex = parseInt(selectedButton.dataset.index);
+            const correctAnswerIndex = quizData[currentQuestionIndex].answer;
+
+            // Check if answer is correct and update score
+            if (selectedAnswerIndex === correctAnswerIndex) {
+                score++;
+            }
+            
+            // Provide visual feedback
+            Array.from(optionsContainer.children).forEach((button, index) => {
+                button.disabled = true; // Disable all options
+                if (index === correctAnswerIndex) {
+                    button.classList.add('correct');
+                } else if (index === selectedAnswerIndex) {
+                    button.classList.add('incorrect');
+                }
+            });
+
+            // Show the next button
+            nextBtn.classList.remove('hidden');
+        }
+        
+        function showNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+                nextBtn.classList.add('hidden');
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            questionArea.classList.add('hidden');
+            quizHeader.classList.add('hidden');
+            quizFooter.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            scoreText.innerText = `${score} / ${quizData.length}`;
+        }
+
+        function updateProgress() {
+            const progressPercentage = ((currentQuestionIndex) / quizData.length) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+
+        // --- EVENT LISTENERS ---
+
+        nextBtn.addEventListener('click', showNextQuestion);
+        restartBtn.addEventListener('click', startQuiz);
+
+        // --- INITIALIZE QUIZ ---
+        startQuiz();
+
+    </script>
+</body>
+</html>
