@@ -47,8 +47,9 @@
         }
         /* Style for the element being dragged */
         .dragging-active {
-            opacity: 0.5;
+            opacity: 0.7;
             transform: scale(1.1);
+            z-index: 1000;
         }
         /* Style for the modal overlay */
         .modal-overlay {
@@ -131,13 +132,13 @@
                 { emoji: '🍎', te: 'పండు', letters: ['పం', 'డు'] }, { emoji: '👀', te: 'కళ్ళు', letters: ['క', 'ళ్ళు'] }, { emoji: '🏠', te: 'ఇల్లు', letters: ['ఇ', 'ల్లు'] }, { emoji: '🐶', te: 'కుక్క', letters: ['కు', 'క్క'] }, { emoji: '🐱', te: 'పిల్లి', letters: ['పి', 'ల్లి'] }, { emoji: '⚽', te: 'బంతి', letters: ['బం', 'తి'] }, { emoji: '🚗', te: 'కారు', letters: ['కా', 'రు'] }, { emoji: '💧', te: 'నీరు', letters: ['నీ', 'రు'] }, { emoji: '🧱', te: 'గోడ', letters: ['గో', 'డ'] }, { emoji: '🏰', te: 'మేడ', letters: ['మే', 'డ'] }, { emoji: '🐦', te: 'కాకి', letters: ['కా', 'కి'] }, { emoji: '🏞️', te: 'నది', letters: ['న', 'ది'] }, { emoji: '🕊️', te: 'పక్షి', letters: ['ప', 'క్షి'] }, { emoji: '🪨', te: 'రాయి', letters: ['రా', 'యి'] }, { emoji: '💨', te: 'గాలి', letters: ['గా', 'లి'] }, { emoji: '☁️', te: 'మేఘం', letters: ['మే', 'ఘం'] }, { emoji: '🍇', te: 'ద్రాక్ష', letters: ['ద్రా', 'క్ష'] }, { emoji: '🦊', te: 'నక్క', letters: ['న', 'క్క'] }, { emoji: '💡', te: 'దీపం', letters: ['దీ', 'పం'] }, { emoji: '🦷', te: 'దంతం', letters: ['దం', 'తం'] }
             ],
             2: [ // Level 2: 3-Syllable words
-                { emoji: '🐘', te: 'ఏనుగు', letters: ['ఏ', 'ను', 'గు'] }, { emoji: '🥭', te: 'మామిడి', letters: ['మా', 'మి', 'డి'] }, { emoji: '🍌', te: 'అరటి', letters: ['అ', 'ర', 'టి'] }, { emoji: '🏺', te: 'కడవ', letters: ['క', 'డ', 'వ'] }, { emoji: '🐿️', te: 'ఉడుత', letters: ['ఉ', 'డు', 'త'] }, { emoji: '💍', te: 'ఉంగరం', letters: ['ఉం', 'గ', 'రం'] }, { emoji: '⛵', te: 'పడవ', letters: ['ప', 'డ', 'వ'] }, { emoji: '🌺', te: 'కమలం', letters: ['క', 'మ', 'లం'] }, { emoji: '🌌', te: 'ఆకాశం', letters: ['ఆ', 'కా', 'శం'] }, { emoji: '🖼️', te: 'కిటికీ', letters: ['కి', 'టి', 'కీ'] }, { emoji: '🪁', te: 'పతంగి', letters: ['ప', 'తం', 'గి'] }, { emoji: '🏞️', te: 'అడవి', letters: ['అ', 'డ', 'వి'] }, { emoji: '✍️', te: 'పలక', letters: ['ప', 'ల', 'క'] }, { emoji: '🚪', te: 'గడప', letters: ['గ', 'డ', 'ప'] }, { emoji: '🍅', te: 'టమోటా', letters: ['ట', 'మో', 'టా'] }, { emoji: '📖', te: 'పుస్తకం', letters: ['పు', 'స్త', 'కం'] }, { emoji: '☀️', te: 'సూర్యుడు', letters: ['సూ', 'ర్యు', 'డు'] }, { emoji: '🌙', te: 'చంద్రుడు', letters: ['చం', 'ద్రు', 'డు'] }, { emoji: '👂', te: 'చెవులు', letters: ['చె', 'వు', 'లు'] }, { emoji: '👧', te: 'జడలు', letters: ['జ', 'డ', 'లు'] }
+                { emoji: '🐘', te: 'ఏనుగు', letters: ['ఏ', 'ను', 'గు'] }, { emoji: '🥭', te: 'మామిడి', letters: ['మా', 'మి', 'డి'] }, { emoji: '🍌', te: 'అరటి', letters: ['అ', 'ర', 'టి'] }, { emoji: '🏺', te: 'కడవ', letters: ['క', 'డ', 'వ'] }, { emoji: '🐿️', te: 'ఉడుత', letters: ['ఉ', 'డు', 'త'] }, { emoji: '💍', te: 'ఉంగరం', letters: ['ఉం', 'గ', 'రం'] }, { emoji: '⛵', te: 'పడవ', letters: ['ప', 'డ', 'వ'] }, { emoji: '🌺', te: 'కమలం', letters: ['క', 'మ', 'లం'] }, { emoji: '�', te: 'ఆకాశం', letters: ['ఆ', 'కా', 'శం'] }, { emoji: '🖼️', te: 'కిటికీ', letters: ['కి', 'టి', 'కీ'] }, { emoji: '🪁', te: 'పతంగి', letters: ['ప', 'తం', 'గి'] }, { emoji: '🏞️', te: 'అడవి', letters: ['అ', 'డ', 'వి'] }, { emoji: '✍️', te: 'పలక', letters: ['ప', 'ల', 'క'] }, { emoji: '🚪', te: 'గడప', letters: ['గ', 'డ', 'ప'] }, { emoji: '🍅', te: 'టమోటా', letters: ['ట', 'మో', 'టా'] }, { emoji: '📖', te: 'పుస్తకం', letters: ['పు', 'స్త', 'కం'] }, { emoji: '☀️', te: 'సూర్యుడు', letters: ['సూ', 'ర్యు', 'డు'] }, { emoji: '🌙', te: 'చంద్రుడు', letters: ['చం', 'ద్రు', 'డు'] }, { emoji: '👂', te: 'చెవులు', letters: ['చె', 'వు', 'లు'] }, { emoji: '👧', te: 'జడలు', letters: ['జ', 'డ', 'లు'] }
             ],
             3: [ // Level 3: 4-Syllable words
                 { emoji: '🏫', te: 'పాఠశాల', letters: ['పా', 'ఠ', 'శా', 'ల'] }, { emoji: '🦟', te: 'దోమతెర', letters: ['దో', 'మ', 'తె', 'ర'] }, { emoji: '🧅', te: 'ఉల్లిపాయ', letters: ['ఉ', 'ల్లి', 'పా', 'య'] }, { emoji: '🛌', te: 'తలగడ', letters: ['త', 'ల', 'గ', 'డ'] }, { emoji: '🕰️', te: 'గడియారం', letters: ['గ', 'డి', 'యా', 'రం'] }, { emoji: '🔥', te: 'అగ్గిపెట్టె', letters: ['అ', 'గ్గి', 'పె', 'ట్టె'] }, { emoji: '🔔', te: 'బడిగంట', letters: ['బ', 'డి', 'గం', 'ట'] }, { emoji: '✈️', te: 'విమానం', letters: ['వి', 'మా', 'నం'] }, { emoji: '🦁', te: 'జంతుశాల', letters: ['జం', 'తు', 'శా', 'ల'] }, { emoji: '🚂', te: 'రైలుబండి', letters: ['రై', 'లు', 'బం', 'డి'] }, { emoji: '🐐', te: 'మేకపిల్ల', letters: ['మే', 'క', 'పి', 'ల్ల'] }, { emoji: '🚀', te: 'అంతరిక్షం', letters: ['అం', 'త', 'రి', 'క్షం'] }, { emoji: '💻', te: 'కంప్యూటరు', letters: ['కం', 'ప్యూ', 'ట', 'రు'] }, { emoji: '📞', te: 'దూరవాణి', letters: ['దూ', 'ర', 'వా', 'ణి'] }, { emoji: '🌡️', te: 'ఉష్ణోగ్రత', letters: ['ఉ', 'ష్ణో', 'గ్ర', 'త'] }, { emoji: '⚡', te: 'విద్యుచ్ఛక్తి', letters: ['వి', 'ద్యు', 'చ్ఛ', 'క్తి'] }, { emoji: '🌌', te: 'నక్షత్రాలు', letters: ['న', 'క్ష', 'త్రా', 'లు'] }, { emoji: '🔑', te: 'తాళంచెవి', letters: ['తా', 'ళం', 'చె', 'వి'] }, { emoji: '🍉', te: 'పుచ్చకాయ', letters: ['పు', 'చ్చ', 'కా', 'య'] }, { emoji: '🧼', te: 'సబ్బుబిళ్ళ', letters: ['స', 'బ్బు', 'బి', 'ళ్ళ'] }
             ],
             4: [ // Level 4: 5+ Syllable words
-                { emoji: '🦜', te: 'రామచిలుక', letters: ['రా', 'మ', 'చి', 'లు', 'క'] }, { emoji: '🧸', te: 'ఆటబొమ్మలు', letters: ['ఆ', 'ట', 'బొ', 'మ్మ', 'లు'] }, { emoji: '🧺', te: 'విహారయాత్ర', letters: ['వి', 'హా', 'ర', 'యా', 'త్ర'] }, { emoji: '🍽️', te: 'భోజనశాల', letters: ['భో', 'జ', 'న', 'శా', 'ల'] }, { emoji: '🛒', te: 'అంగడివీధి', letters: ['అం', 'గ', 'డి', 'వీ', 'ధి'] }, { emoji: '🎨', te: 'చిత్రలేఖనం', letters: ['చి', 'త్ర', 'లే', 'ఖ', 'నం'] }, { emoji: '🔭', te: 'దూరదర్శిని', letters: ['దూ', 'ర', 'ద', 'ర్శి', 'ని'] }, { emoji: '🎬', te: 'చలనచిత్రం', letters: ['చ', 'ల', 'న', 'చి', 'త్రం'] }, { emoji: '🧪', te: 'ప్రయోగశాల', letters: ['ప్ర', 'యో', 'గ', 'శా', 'ల'] }, { emoji: '🛰️', te: 'ఉపగ్రహము', letters: ['ఉ', 'ప', 'గ్ర', 'హ', 'ము'] }, { emoji: '🥒', te: 'కాకరకాయ', letters: ['కా', 'క', 'ర', 'కా', 'య'] }, { emoji: '🏞️', te: 'ఉద్యానవనం', letters: ['ఉ', 'ద్యా', 'న', 'వ', 'నం'] }, { emoji: ' handkerchief ', te: 'చేతిరుమాలు', letters: ['చే', 'తి', 'రు', 'మా', 'లు'] }, { emoji: '📺', te: 'టెలివిజను', letters: ['టె', 'లి', 'వి', 'జ', 'ను'] }, { emoji: '🌦️', te: 'వాతావరణం', letters: ['వా', 'తా', 'వ', 'ర', 'ణం'] }, { emoji: '🔬', te: 'విజ్ఞానశాస్త్రం', letters: ['వి', 'జ్ఞా', 'న', 'శా', 'స్త్రం'] }, { emoji: '🏙️', te: 'ఆకాశహర్మ్యం', letters: ['ఆ', 'కా', 'శ', 'హ', 'ర్మ్యం'] }, { emoji: '🧲', te: 'అయస్కాంతము', letters: ['అ', 'య', 'స్కాం', 'త', 'ము'] }, { emoji: '📝', te: 'పరీక్షపత్రం', letters: ['ప', 'రీ', 'క్ష', 'ప', 'త్రం'] }, { emoji: '🌊', te: 'జలపాతము', letters: ['జ', 'ల', 'పా', 'త', 'ము'] }, { emoji: '🧈', te: 'నవనీతము', letters: ['న', 'వ', 'నీ', 'త', 'ము'] }, { emoji: '🔢', te: 'గణితశాస్త్రం', letters: ['గ', 'ణి', 'త', 'శా', 'స్త్రం'] }, { emoji: '🏋️', te: 'వ్యాయామశాల', letters: ['వ్యా', 'యా', 'మ', 'శా', 'ల'] }, { emoji: '✈️', te: 'విమానాశ్రయం', letters: ['వి', 'మా', 'నా', 'శ్ర', 'యం'] }, { emoji: '🏖️', te: 'సముద్రతీరం', letters: ['స', 'ము', 'ద్ర', 'తీ', 'రం'] }, { emoji: '📰', te: 'సమాచారము', letters: ['స', 'మా', 'చా', 'ర', 'ము'] }, { emoji: '🥞', te: 'అల్పాహారము', letters: ['అ', 'ల్పా', 'హా', 'ర', 'ము'] }, { emoji: '🥔', te: 'బంగాళాదుంప', letters: ['బం', 'గా', 'ళా', 'దుం', 'ప'] }, { emoji: '🌍', te: 'పర్యావరణము', letters: ['ప', 'ర్యా', 'వ', 'ర', 'ణ', 'ము'] }, { emoji: '🚒', te: 'అగ్నిమాపకము', letters: ['అ', 'గ్ని', 'మా', 'ప', 'క', 'ము'] }, { emoji: '🔭', te: 'విశ్వవిద్యాలయం', letters: ['వి', 'శ్వ', 'వి', 'ద్యా', 'ల', 'యం'] }, { emoji: '🚲', te: 'ద్విచక్రవాహనం', letters: ['ద్వి', 'చ', 'క్ర', 'వా', 'హ', 'నం'] }, { emoji: '🌕', te: 'చంద్రమండలం', letters: ['చం', 'ద్ర', 'మం', 'డ', 'లం'] }, { emoji: '🗺️', te: 'భూగోళశాస్త్రం', letters: ['భూ', 'గో', 'ళ', 'శా', 'స్త్రం'] }, { emoji: '🚂', te: 'ఆవిరియంత్రము', letters: ['ఆ', 'వి', 'రి', 'యం', 'త్ర', 'ము'] }, { emoji: '📚', te: 'గ్రంథాలయం', letters: ['గ్రం', 'థా', 'ల', 'యం'] }, { emoji: '🏭', te: 'కర్మాగారం', letters: ['క', 'ర్మా', 'గా', 'రం'] }, { emoji: '🏥', te: 'ఆసుపత్రి', letters: ['ఆ', 'సు', 'ప', 'త్రి'] }, { emoji: '🪁', te: 'గాలిపటము', letters: ['గా', 'లి', 'ప', 'ట', 'ము'] }, { emoji: '�', te: 'రోదసీనౌక', letters: ['రో', 'ద', 'సీ', 'నౌ', 'క'] }
+                { emoji: '🦜', te: 'రామచిలుక', letters: ['రా', 'మ', 'చి', 'లు', 'క'] }, { emoji: '🧸', te: 'ఆటబొమ్మలు', letters: ['ఆ', 'ట', 'బొ', 'మ్మ', 'లు'] }, { emoji: '🧺', te: 'విహారయాత్ర', letters: ['వి', 'హా', 'ర', 'యా', 'త్ర'] }, { emoji: '🍽️', te: 'భోజనశాల', letters: ['భో', 'జ', 'న', 'శా', 'ల'] }, { emoji: '🛒', te: 'అంగడివీధి', letters: ['అం', 'గ', 'డి', 'వీ', 'ధి'] }, { emoji: '🎨', te: 'చిత్రలేఖనం', letters: ['చి', 'త్ర', 'లే', 'ఖ', 'నం'] }, { emoji: '🔭', te: 'దూరదర్శిని', letters: ['దూ', 'ర', 'ద', 'ర్శి', 'ని'] }, { emoji: '🎬', te: 'చలనచిత్రం', letters: ['చ', 'ల', 'న', 'చి', 'త్రం'] }, { emoji: '🧪', te: 'ప్రయోగశాల', letters: ['ప్ర', 'యో', 'గ', 'శా', 'ల'] }, { emoji: '🛰️', te: 'ఉపగ్రహము', letters: ['ఉ', 'ప', 'గ్ర', 'హ', 'ము'] }, { emoji: '🥒', te: 'కాకరకాయ', letters: ['కా', 'క', 'ర', 'కా', 'య'] }, { emoji: '🏞️', te: 'ఉద్యానవనం', letters: ['ఉ', 'ద్యా', 'న', 'వ', 'నం'] }, { emoji: ' handkerchief ', te: 'చేతిరుమాలు', letters: ['చే', 'తి', 'రు', 'మా', 'లు'] }, { emoji: '📺', te: 'టెలివిజను', letters: ['టె', 'లి', 'వి', 'జ', 'ను'] }, { emoji: '🌦️', te: 'వాతావరణం', letters: ['వా', 'తా', 'వ', 'ర', 'ణం'] }, { emoji: '🔬', te: 'విజ్ఞానశాస్త్రం', letters: ['వి', 'జ్ఞా', 'న', 'శా', 'స్త్రం'] }, { emoji: '🏙️', te: 'ఆకాశహర్మ్యం', letters: ['ఆ', 'కా', 'శ', 'హ', 'ర్మ్యం'] }, { emoji: '🧲', te: 'అయస్కాంతము', letters: ['అ', 'య', 'స్కాం', 'త', 'ము'] }, { emoji: '📝', te: 'పరీక్షపత్రం', letters: ['ప', 'రీ', 'క్ష', 'ప', 'త్రం'] }, { emoji: '🌊', te: 'జలపాతము', letters: ['జ', 'ల', 'పా', 'త', 'ము'] }, { emoji: '🧈', te: 'నవనీతము', letters: ['న', 'వ', 'నీ', 'త', 'ము'] }, { emoji: '🔢', te: 'గణితశాస్త్రం', letters: ['గ', 'ణి', 'త', 'శా', 'స్త్రం'] }, { emoji: '🏋️', te: 'వ్యాయామశాల', letters: ['వ్యా', 'యా', 'మ', 'శా', 'ల'] }, { emoji: '✈️', te: 'విమానాశ్రయం', letters: ['వి', 'మా', 'నా', 'శ్ర', 'యం'] }, { emoji: '🏖️', te: 'సముద్రతీరం', letters: ['స', 'ము', 'ద్ర', 'తీ', 'రం'] }, { emoji: '📰', te: 'సమాచారము', letters: ['స', 'మా', 'చా', 'ర', 'ము'] }, { emoji: '🥞', te: 'అల్పాహారము', letters: ['అ', 'ల్పా', 'హా', 'ర', 'ము'] }, { emoji: '🥔', te: 'బంగాళాదుంప', letters: ['బం', 'గా', 'ళా', 'దుం', 'ప'] }, { emoji: '🌍', te: 'పర్యావరణము', letters: ['ప', 'ర్యా', 'వ', 'ర', 'ణ', 'ము'] }, { emoji: '🚒', te: 'అగ్నిమాపకము', letters: ['అ', 'గ్ని', 'మా', 'ప', 'క', 'ము'] }, { emoji: '🔭', te: 'విశ్వవిద్యాలయం', letters: ['వి', 'శ్వ', 'వి', 'ద్యా', 'ల', 'యం'] }, { emoji: '🚲', te: 'ద్విచక్రవాహనం', letters: ['ద్వి', 'చ', 'క్ర', 'వా', 'హ', 'నం'] }, { emoji: '🌕', te: 'చంద్రమండలం', letters: ['చం', 'ద్ర', 'మం', 'డ', 'లం'] }, { emoji: '🗺️', te: 'భూగోళశాస్త్రం', letters: ['భూ', 'గో', 'ళ', 'శా', 'స్త్రం'] }, { emoji: '🚂', te: 'ఆవిరియంత్రము', letters: ['ఆ', 'వి', 'రి', 'యం', 'త్ర', 'ము'] }, { emoji: '📚', te: 'గ్రంథాలయం', letters: ['గ్రం', 'థా', 'ల', 'యం'] }, { emoji: '🏭', te: 'కర్మాగారం', letters: ['క', 'ర్మా', 'గా', 'రం'] }, { emoji: '🏥', te: 'ఆసుపత్రి', letters: ['ఆ', 'సు', 'ప', 'త్రి'] }, { emoji: '🪁', te: 'గాలిపటము', letters: ['గా', 'లి', 'ప', 'ట', 'ము'] }, { emoji: '🚀', te: 'రోదసీనౌక', letters: ['రో', 'ద', 'సీ', 'నౌ', 'క'] }
             ]
         };
         const MAX_LEVEL = Object.keys(wordLevels).length;
@@ -377,13 +378,12 @@
             return array;
         }
 
-        // --- DRAG AND DROP LOGIC (Enhanced for Touch) ---
+        // --- DRAG AND DROP LOGIC (FIXED FOR MOBILE) ---
         function addDragListeners() {
             const tiles = document.querySelectorAll('.letter-tile');
             const slots = document.querySelectorAll('.answer-slot');
-            const sourceContainer = letterTilesContainer;
 
-            // --- Desktop Drag Events ---
+            // --- Desktop Drag Events (Unaffected) ---
             tiles.forEach(tile => {
                 tile.addEventListener('dragstart', (e) => {
                     draggedElement = e.target;
@@ -395,77 +395,98 @@
                 });
             });
 
-            // --- Touch Events ---
-            let originalParent = null;
-            const onTouchStart = (e) => {
-                if (e.target.classList.contains('letter-tile')) {
-                    draggedElement = e.target;
-                    originalParent = draggedElement.parentNode;
-                    draggedElement.classList.add('dragging-active');
-                    document.body.appendChild(draggedElement);
-                    draggedElement.style.position = 'absolute';
-                    draggedElement.style.zIndex = '1000';
-                    moveElementWithTouch(e);
-                }
-            };
-            const onTouchMove = (e) => {
+            slots.forEach(slot => {
+                slot.addEventListener('dragover', (e) => e.preventDefault());
+                slot.addEventListener('drop', (e) => {
+                     e.preventDefault();
+                    if (draggedElement && !slot.firstChild) {
+                         slot.appendChild(draggedElement);
+                         checkAnswer();
+                    }
+                });
+            });
+            
+            letterTilesContainer.addEventListener('dragover', e => e.preventDefault());
+            letterTilesContainer.addEventListener('drop', e => {
+                e.preventDefault();
                 if (draggedElement) {
-                    e.preventDefault();
-                    moveElementWithTouch(e);
+                    letterTilesContainer.appendChild(draggedElement);
                 }
+            });
+
+
+            // --- Mobile Touch Events (REWRITTEN FOR RELIABILITY) ---
+            let originalParent = null;
+            let startX, startY, offsetX, offsetY;
+
+            const onTouchStart = (e) => {
+                if (!e.target.classList.contains('letter-tile')) return;
+                
+                draggedElement = e.target;
+                originalParent = draggedElement.parentNode;
+
+                // For smooth "picking up" effect
+                const rect = draggedElement.getBoundingClientRect();
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+                offsetX = startX - rect.left;
+                offsetY = startY - rect.top;
+
+                // "Lift" the element
+                draggedElement.style.position = 'fixed';
+                draggedElement.style.left = `${startX - offsetX}px`;
+                draggedElement.style.top = `${startY - offsetY}px`;
+                draggedElement.classList.add('dragging-active');
             };
+
+            const onTouchMove = (e) => {
+                if (!draggedElement) return;
+                e.preventDefault(); // This is key to prevent screen scrolling
+                const touch = e.touches[0];
+                const newX = touch.clientX - offsetX;
+                const newY = touch.clientY - offsetY;
+                draggedElement.style.left = `${newX}px`;
+                draggedElement.style.top = `${newY}px`;
+            };
+
             const onTouchEnd = (e) => {
                 if (!draggedElement) return;
 
+                // Find element underneath the touch point
                 draggedElement.style.visibility = 'hidden';
                 const touch = e.changedTouches[0];
                 const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
                 draggedElement.style.visibility = 'visible';
                 
+                // Cleanup styles
                 draggedElement.style.position = '';
-                draggedElement.style.zIndex = '';
+                draggedElement.style.left = '';
+                draggedElement.style.top = '';
                 draggedElement.classList.remove('dragging-active');
-
-                const targetSlot = dropTarget ? (dropTarget.classList.contains('answer-slot') ? dropTarget : dropTarget.closest('.answer-slot')) : null;
                 
+                // Find the closest answer slot to the drop target
+                const targetSlot = dropTarget ? dropTarget.closest('.answer-slot') : null;
+
                 if (targetSlot && !targetSlot.firstChild) {
-                    targetSlot.appendChild(draggedElement);
+                    targetSlot.appendChild(draggedElement); // Drop in slot
                     checkAnswer();
                 } else {
-                    originalParent.appendChild(draggedElement);
+                    originalParent.appendChild(draggedElement); // Return to original home
                 }
-                draggedElement = null;
-            };
 
+                // Reset state
+                draggedElement = null;
+                originalParent = null;
+            };
+            
             const gameArea = document.getElementById('main-game-area');
             gameArea.addEventListener('touchstart', onTouchStart, { passive: false });
             gameArea.addEventListener('touchmove', onTouchMove, { passive: false });
             gameArea.addEventListener('touchend', onTouchEnd);
-            
-            const moveElementWithTouch = (e) => {
-                 const touch = e.touches[0];
-                 draggedElement.style.left = `${touch.clientX - draggedElement.offsetWidth / 2}px`;
-                 draggedElement.style.top = `${touch.clientY - draggedElement.offsetHeight / 2}px`;
-            }
-
-            // --- Shared Drop Logic ---
-            const setupDropZone = (zone) => {
-                zone.addEventListener('dragover', (e) => e.preventDefault());
-                zone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    if (!draggedElement) return;
-                    if (zone.classList.contains('answer-slot') && !zone.firstChild) {
-                         zone.appendChild(draggedElement);
-                         checkAnswer();
-                    } 
-                    else if (zone === sourceContainer) {
-                        sourceContainer.appendChild(draggedElement);
-                    }
-                });
-            };
-            slots.forEach(slot => setupDropZone(slot));
-            setupDropZone(sourceContainer);
+            gameArea.addEventListener('touchcancel', onTouchEnd); // Handle cancelled touches
         }
+
 
         // --- Initial UI State ---
         function setInitialUI() {
