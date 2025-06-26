@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>తెలుగు సంపద </title>
+    <title>తెలుగు సంపద వీక్షణి</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=NTR&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -120,13 +120,15 @@
         #tree-trunk {
             position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
             width: 15px; height: 0; background: #5C3D2E; border-radius: 10px 10px 0 0;
-            transition: height 2s cubic-bezier(0.165, 0.84, 0.44, 1);
+            /* Transition duration will be set dynamically by JS */
+            /* transition: height 2s cubic-bezier(0.165, 0.84, 0.44, 1); */
         }
         #tree-canopy {
             position: absolute; bottom: 95px; left: 50%; width: 150px; height: 150px;
             background: var(--leaf-color); border-radius: 50%;
             transform: translateX(-50%) scale(0); transform-origin: bottom center;
-            transition: transform 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            /* Transition duration will be set dynamically by JS */
+            /* transition: transform 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); */
             filter: drop-shadow(0 0 15px #2e8b577e);
         }
 
@@ -147,7 +149,8 @@
         #fountain-water {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 0;
             background: linear-gradient(to top, var(--accent-teal), #89f7fe);
-            transition: height 2s ease-out;
+            /* Transition duration will be set dynamically by JS */
+            /* transition: height 2s ease-out; */
             filter: drop-shadow(0 0 15px var(--accent-teal));
         }
 
@@ -216,8 +219,8 @@
 
     <div class="dashboard-container">
         <header>
-            <h1>తెలుగు సంపద</h1>
-            <p></p>
+            <h1>తెలుగు సంపద వీక్షణి</h1>
+            <p>భాషా సాహిత్య సేకరణ పురోగతి</p>
         </header>
 
         <div class="projects-grid">
@@ -262,6 +265,10 @@
         const poemData = { current: 48785, target: 100000 };
         // Set this to true to hide everything related to "పదార్చన"
         const hidePadarchana = true; 
+        // Duration for number count-up and visual animations
+        const COUNT_UP_DURATION = 16000; // 16 seconds
+        // Delay before visual animations start
+        const VISUAL_DELAY = 3000; // 0.5 seconds
         // --- END CONFIGURATION ---
 
         function animateCountUp(element, endValue, duration = 2000) {
@@ -299,9 +306,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const COUNT_UP_DURATION = 2000;
-            const VISUAL_DELAY = 500;
-
             // Get the "పదార్చన" card element
             const padarchanaCard = document.getElementById('padarchana-card');
             
@@ -316,7 +320,6 @@
                 }
             }
 
-
             // --- పదార్చన (Words Project) ---
             const wordCounter = document.getElementById('word-counter');
             const wordTarget = document.getElementById('word-target');
@@ -328,9 +331,21 @@
             
             wordTarget.innerText = `/ ${wordData.target.toLocaleString('en-IN')} పదాలు`;
             wordPercentageDisplay.innerText = `${(wordPercentage * 100).toFixed(1)}% పూర్తయింది`;
-            // Only animate and create particles if the card is not hidden
-            if (!hidePadarchana) {
+            
+            if (!hidePadarchana) { // Only animate and apply visuals if the card is not hidden
                 animateCountUp(wordCounter, wordData.current, COUNT_UP_DURATION);
+
+                // Set CSS transitions dynamically to match COUNT_UP_DURATION
+                treeTrunk.style.transition = `height ${COUNT_UP_DURATION / 1000}s cubic-bezier(0.165, 0.84, 0.44, 1)`;
+                treeCanopy.style.transition = `transform ${COUNT_UP_DURATION / 1000}s cubic-bezier(0.68, -0.55, 0.27, 1.55)`;
+
+                // Trigger tree growth and leaf particles after VISUAL_DELAY
+                setTimeout(() => {
+                    const treeScale = Math.max(0.2, wordPercentage);    
+                    treeCanopy.style.transform = `translateX(-50%) scale(${treeScale})`;
+                    treeTrunk.style.height = `${40 + (wordPercentage * 80)}px`;
+                    createParticles(wordVisualContainer, 'leaf', 15);
+                }, VISUAL_DELAY);
             } else {
                 // If hidden, just set the final values instantly
                 wordCounter.innerText = wordData.current.toLocaleString('en-IN');
@@ -348,19 +363,15 @@
             poemTarget.innerText = `/ ${poemData.target.toLocaleString('en-IN')} పద్యాలు`;
             poemPercentageDisplay.innerText = `${(poemPercentage * 100).toFixed(1)}% పూర్తయింది`;
             animateCountUp(poemCounter, poemData.current, COUNT_UP_DURATION);
+            
+            // Set CSS transition dynamically to match COUNT_UP_DURATION
+            fountainWater.style.transition = `height ${COUNT_UP_DURATION / 1000}s ease-out`;
 
-            // --- Trigger Visuals after numbers are done ---
+            // Trigger fountain fill and bubble particles after VISUAL_DELAY
             setTimeout(() => {
-                if (!hidePadarchana) { // Only animate if not hidden
-                    const treeScale = Math.max(0.2, wordPercentage);    
-                    treeCanopy.style.transform = `translateX(-50%) scale(${treeScale})`;
-                    treeTrunk.style.height = `${40 + (wordPercentage * 80)}px`;
-                    createParticles(wordVisualContainer, 'leaf', 15);
-                }
                 fountainWater.style.height = `${poemPercentage * 100}%`;
                 createParticles(poemVisualContainer, 'bubble', 20);
-
-            }, COUNT_UP_DURATION + VISUAL_DELAY);
+            }, VISUAL_DELAY);
         });
     </script>
 </body>
