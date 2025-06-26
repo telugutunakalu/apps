@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>తెలుగు సంపద వీక్షణి</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f0c29;
+            --card-bg: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            --primary-text: #ffffff;
+            --secondary-text: #d1d1d1;
+            --accent-gold: #ffc107;
+            --accent-teal: #00bcd4;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --leaf-color: #3cb371;
+            --bubble-color: rgba(173, 216, 230, 0.6);
+        }
+
+        body {
+            margin: 0;
+            /* 'NTR' for Telugu, 'Poppins' for numbers/symbols */
+            font-family: 'NTR', 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+            padding: 1rem 0; /* Add padding for small screens */
+            background-image: radial-gradient(circle at top right, rgba(121, 68, 154, 0.15), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(45, 156, 219, 0.15), transparent 40%);
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            width: 90%;
+            text-align: center;
+        }
+
+        /* --- Entry Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        header {
+            opacity: 0;
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        .project-card {
+            opacity: 0;
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        .project-card:nth-child(1) { animation-delay: 0.2s; }
+        .project-card:nth-child(2) { animation-delay: 0.4s; }
+
+
+        header h1 {
+            font-size: 3.8rem;
+            margin-bottom: 1rem;
+            letter-spacing: 1px;
+            color: var(--accent-gold);
+            text-shadow: 2px 2px 10px var(--shadow-color);
+        }
+
+        header p {
+            font-size: 1.5rem;
+            color: var(--secondary-text);
+            margin-bottom: 3rem;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+        }
+
+        .project-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .project-title {
+            font-size: 4rem; /* Larger font for the main Telugu title */
+            margin-bottom: 1.5rem;
+            color: var(--accent-teal);
+            line-height: 1.2;
+        }
+
+        .visual-container {
+            height: 250px;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Tree of Words (పదాల వృక్షం) --- */
+        #tree-container {
+            position: relative; width: 200px; height: 250px; bottom: -25px;
+        }
+        #tree-trunk {
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 15px; height: 0; background: #5C3D2E; border-radius: 10px 10px 0 0;
+            transition: height 2s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        #tree-canopy {
+            position: absolute; bottom: 95px; left: 50%; width: 150px; height: 150px;
+            background: var(--leaf-color); border-radius: 50%;
+            transform: translateX(-50%) scale(0); transform-origin: bottom center;
+            transition: transform 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            filter: drop-shadow(0 0 15px #2e8b577e);
+        }
+
+        /* --- Fountain of Poems (పద్యాల ఊట) --- */
+        #fountain-container {
+            position: relative; width: 200px; height: 200px;
+        }
+        .fountain-base {
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 150px; height: 40px; background: #757F9A; border-radius: 5px 5px 20px 20px;
+        }
+        .fountain-basin {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 200px; height: 100px; border: 15px solid #757F9A;
+            border-bottom: none; border-radius: 100px 100px 0 0;
+            box-sizing: border-box; overflow: hidden;
+        }
+        #fountain-water {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0;
+            background: linear-gradient(to top, var(--accent-teal), #89f7fe);
+            transition: height 2s ease-out;
+            filter: drop-shadow(0 0 15px var(--accent-teal));
+        }
+
+        /* --- Ambient Animations --- */
+        .leaf {
+            position: absolute; width: 15px; height: 15px;
+            background-color: var(--leaf-color); border-radius: 0 50%;
+            animation: fall 10s linear infinite; opacity: 0;
+        }
+        .bubble {
+            position: absolute; width: 8px; height: 8px;
+            background-color: var(--bubble-color); border-radius: 50%;
+            animation: rise 5s linear infinite; opacity: 0;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100px) rotate(360deg); opacity: 0; }
+        }
+        @keyframes rise {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-120px); opacity: 0; }
+        }
+
+        .stats-container { text-align: center; }
+        .counter { font-family: 'Poppins', sans-serif; font-size: 3rem; font-weight: 600; color: var(--primary-text); }
+        .target { font-size: 1.2rem; color: var(--secondary-text); margin-top: -5px; }
+        .percentage { font-size: 1.5rem; font-weight: 600; margin-top: 1rem; color: var(--accent-gold); }
+
+        /* --- Mobile Responsive Design --- */
+        @media (max-width: 992px) {
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            header h1 {
+                font-size: 3rem;
+            }
+            .project-title {
+                font-size: 3.5rem;
+            }
+        }
+        @media (max-width: 480px) {
+             header h1 {
+                font-size: 2.5rem;
+            }
+             header p {
+                font-size: 1.2rem;
+            }
+            .project-card {
+                padding: 1.5rem;
+            }
+            .project-title {
+                font-size: 3rem;
+            }
+            .counter {
+                font-size: 2.5rem;
+            }
+            .percentage {
+                font-size: 1.3rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <header>
+            <h1>తెలుగు సంపద</h1>
+        </header>
+
+        <div class="projects-grid">
+            <div class="project-card" id="padarchana-card">
+                <div class="project-title">పదార్చన</div>
+                <div class="visual-container" id="word-visual-container">
+                    <div id="tree-container">
+                        <div id="tree-trunk"></div>
+                        <div id="tree-canopy"></div>
+                    </div>
+                </div>
+                <div class="stats-container">
+                    <div id="word-counter" class="counter">0</div>
+                    <div id="word-target" class="target">/ 0</div>
+                    <div id="word-percentage" class="percentage">0%</div>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="project-title">పద్యార్చన</div>
+                <div class="visual-container" id="poem-visual-container">
+                    <div id="fountain-container">
+                        <div class="fountain-base"></div>
+                        <div class="fountain-basin">
+                            <div id="fountain-water"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-container">
+                    <div id="poem-counter" class="counter">0</div>
+                    <div id="poem-target" class="target">/ 0</div>
+                    <div id="poem-percentage" class="percentage">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        //  మీ పురోగతిని ఇక్కడ నవీకరించండి! 'current' విలువలను మార్చండి.
+        const wordData = { current: 78543, target: 150000 };
+        const poemData = { current: 34219, target: 100000 };
+        // Set this to true to hide everything related to "పదార్చన"
+        const hidePadarchana = false; 
+        // --- END CONFIGURATION ---
+
+        function animateCountUp(element, endValue, duration = 2000) {
+            let startValue = 0;
+            let startTime = null;
+            function animation(currentTime) {
+                if (startTime === null) startTime = currentTime;
+                const progress = Math.min((currentTime - startTime) / duration, 1);
+                const currentValue = Math.floor(progress * endValue);
+                element.innerText = currentValue.toLocaleString('en-IN');
+                if (progress < 1) {
+                    window.requestAnimationFrame(animation);
+                }
+            }
+            window.requestAnimationFrame(animation);
+        }
+        
+        function createParticles(container, className, count) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = className;
+                if (className === 'leaf') {
+                    particle.style.left = `${Math.random() * 80 + 10}%`;
+                    particle.style.top = `${Math.random() * 50}%`;
+                    particle.style.animationDelay = `${Math.random() * 10}s`;
+                    particle.style.animationDuration = `${Math.random() * 5 + 5}s`;
+                } else { // bubble
+                    particle.style.left = `${Math.random() * 90 + 5}%`;
+                    particle.style.bottom = `${Math.random() * 20}%`;
+                    particle.style.animationDelay = `${Math.random() * 5}s`;
+                    particle.style.animationDuration = `${Math.random() * 3 + 3}s`;
+                }
+                container.appendChild(particle);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const COUNT_UP_DURATION = 2000;
+            const VISUAL_DELAY = 500;
+
+            // Get the "పదార్చన" card element
+            const padarchanaCard = document.getElementById('padarchana-card');
+            
+            // Hide "పదార్చన" card if the configuration variable is true
+            if (hidePadarchana && padarchanaCard) {
+                padarchanaCard.style.display = 'none';
+                // Adjust grid columns if only one card is visible
+                const projectsGrid = document.querySelector('.projects-grid');
+                if (projectsGrid) {
+                    projectsGrid.style.gridTemplateColumns = '1fr';
+                    projectsGrid.style.justifyContent = 'center'; // Center the single card
+                }
+            }
+
+
+            // --- పదార్చన (Words Project) ---
+            const wordCounter = document.getElementById('word-counter');
+            const wordTarget = document.getElementById('word-target');
+            const wordPercentageDisplay = document.getElementById('word-percentage');
+            const treeCanopy = document.getElementById('tree-canopy');
+            const treeTrunk = document.getElementById('tree-trunk');
+            const wordVisualContainer = document.getElementById('word-visual-container');
+            const wordPercentage = (wordData.current / wordData.target);
+            
+            wordTarget.innerText = `/ ${wordData.target.toLocaleString('en-IN')} పదాలు`;
+            wordPercentageDisplay.innerText = `${(wordPercentage * 100).toFixed(1)}% పూర్తయింది`;
+            // Only animate and create particles if the card is not hidden
+            if (!hidePadarchana) {
+                animateCountUp(wordCounter, wordData.current, COUNT_UP_DURATION);
+            } else {
+                // If hidden, just set the final values instantly
+                wordCounter.innerText = wordData.current.toLocaleString('en-IN');
+            }
+
+
+            // --- పద్యార్చన (Poems Project) ---
+            const poemCounter = document.getElementById('poem-counter');
+            const poemTarget = document.getElementById('poem-target');
+            const poemPercentageDisplay = document.getElementById('poem-percentage');
+            const fountainWater = document.getElementById('fountain-water');
+            const poemVisualContainer = document.getElementById('poem-visual-container');
+            const poemPercentage = (poemData.current / poemData.target);
+
+            poemTarget.innerText = `/ ${poemData.target.toLocaleString('en-IN')} పద్యాలు`;
+            poemPercentageDisplay.innerText = `${(poemPercentage * 100).toFixed(1)}% పూర్తయింది`;
+            animateCountUp(poemCounter, poemData.current, COUNT_UP_DURATION);
+
+            // --- Trigger Visuals after numbers are done ---
+            setTimeout(() => {
+                if (!hidePadarchana) { // Only animate if not hidden
+                    const treeScale = Math.max(0.2, wordPercentage); 
+                    treeCanopy.style.transform = `translateX(-50%) scale(${treeScale})`;
+                    treeTrunk.style.height = `${40 + (wordPercentage * 80)}px`;
+                    createParticles(wordVisualContainer, 'leaf', 15);
+                }
+                fountainWater.style.height = `${poemPercentage * 100}%`;
+                createParticles(poemVisualContainer, 'bubble', 20);
+
+            }, COUNT_UP_DURATION + VISUAL_DELAY);
+        });
+    </script>
+</body>
+</html>
