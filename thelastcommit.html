@@ -41,7 +41,6 @@
         }
 
         /* Simple toggle switch styles */
-        /* When checked (Color mode), move the circle and make the bar green */
         .toggle-checkbox:checked {
             right: 0;
             border-color: #10b981; /* emerald-500 */
@@ -76,6 +75,14 @@
 
         <!-- Controls Section -->
         <div class="flex items-center justify-center gap-x-8 gap-y-4 mb-4 flex-wrap">
+             <div class="flex items-center justify-center gap-4">
+                <span class="text-gray-400">Grid</span>
+                <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="viewToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                    <label for="viewToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label>
+                </div>
+                <span class="text-gray-400">Lines</span>
+            </div>
             <div class="flex items-center justify-center gap-4">
                 <span class="text-gray-400">Grayscale</span>
                 <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
@@ -97,7 +104,7 @@
         <div class="w-full aspect-video bg-gray-800 rounded-xl overflow-hidden shadow-2xl border border-gray-700">
             <canvas id="commitCanvas"></canvas>
         </div>
-         <p class="text-gray-500 mt-4 text-sm">Hover over a square to hear its unique sound and see commit details.</p>
+         <p class="text-gray-500 mt-4 text-sm">Hover over the artwork to hear unique sounds and see commit details.</p>
     </div>
 
     <!-- Tooltip for commit details -->
@@ -112,6 +119,7 @@
         const ctx = canvas.getContext('2d');
         const tooltip = document.getElementById('tooltip');
         const colorToggle = document.getElementById('colorToggle');
+        const viewToggle = document.getElementById('viewToggle');
         const downloadBtn = document.getElementById('downloadBtn');
         const fileLoader = document.getElementById('fileLoader');
 
@@ -119,8 +127,8 @@
         let commitsData = [];
         let gridConfig = { cols: 0, squareSize: 0 };
         let currentRepoName = '';
-        let animationFrameId; // To control the drawing animation
-        let isAnimating = false; // To track animation state
+        let animationFrameId;
+        let isAnimating = false;
         
         // --- Audio State ---
         let synth;
@@ -129,11 +137,9 @@
 
 
         // --- Core Functions ---
-
         async function initializeAudio() {
             if (Tone.context.state !== 'running') {
                 await Tone.start();
-                console.log('Audio context started');
             }
             if (!synth) {
                 synth = new Tone.Synth({
@@ -159,66 +165,44 @@
             let allCommits = [];
             let page = 1;
             const perPage = 100;
-            let isFetching = true;
             statusEl.textContent = 'Initializing...';
             currentRepoName = `${owner}-${repo}`;
-
-            while (isFetching) {
+            for (let i = 0; i < 50; i++) { // Limit to 50 pages for large repos to avoid long waits
                 try {
-                    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=${perPage}&page=${page}`;
-                    const response = await fetch(apiUrl);
+                    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=${perPage}&page=${page}`);
                     if (!response.ok) {
                         if (response.status === 404) throw new Error("Repository not found or is private.");
                         if (response.status === 403) throw new Error("GitHub API rate limit exceeded. Try loading from a file.");
                         throw new Error(`API Error: ${response.statusText} (${response.status})`);
                     }
                     const pageCommits = await response.json();
-                    if (pageCommits.length === 0) {
-                        isFetching = false;
-                        if (allCommits.length === 0) {
-                           statusEl.textContent = `Repository '${owner}/${repo}' has no commits.`;
-                           downloadBtn.classList.add('hidden');
-                        } else {
-                           statusEl.textContent = `Finished! Found ${allCommits.length} commits for ${owner}/${repo}.`;
-                           downloadBtn.classList.remove('hidden');
-                        }
-                    } else {
-                        allCommits.push(...pageCommits);
-                        statusEl.textContent = `Loading... Fetched ${allCommits.length} commits.`;
-                        page++;
-                    }
+                    if (pageCommits.length === 0) break;
+                    allCommits.push(...pageCommits);
+                    statusEl.textContent = `Loading... Fetched ${allCommits.length} commits.`;
+                    page++;
                 } catch (error) {
-                    console.error("Fetch Error:", error);
                     statusEl.textContent = `Error: ${error.message}`;
-                    isFetching = false;
-                    downloadBtn.classList.add('hidden');
                     return [];
                 }
+            }
+            if (allCommits.length > 0) {
+                 statusEl.textContent = `Finished! Found ${allCommits.length} commits for ${owner}/${repo}.`;
+                 downloadBtn.classList.remove('hidden');
+            } else {
+                 statusEl.textContent = `Repository '${owner}/${repo}' has no commits.`;
+                 downloadBtn.classList.add('hidden');
             }
             return allCommits;
         }
         
-        /**
-         * Draws a single square, checking the color toggle state each time.
-         * This makes color changes during animation possible.
-         */
-        const drawSquare = (commit, x, y) => {
-            let color;
-            if (colorToggle.checked) { // Checks the toggle directly
-                color = '#' + commit.sha.substring(0, 6);
-            } else {
-                const grayValue = parseInt(commit.sha.substring(0, 2), 16);
-                color = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+        const getCommitColor = (commit) => {
+            if (colorToggle.checked) {
+                return '#' + commit.sha.substring(0, 6);
             }
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, gridConfig.squareSize, gridConfig.squareSize);
+            const grayValue = parseInt(commit.sha.substring(0, 2), 16);
+            return `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
         };
 
-        /**
-         * Draws the commit data onto the canvas, with an optional animation.
-         * @param {Array} commits - The array of commit objects.
-         * @param {boolean} animate - Whether to animate the drawing process.
-         */
         function drawCommitArt(commits, animate = false) {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
@@ -232,47 +216,47 @@
             const container = canvas.parentElement;
             const dpr = window.devicePixelRatio || 1;
             const rect = container.getBoundingClientRect();
-            
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
             canvas.style.width = `${rect.width}px`;
             canvas.style.height = `${rect.height}px`;
-
-            const preferredSquareSize = 12;
-            gridConfig.cols = Math.floor(rect.width / preferredSquareSize);
-            gridConfig.squareSize = rect.width / gridConfig.cols;
-            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const isLineView = viewToggle.checked;
+
+            if (isLineView) {
+                drawLinesView(commits, animate);
+            } else {
+                drawGridView(commits, animate);
+            }
+        }
+
+        function drawGridView(commits, animate) {
+             const preferredSquareSize = 12;
+            gridConfig.cols = Math.floor(parseInt(canvas.style.width) / preferredSquareSize);
+            gridConfig.squareSize = parseInt(canvas.style.width) / gridConfig.cols;
+            
+            const drawSquare = (commit, x, y) => ctx.fillRect(x, y, gridConfig.squareSize, gridConfig.squareSize);
 
             if (!animate) {
                 commits.forEach((commit, index) => {
                     const col = index % gridConfig.cols;
                     const row = Math.floor(index / gridConfig.cols);
+                    ctx.fillStyle = getCommitColor(commit);
                     drawSquare(commit, col * gridConfig.squareSize, row * gridConfig.squareSize);
                 });
                 return;
             }
-            
-            // --- Random Falling Bricks Animation ---
+
             isAnimating = true;
             const bricks = commits.map((commit, index) => {
                 const col = index % gridConfig.cols;
                 const row = Math.floor(index / gridConfig.cols);
-                return {
-                    commit: commit,
-                    finalX: col * gridConfig.squareSize,
-                    finalY: row * gridConfig.squareSize,
-                    currentY: -gridConfig.squareSize,
-                    speed: 0,
-                    gravity: 0.1,
-                    delay: 0,
-                    isSettled: false
-                };
+                return { commit, finalX: col * gridConfig.squareSize, finalY: row * gridConfig.squareSize, currentY: -gridConfig.squareSize, speed: 0, gravity: 0.1, delay: 0, isSettled: false };
             });
 
-            const shuffledBricks = [...bricks].sort(() => Math.random() - 0.5);
-            shuffledBricks.forEach((brick, index) => { brick.delay = index * 2; });
+            [...bricks].sort(() => Math.random() - 0.5).forEach((brick, index) => brick.delay = index * 2);
 
             let frameCount = 0;
             function animationLoop() {
@@ -290,47 +274,156 @@
                                 brick.isSettled = true;
                             }
                         }
+                        ctx.fillStyle = getCommitColor(brick.commit);
                         drawSquare(brick.commit, brick.finalX, brick.currentY);
                     } else {
                         allSettled = false;
                     }
                 });
-                
                 frameCount++;
-
-                if (!allSettled) {
-                    animationFrameId = requestAnimationFrame(animationLoop);
-                } else {
-                     isAnimating = false;
-                     // A final, clean redraw to ensure everything is perfectly aligned
+                if (allSettled) {
+                    isAnimating = false;
+                    // Final clean redraw
                      ctx.clearRect(0, 0, canvas.width, canvas.height);
                      bricks.forEach(brick => {
-                         drawSquare(brick.commit, brick.finalX, brick.finalY);
+                        ctx.fillStyle = getCommitColor(brick.commit);
+                        drawSquare(brick.commit, brick.finalX, brick.finalY)
                      });
+                } else {
+                    animationFrameId = requestAnimationFrame(animationLoop);
                 }
             }
             animationLoop();
         }
-        
+
+        function drawLinesView(commits, animate) {
+            const canvasWidth = parseInt(canvas.style.width);
+            const canvasHeight = parseInt(canvas.style.height);
+
+            const drawDoor = () => {
+                // The "door" now fills the entire canvas
+                const doorWidth = canvasWidth;
+                const doorHeight = canvasHeight;
+                const doorX = 0;
+                const doorY = 0;
+
+                // Create an abstract door with vertical, semi-transparent lines
+                for (let i = 0; i < doorWidth; i += 2) {
+                    // Vary the transparency (alpha) to create a shimmering effect
+                    const alpha = Math.random() * 0.1 + 0.05; // Low alpha for subtlety
+                    ctx.strokeStyle = `rgba(200, 200, 220, ${alpha})`; // A light, cool gray
+                    ctx.lineWidth = 2;
+
+                    ctx.beginPath();
+                    ctx.moveTo(doorX + i, doorY);
+                    ctx.lineTo(doorX + i, doorY + doorHeight);
+                    ctx.stroke();
+                }
+            };
+            
+            const lines = commits.map((commit, index) => {
+                const y = (index / commits.length) * canvasHeight;
+                return { commit, y, currentX: 0, delay: 0, isDrawn: false };
+            });
+
+            const drawFullLine = (line) => {
+                ctx.beginPath();
+                ctx.moveTo(0, line.y);
+                const sha = line.commit.sha;
+                for (let i = 1; i <= 10; i++) {
+                    const x = (canvasWidth / 10) * i;
+                    const yPerturbation = (parseInt(sha.substring(i, i+2), 16) - 128) / 12;
+                    ctx.lineTo(x, line.y + yPerturbation);
+                }
+                ctx.strokeStyle = getCommitColor(line.commit);
+                ctx.lineWidth = 1 + (parseInt(sha.substring(12, 13), 16) / 10);
+                ctx.stroke();
+            };
+
+            if (!animate) {
+                // Draw lines first, so door appears in front
+                lines.forEach(drawFullLine);
+                drawDoor();
+                return;
+            }
+
+            isAnimating = true;
+            [...lines].sort(() => Math.random() - 0.5).forEach((line, index) => line.delay = index * 2);
+
+            let frameCount = 0;
+            function animationLoop() {
+                // In animation, we clear and redraw everything each frame
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+                let allDrawn = true;
+                
+                // Draw all lines that have completed their animation
+                lines.forEach(line => {
+                    if(line.isDrawn) {
+                       drawFullLine(line);
+                    }
+                });
+
+                // Animate lines that are still drawing
+                lines.forEach(line => {
+                    if (frameCount >= line.delay) {
+                        if (!line.isDrawn) {
+                            allDrawn = false;
+                            line.currentX += 15; // Drawing speed
+                            if (line.currentX >= canvasWidth) {
+                                line.currentX = canvasWidth;
+                                line.isDrawn = true;
+                            }
+                            // Draw partial line
+                            const sha = line.commit.sha;
+                            ctx.beginPath();
+                            ctx.moveTo(0, line.y);
+                            for (let i = 1; i <= 10; i++) {
+                                const segmentX = (canvasWidth / 10) * i;
+                                if (line.currentX > segmentX) {
+                                     const yPerturbation = (parseInt(sha.substring(i, i+2), 16) - 128) / 12;
+                                     ctx.lineTo(segmentX, line.y + yPerturbation);
+                                } else {
+                                     const yPerturbation = (parseInt(sha.substring(i, i+2), 16) - 128) / 12;
+                                     const lastSegmentX = (canvasWidth / 10) * (i - 1);
+                                     const lastYPerturbation = (parseInt(sha.substring(i-1, i+1), 16) - 128) / 12;
+                                     const progress = (line.currentX - lastSegmentX) / (segmentX - lastSegmentX);
+                                     ctx.lineTo(line.currentX, (line.y + lastYPerturbation) + (yPerturbation - lastYPerturbation) * progress );
+                                     break;
+                                }
+                            }
+                            ctx.strokeStyle = getCommitColor(line.commit);
+                            ctx.lineWidth = 1 + (parseInt(sha.substring(12, 13), 16) / 10);
+                            ctx.stroke();
+                        }
+                    } else {
+                        allDrawn = false;
+                    }
+                });
+
+                // Draw the door on top of the lines
+                drawDoor();
+                
+                frameCount++;
+                if (allDrawn) {
+                     isAnimating = false;
+                } else {
+                     animationFrameId = requestAnimationFrame(animationLoop);
+                }
+            }
+            animationLoop();
+        }
+
         async function handleVisualizeClick() {
             await initializeAudio();
             const url = repoUrlInput.value.trim();
-            if (!url) {
-                statusEl.textContent = 'Please enter a GitHub repository URL.';
-                return;
-            }
+            if (!url) return;
             const repoInfo = parseRepoUrl(url);
-            if (!repoInfo) {
-                statusEl.textContent = "Invalid GitHub URL format. Example: https://github.com/owner/repo";
-                return;
-            }
+            if (!repoInfo) return;
             visualizeBtn.disabled = true;
             visualizeBtn.textContent = 'Loading...';
-            statusEl.textContent = `Parsing URL for '${repoInfo.owner}/${repoInfo.repo}'...`;
-            downloadBtn.classList.add('hidden');
-            commitsData = [];
             commitsData = await fetchAllCommits(repoInfo.owner, repoInfo.repo);
-            drawCommitArt(commitsData, true); // Animate the drawing
+            drawCommitArt(commitsData, true);
             visualizeBtn.disabled = false;
             visualizeBtn.textContent = 'Visualize';
         }
@@ -343,9 +436,7 @@
             const link = document.createElement('a');
             link.href = url;
             link.download = `${currentRepoName}-commits.json`;
-            document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }
 
@@ -357,18 +448,12 @@
             reader.onload = (e) => {
                 try {
                     const loadedCommits = JSON.parse(e.target.result);
-                    if (Array.isArray(loadedCommits) && loadedCommits.length > 0 && loadedCommits[0].sha) {
-                        commitsData = loadedCommits;
-                        drawCommitArt(commitsData, true); // Animate the drawing
-                        statusEl.textContent = `Loaded ${commitsData.length} commits from ${file.name}.`;
-                        downloadBtn.classList.remove('hidden');
-                        currentRepoName = file.name.replace('-commits.json', '');
-                    } else {
-                        throw new Error("Invalid or empty commit file.");
-                    }
+                    commitsData = loadedCommits;
+                    drawCommitArt(commitsData, true);
+                    statusEl.textContent = `Loaded ${commitsData.length} commits from ${file.name}.`;
+                    downloadBtn.classList.remove('hidden');
                 } catch (error) {
-                    statusEl.textContent = `Error: Could not parse file. ${error.message}`;
-                    console.error("File Parse Error:", error);
+                    statusEl.textContent = `Error: Could not parse file.`;
                 }
             };
             reader.readAsText(file);
@@ -378,45 +463,45 @@
         // --- Event Listeners ---
         visualizeBtn.addEventListener('click', handleVisualizeClick);
         repoUrlInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleVisualizeClick(); });
-        
-        colorToggle.addEventListener('change', () => {
-            // Only perform a static redraw if the animation is NOT running.
-            // If it is running, the animation loop itself will handle the color change.
-            if (!isAnimating) {
-                drawCommitArt(commitsData, false);
-            }
-        });
-
         downloadBtn.addEventListener('click', handleFileDownload);
         fileLoader.addEventListener('change', handleFileUpload);
+        window.addEventListener('resize', () => drawCommitArt(commitsData, false));
+        
+        const redrawOnToggle = () => {
+            if (!isAnimating) drawCommitArt(commitsData, false);
+        };
+        colorToggle.addEventListener('change', redrawOnToggle);
+        viewToggle.addEventListener('change', () => drawCommitArt(commitsData, true));
         
         canvas.addEventListener('mousemove', (e) => {
             if (commitsData.length === 0 || !synth) return;
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const col = Math.floor(x / gridConfig.squareSize);
-            const row = Math.floor(y / gridConfig.squareSize);
-            const index = row * gridConfig.cols + col;
+            let index = -1;
+
+            if(viewToggle.checked) { // Lines view hit detection
+                const y = e.clientY - rect.top;
+                index = Math.floor((y / rect.height) * commitsData.length);
+            } else { // Grid view hit detection
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const col = Math.floor(x / gridConfig.squareSize);
+                const row = Math.floor(y / gridConfig.squareSize);
+                index = row * gridConfig.cols + col;
+            }
             
             if (index >= 0 && index < commitsData.length) {
-                const commit = commitsData[index];
                 if (index !== lastHoveredIndex) {
                     lastHoveredIndex = index;
+                    const commit = commitsData[index];
                     const noteIndex = parseInt(commit.sha[0], 16);
-                    const noteToPlay = notes[noteIndex];
-                    synth.triggerAttackRelease(noteToPlay, "8n");
+                    synth.triggerAttackRelease(notes[noteIndex], "8n");
                 }
+                const commit = commitsData[index];
                 tooltip.style.display = 'block';
                 tooltip.style.left = `${e.clientX + 15}px`;
                 tooltip.style.top = `${e.clientY + 15}px`;
                 const commitDate = new Date(commit.commit.author.date).toLocaleString();
-                tooltip.innerHTML = `
-                    <p class="mb-2">${commit.commit.message.split('\n')[0]}</p>
-                    <p class="author">by ${commit.commit.author.name}</p>
-                    <p class="text-gray-400 text-sm mb-1">${commitDate}</p>
-                    <p class="sha">${commit.sha.substring(0, 12)}...</p>
-                `;
+                tooltip.innerHTML = `<p class="mb-2">${commit.commit.message.split('\n')[0]}</p><p class="author">by ${commit.commit.author.name}</p><p class="text-gray-400 text-sm mb-1">${commitDate}</p><p class="sha">${commit.sha.substring(0, 12)}...</p>`;
             } else {
                 tooltip.style.display = 'none';
                 lastHoveredIndex = -1;
@@ -427,8 +512,6 @@
             tooltip.style.display = 'none';
             lastHoveredIndex = -1; 
         });
-
-        window.addEventListener('resize', () => drawCommitArt(commitsData, false)); // No animation on resize
     </script>
 </body>
 </html>
