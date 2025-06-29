@@ -41,6 +41,7 @@
         }
 
         /* Simple toggle switch styles */
+        /* When checked (Color mode), move the circle and make the bar green */
         .toggle-checkbox:checked {
             right: 0;
             border-color: #10b981; /* emerald-500 */
@@ -48,7 +49,7 @@
         .toggle-checkbox:checked + .toggle-label {
             background-color: #10b981; /* emerald-500 */
         }
-
+         
         /* Hide the actual file input */
         #fileLoader {
             display: none;
@@ -76,12 +77,12 @@
         <!-- Controls Section -->
         <div class="flex items-center justify-center gap-x-8 gap-y-4 mb-4 flex-wrap">
             <div class="flex items-center justify-center gap-4">
-                <span class="text-gray-400">Color</span>
-                <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                    <input type="checkbox" name="toggle" id="grayscaleToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                    <label for="grayscaleToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label>
-                </div>
                 <span class="text-gray-400">Grayscale</span>
+                <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="colorToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                    <label for="colorToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label>
+                </div>
+                <span class="text-gray-400">Color</span>
             </div>
              <button id="downloadBtn" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
                 Download .json
@@ -110,7 +111,7 @@
         const canvas = document.getElementById('commitCanvas');
         const ctx = canvas.getContext('2d');
         const tooltip = document.getElementById('tooltip');
-        const grayscaleToggle = document.getElementById('grayscaleToggle');
+        const colorToggle = document.getElementById('colorToggle');
         const downloadBtn = document.getElementById('downloadBtn');
         const fileLoader = document.getElementById('fileLoader');
 
@@ -118,37 +119,28 @@
         let commitsData = [];
         let gridConfig = { cols: 0, squareSize: 0 };
         let currentRepoName = '';
+        let animationFrameId; // To control the drawing animation
+        let isAnimating = false; // To track animation state
         
         // --- Audio State ---
         let synth;
         let lastHoveredIndex = -1;
-        // A pleasant pentatonic scale to map notes to.
         const notes = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5', 'C6', 'D6', 'E6', 'G6', 'A6', 'C7'];
 
 
         // --- Core Functions ---
 
-        /**
-         * Initializes the Web Audio context via Tone.js.
-         * Must be called after a user interaction (e.g., a click).
-         */
         async function initializeAudio() {
             if (Tone.context.state !== 'running') {
                 await Tone.start();
                 console.log('Audio context started');
             }
             if (!synth) {
-                // Create a synth with a xylophone-like envelope
                 synth = new Tone.Synth({
                     oscillator: { type: 'sine' },
-                    envelope: {
-                        attack: 0.01,
-                        decay: 0.2,
-                        sustain: 0.1,
-                        release: 0.2,
-                    },
+                    envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 },
                 }).toDestination();
-                synth.volume.value = -6; // Lower the volume a bit
+                synth.volume.value = -6;
             }
         }
 
@@ -168,23 +160,19 @@
             let page = 1;
             const perPage = 100;
             let isFetching = true;
-
             statusEl.textContent = 'Initializing...';
-            currentRepoName = `${owner}-${repo}`; // For filename
+            currentRepoName = `${owner}-${repo}`;
 
             while (isFetching) {
                 try {
                     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=${perPage}&page=${page}`;
                     const response = await fetch(apiUrl);
-
                     if (!response.ok) {
                         if (response.status === 404) throw new Error("Repository not found or is private.");
                         if (response.status === 403) throw new Error("GitHub API rate limit exceeded. Try loading from a file.");
                         throw new Error(`API Error: ${response.statusText} (${response.status})`);
                     }
-                    
                     const pageCommits = await response.json();
-
                     if (pageCommits.length === 0) {
                         isFetching = false;
                         if (allCommits.length === 0) {
@@ -210,13 +198,37 @@
             return allCommits;
         }
         
-        function drawCommitArt(commits) {
+        /**
+         * Draws a single square, checking the color toggle state each time.
+         * This makes color changes during animation possible.
+         */
+        const drawSquare = (commit, x, y) => {
+            let color;
+            if (colorToggle.checked) { // Checks the toggle directly
+                color = '#' + commit.sha.substring(0, 6);
+            } else {
+                const grayValue = parseInt(commit.sha.substring(0, 2), 16);
+                color = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+            }
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, gridConfig.squareSize, gridConfig.squareSize);
+        };
+
+        /**
+         * Draws the commit data onto the canvas, with an optional animation.
+         * @param {Array} commits - The array of commit objects.
+         * @param {boolean} animate - Whether to animate the drawing process.
+         */
+        function drawCommitArt(commits, animate = false) {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                isAnimating = false;
+            }
             if (!commits || commits.length === 0) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 return;
-            };
+            }
 
-            const isGrayscale = grayscaleToggle.checked;
             const container = canvas.parentElement;
             const dpr = window.devicePixelRatio || 1;
             const rect = container.getBoundingClientRect();
@@ -233,57 +245,98 @@
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            commits.forEach((commit, i) => {
-                const col = i % gridConfig.cols;
-                const row = Math.floor(i / gridConfig.cols);
-                const x = col * gridConfig.squareSize;
-                const y = row * gridConfig.squareSize;
-
-                let color;
-                if (isGrayscale) {
-                    const grayValue = parseInt(commit.sha.substring(0, 2), 16);
-                    color = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
-                } else {
-                    color = '#' + commit.sha.substring(0, 6);
-                }
-                
-                ctx.fillStyle = color;
-                ctx.fillRect(x, y, gridConfig.squareSize, gridConfig.squareSize);
+            if (!animate) {
+                commits.forEach((commit, index) => {
+                    const col = index % gridConfig.cols;
+                    const row = Math.floor(index / gridConfig.cols);
+                    drawSquare(commit, col * gridConfig.squareSize, row * gridConfig.squareSize);
+                });
+                return;
+            }
+            
+            // --- Random Falling Bricks Animation ---
+            isAnimating = true;
+            const bricks = commits.map((commit, index) => {
+                const col = index % gridConfig.cols;
+                const row = Math.floor(index / gridConfig.cols);
+                return {
+                    commit: commit,
+                    finalX: col * gridConfig.squareSize,
+                    finalY: row * gridConfig.squareSize,
+                    currentY: -gridConfig.squareSize,
+                    speed: 0,
+                    gravity: 0.1,
+                    delay: 0,
+                    isSettled: false
+                };
             });
+
+            const shuffledBricks = [...bricks].sort(() => Math.random() - 0.5);
+            shuffledBricks.forEach((brick, index) => { brick.delay = index * 2; });
+
+            let frameCount = 0;
+            function animationLoop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let allSettled = true;
+
+                bricks.forEach(brick => {
+                    if (frameCount >= brick.delay) {
+                        if (!brick.isSettled) {
+                            allSettled = false;
+                            brick.speed += brick.gravity;
+                            brick.currentY += brick.speed;
+                            if (brick.currentY >= brick.finalY) {
+                                brick.currentY = brick.finalY;
+                                brick.isSettled = true;
+                            }
+                        }
+                        drawSquare(brick.commit, brick.finalX, brick.currentY);
+                    } else {
+                        allSettled = false;
+                    }
+                });
+                
+                frameCount++;
+
+                if (!allSettled) {
+                    animationFrameId = requestAnimationFrame(animationLoop);
+                } else {
+                     isAnimating = false;
+                     // A final, clean redraw to ensure everything is perfectly aligned
+                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                     bricks.forEach(brick => {
+                         drawSquare(brick.commit, brick.finalX, brick.finalY);
+                     });
+                }
+            }
+            animationLoop();
         }
         
         async function handleVisualizeClick() {
-            await initializeAudio(); // Initialize audio on user click
-
+            await initializeAudio();
             const url = repoUrlInput.value.trim();
             if (!url) {
                 statusEl.textContent = 'Please enter a GitHub repository URL.';
                 return;
             }
-
             const repoInfo = parseRepoUrl(url);
             if (!repoInfo) {
                 statusEl.textContent = "Invalid GitHub URL format. Example: https://github.com/owner/repo";
                 return;
             }
-            
             visualizeBtn.disabled = true;
             visualizeBtn.textContent = 'Loading...';
             statusEl.textContent = `Parsing URL for '${repoInfo.owner}/${repoInfo.repo}'...`;
             downloadBtn.classList.add('hidden');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             commitsData = [];
-
             commitsData = await fetchAllCommits(repoInfo.owner, repoInfo.repo);
-            drawCommitArt(commitsData);
-
+            drawCommitArt(commitsData, true); // Animate the drawing
             visualizeBtn.disabled = false;
             visualizeBtn.textContent = 'Visualize';
         }
 
         function handleFileDownload() {
             if (commitsData.length === 0) return;
-
             const dataStr = JSON.stringify(commitsData, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
@@ -297,18 +350,16 @@
         }
 
         function handleFileUpload(event) {
-            initializeAudio(); // Initialize audio on user click
-
+            initializeAudio();
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const loadedCommits = JSON.parse(e.target.result);
                     if (Array.isArray(loadedCommits) && loadedCommits.length > 0 && loadedCommits[0].sha) {
                         commitsData = loadedCommits;
-                        drawCommitArt(commitsData);
+                        drawCommitArt(commitsData, true); // Animate the drawing
                         statusEl.textContent = `Loaded ${commitsData.length} commits from ${file.name}.`;
                         downloadBtn.classList.remove('hidden');
                         currentRepoName = file.name.replace('-commits.json', '');
@@ -327,13 +378,20 @@
         // --- Event Listeners ---
         visualizeBtn.addEventListener('click', handleVisualizeClick);
         repoUrlInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleVisualizeClick(); });
-        grayscaleToggle.addEventListener('change', () => drawCommitArt(commitsData));
+        
+        colorToggle.addEventListener('change', () => {
+            // Only perform a static redraw if the animation is NOT running.
+            // If it is running, the animation loop itself will handle the color change.
+            if (!isAnimating) {
+                drawCommitArt(commitsData, false);
+            }
+        });
+
         downloadBtn.addEventListener('click', handleFileDownload);
         fileLoader.addEventListener('change', handleFileUpload);
         
         canvas.addEventListener('mousemove', (e) => {
             if (commitsData.length === 0 || !synth) return;
-            
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -343,16 +401,12 @@
             
             if (index >= 0 && index < commitsData.length) {
                 const commit = commitsData[index];
-                // Play sound only when hovering over a *new* square
                 if (index !== lastHoveredIndex) {
                     lastHoveredIndex = index;
-                    // Map the first hex character of the SHA to a note index (0-15)
                     const noteIndex = parseInt(commit.sha[0], 16);
                     const noteToPlay = notes[noteIndex];
                     synth.triggerAttackRelease(noteToPlay, "8n");
                 }
-                
-                // Update tooltip
                 tooltip.style.display = 'block';
                 tooltip.style.left = `${e.clientX + 15}px`;
                 tooltip.style.top = `${e.clientY + 15}px`;
@@ -365,7 +419,7 @@
                 `;
             } else {
                 tooltip.style.display = 'none';
-                lastHoveredIndex = -1; // Reset when mouse leaves the grid area
+                lastHoveredIndex = -1;
             }
         });
 
@@ -374,7 +428,7 @@
             lastHoveredIndex = -1; 
         });
 
-        window.addEventListener('resize', () => drawCommitArt(commitsData));
+        window.addEventListener('resize', () => drawCommitArt(commitsData, false)); // No animation on resize
     </script>
 </body>
 </html>
