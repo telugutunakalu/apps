@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Last Commit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for the tooltip */
+        #tooltip {
+            position: fixed;
+            display: none;
+            padding: 12px;
+            background-color: rgba(17, 24, 39, 0.9); /* bg-gray-900 with opacity */
+            border: 1px solid #4b5563; /* border-gray-600 */
+            border-radius: 8px;
+            color: white;
+            pointer-events: none; /* So it doesn't interfere with mouse events on the canvas */
+            z-index: 100;
+            max-width: 350px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            transition: opacity 0.2s;
+        }
+        #tooltip .sha {
+            font-family: monospace;
+            color: #9ca3af; /* text-gray-400 */
+            word-break: break-all;
+        }
+        #tooltip .author {
+            font-weight: 600;
+            color: #6ee7b7; /* emerald-300 */
+        }
+
+        /* Simple toggle switch styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10b981; /* emerald-500 */
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10b981; /* emerald-500 */
+        }
+
+        /* Hide the actual file input */
+        #fileLoader {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 flex flex-col items-center min-h-screen p-4 md:p-8">
+
+    <div class="w-full max-w-4xl text-center">
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">The Last Commit</h1>
+        <p class="text-gray-400 mb-6">Visualize the commit history of any public GitHub repository as a unique painting.</p>
+
+        <!-- Input Section -->
+        <div class="flex flex-col sm:flex-row gap-2 max-w-2xl mx-auto mb-4">
+            <input type="text" id="repoUrl" placeholder="e.g., https://github.com/vuejs/vue" class="flex-grow bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
+            <button id="visualizeBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg hover:shadow-emerald-500/30">
+                Visualize
+            </button>
+            <label for="fileLoader" class="cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                Load File
+            </label>
+            <input type="file" id="fileLoader" accept=".json">
+        </div>
+
+        <!-- Controls Section -->
+        <div class="flex items-center justify-center gap-x-8 gap-y-4 mb-4 flex-wrap">
+            <div class="flex items-center justify-center gap-4">
+                <span class="text-gray-400">Color</span>
+                <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="grayscaleToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                    <label for="grayscaleToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label>
+                </div>
+                <span class="text-gray-400">Grayscale</span>
+            </div>
+             <button id="downloadBtn" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                Download .json
+            </button>
+        </div>
+
+
+        <!-- Status & Info Section -->
+        <div id="status" class="min-h-[2rem] text-gray-400 mb-4"></div>
+
+        <!-- Canvas for the Art -->
+        <div class="w-full aspect-video bg-gray-800 rounded-xl overflow-hidden shadow-2xl border border-gray-700">
+            <canvas id="commitCanvas"></canvas>
+        </div>
+         <p class="text-gray-500 mt-4 text-sm">Hover over a square to hear its unique sound and see commit details.</p>
+    </div>
+
+    <!-- Tooltip for commit details -->
+    <div id="tooltip"></div>
+
+    <script>
+        // --- DOM Element References ---
+        const repoUrlInput = document.getElementById('repoUrl');
+        const visualizeBtn = document.getElementById('visualizeBtn');
+        const statusEl = document.getElementById('status');
+        const canvas = document.getElementById('commitCanvas');
+        const ctx = canvas.getContext('2d');
+        const tooltip = document.getElementById('tooltip');
+        const grayscaleToggle = document.getElementById('grayscaleToggle');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const fileLoader = document.getElementById('fileLoader');
+
+        // --- App State ---
+        let commitsData = [];
+        let gridConfig = { cols: 0, squareSize: 0 };
+        let currentRepoName = '';
+        
+        // --- Audio State ---
+        let synth;
+        let lastHoveredIndex = -1;
+        // A pleasant pentatonic scale to map notes to.
+        const notes = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5', 'C6', 'D6', 'E6', 'G6', 'A6', 'C7'];
+
+
+        // --- Core Functions ---
+
+        /**
+         * Initializes the Web Audio context via Tone.js.
+         * Must be called after a user interaction (e.g., a click).
+         */
+        async function initializeAudio() {
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+                console.log('Audio context started');
+            }
+            if (!synth) {
+                // Create a synth with a xylophone-like envelope
+                synth = new Tone.Synth({
+                    oscillator: { type: 'sine' },
+                    envelope: {
+                        attack: 0.01,
+                        decay: 0.2,
+                        sustain: 0.1,
+                        release: 0.2,
+                    },
+                }).toDestination();
+                synth.volume.value = -6; // Lower the volume a bit
+            }
+        }
+
+        function parseRepoUrl(url) {
+            try {
+                const path = new URL(url).pathname;
+                const match = path.match(/^\/([^\/]+)\/([^\/]+)/);
+                if (match && match[1] && match[2]) {
+                    return { owner: match[1], repo: match[2].replace('.git', '') };
+                }
+            } catch (e) { /* Catches invalid URLs */ }
+            return null;
+        }
+
+        async function fetchAllCommits(owner, repo) {
+            let allCommits = [];
+            let page = 1;
+            const perPage = 100;
+            let isFetching = true;
+
+            statusEl.textContent = 'Initializing...';
+            currentRepoName = `${owner}-${repo}`; // For filename
+
+            while (isFetching) {
+                try {
+                    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=${perPage}&page=${page}`;
+                    const response = await fetch(apiUrl);
+
+                    if (!response.ok) {
+                        if (response.status === 404) throw new Error("Repository not found or is private.");
+                        if (response.status === 403) throw new Error("GitHub API rate limit exceeded. Try loading from a file.");
+                        throw new Error(`API Error: ${response.statusText} (${response.status})`);
+                    }
+                    
+                    const pageCommits = await response.json();
+
+                    if (pageCommits.length === 0) {
+                        isFetching = false;
+                        if (allCommits.length === 0) {
+                           statusEl.textContent = `Repository '${owner}/${repo}' has no commits.`;
+                           downloadBtn.classList.add('hidden');
+                        } else {
+                           statusEl.textContent = `Finished! Found ${allCommits.length} commits for ${owner}/${repo}.`;
+                           downloadBtn.classList.remove('hidden');
+                        }
+                    } else {
+                        allCommits.push(...pageCommits);
+                        statusEl.textContent = `Loading... Fetched ${allCommits.length} commits.`;
+                        page++;
+                    }
+                } catch (error) {
+                    console.error("Fetch Error:", error);
+                    statusEl.textContent = `Error: ${error.message}`;
+                    isFetching = false;
+                    downloadBtn.classList.add('hidden');
+                    return [];
+                }
+            }
+            return allCommits;
+        }
+        
+        function drawCommitArt(commits) {
+            if (!commits || commits.length === 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                return;
+            };
+
+            const isGrayscale = grayscaleToggle.checked;
+            const container = canvas.parentElement;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+
+            const preferredSquareSize = 12;
+            gridConfig.cols = Math.floor(rect.width / preferredSquareSize);
+            gridConfig.squareSize = rect.width / gridConfig.cols;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            commits.forEach((commit, i) => {
+                const col = i % gridConfig.cols;
+                const row = Math.floor(i / gridConfig.cols);
+                const x = col * gridConfig.squareSize;
+                const y = row * gridConfig.squareSize;
+
+                let color;
+                if (isGrayscale) {
+                    const grayValue = parseInt(commit.sha.substring(0, 2), 16);
+                    color = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+                } else {
+                    color = '#' + commit.sha.substring(0, 6);
+                }
+                
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, gridConfig.squareSize, gridConfig.squareSize);
+            });
+        }
+        
+        async function handleVisualizeClick() {
+            await initializeAudio(); // Initialize audio on user click
+
+            const url = repoUrlInput.value.trim();
+            if (!url) {
+                statusEl.textContent = 'Please enter a GitHub repository URL.';
+                return;
+            }
+
+            const repoInfo = parseRepoUrl(url);
+            if (!repoInfo) {
+                statusEl.textContent = "Invalid GitHub URL format. Example: https://github.com/owner/repo";
+                return;
+            }
+            
+            visualizeBtn.disabled = true;
+            visualizeBtn.textContent = 'Loading...';
+            statusEl.textContent = `Parsing URL for '${repoInfo.owner}/${repoInfo.repo}'...`;
+            downloadBtn.classList.add('hidden');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            commitsData = [];
+
+            commitsData = await fetchAllCommits(repoInfo.owner, repoInfo.repo);
+            drawCommitArt(commitsData);
+
+            visualizeBtn.disabled = false;
+            visualizeBtn.textContent = 'Visualize';
+        }
+
+        function handleFileDownload() {
+            if (commitsData.length === 0) return;
+
+            const dataStr = JSON.stringify(commitsData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${currentRepoName}-commits.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function handleFileUpload(event) {
+            initializeAudio(); // Initialize audio on user click
+
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const loadedCommits = JSON.parse(e.target.result);
+                    if (Array.isArray(loadedCommits) && loadedCommits.length > 0 && loadedCommits[0].sha) {
+                        commitsData = loadedCommits;
+                        drawCommitArt(commitsData);
+                        statusEl.textContent = `Loaded ${commitsData.length} commits from ${file.name}.`;
+                        downloadBtn.classList.remove('hidden');
+                        currentRepoName = file.name.replace('-commits.json', '');
+                    } else {
+                        throw new Error("Invalid or empty commit file.");
+                    }
+                } catch (error) {
+                    statusEl.textContent = `Error: Could not parse file. ${error.message}`;
+                    console.error("File Parse Error:", error);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = null;
+        }
+
+        // --- Event Listeners ---
+        visualizeBtn.addEventListener('click', handleVisualizeClick);
+        repoUrlInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleVisualizeClick(); });
+        grayscaleToggle.addEventListener('change', () => drawCommitArt(commitsData));
+        downloadBtn.addEventListener('click', handleFileDownload);
+        fileLoader.addEventListener('change', handleFileUpload);
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (commitsData.length === 0 || !synth) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const col = Math.floor(x / gridConfig.squareSize);
+            const row = Math.floor(y / gridConfig.squareSize);
+            const index = row * gridConfig.cols + col;
+            
+            if (index >= 0 && index < commitsData.length) {
+                const commit = commitsData[index];
+                // Play sound only when hovering over a *new* square
+                if (index !== lastHoveredIndex) {
+                    lastHoveredIndex = index;
+                    // Map the first hex character of the SHA to a note index (0-15)
+                    const noteIndex = parseInt(commit.sha[0], 16);
+                    const noteToPlay = notes[noteIndex];
+                    synth.triggerAttackRelease(noteToPlay, "8n");
+                }
+                
+                // Update tooltip
+                tooltip.style.display = 'block';
+                tooltip.style.left = `${e.clientX + 15}px`;
+                tooltip.style.top = `${e.clientY + 15}px`;
+                const commitDate = new Date(commit.commit.author.date).toLocaleString();
+                tooltip.innerHTML = `
+                    <p class="mb-2">${commit.commit.message.split('\n')[0]}</p>
+                    <p class="author">by ${commit.commit.author.name}</p>
+                    <p class="text-gray-400 text-sm mb-1">${commitDate}</p>
+                    <p class="sha">${commit.sha.substring(0, 12)}...</p>
+                `;
+            } else {
+                tooltip.style.display = 'none';
+                lastHoveredIndex = -1; // Reset when mouse leaves the grid area
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => { 
+            tooltip.style.display = 'none';
+            lastHoveredIndex = -1; 
+        });
+
+        window.addEventListener('resize', () => drawCommitArt(commitsData));
+    </script>
+</body>
+</html>
