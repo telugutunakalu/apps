@@ -8,6 +8,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.dom.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
@@ -16,12 +20,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
         }
         .chat-container {
             width: 100%;
             max-width: 800px;
             height: 90vh;
+            max-height: 800px;
             background-color: #ffffff;
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -36,6 +40,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            -webkit-overflow-scrolling: touch;
         }
         .message {
             padding: 12px 18px;
@@ -62,15 +67,15 @@
             color: white;
             align-self: flex-end;
         }
-        /* Style for the video message container */
         .video-message {
             padding: 0;
             background-color: transparent;
             max-width: 80%;
+            align-self: flex-start;
         }
         .video-message video {
             width: 100%;
-            border-radius: 18px; /* Match message bubble radius */
+            border-radius: 18px;
             display: block;
         }
         .book-recommendation {
@@ -146,6 +151,28 @@
             border-color: #545b62;
             transform: translateY(-2px);
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 600px) {
+            .chat-container {
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+            #chat-box {
+                padding: 16px;
+            }
+            .message {
+                max-width: 85%;
+            }
+            #options-container {
+                padding: 12px;
+            }
+            .option-button, .action-button, .back-button {
+                font-size: 0.9em;
+                padding: 8px 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -195,9 +222,8 @@
         }
 
         function startConversation() {
-            // --- NEW: Video Introduction ---
-            // Replace this URL with your raw GitHub video link
-            const introVideoUrl = '/raya_intro_vid.mp4'; 
+            // --- Video Introduction ---
+            const introVideoUrl = 'https://github.com/telugutunakalu/example_videos/raw/main/raya_intro_vid.mp4'; 
             addVideoMessage(introVideoUrl);
 
             // Delay the welcome text to appear after the video
@@ -207,18 +233,20 @@
             }, 500); // A brief delay for a smoother effect
         }
 
-        // --- NEW: Function to add a video message ---
         function addVideoMessage(videoSrc) {
             let msgDiv = createDiv();
             msgDiv.class('message bot-message video-message');
 
-            // Create the video element using p5.js and set attributes
-            let video = createVideo(videoSrc);
-            video.parent(msgDiv);
-            video.attribute('autoplay', '');
-            video.attribute('muted', ''); // Muted is required for most browsers to autoplay
-            video.attribute('loop', '');
-            video.attribute('playsinline', ''); // Important for playback on iOS
+            // Create an HTML string for the video tag
+            const videoHTML = `
+                <video autoplay muted loop playsinline style="width: 100%; border-radius: 18px; display: block;">
+                    <source src="${videoSrc}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            `;
+    
+            // Set the inner HTML of the message div to the video tag
+            msgDiv.html(videoHTML);
 
             msgDiv.parent(chatBox);
             scrollToBottom();
