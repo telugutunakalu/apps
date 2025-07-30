@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Recommendation Bot</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.dom.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #chat-box {
+            flex-grow: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 75%;
+            line-height: 1.5;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s forwards;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .bot-message {
+            background-color: #e9e9eb;
+            color: #1c1e21;
+            align-self: flex-start;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+        /* Style for the video message container */
+        .video-message {
+            padding: 0;
+            background-color: transparent;
+            max-width: 80%;
+        }
+        .video-message video {
+            width: 100%;
+            border-radius: 18px; /* Match message bubble radius */
+            display: block;
+        }
+        .book-recommendation {
+            background-color: #f7f7f7;
+            border: 1px solid #ddd;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+        .book-title {
+            font-weight: 700;
+            color: #0056b3;
+        }
+        .book-author {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        .book-description {
+            font-size: 0.9em;
+            color: #333;
+        }
+        #options-container {
+            padding: 16px 24px;
+            border-top: 1px solid #ddd;
+            background-color: #fff;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .option-button, .action-button, .back-button {
+            padding: 10px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid transparent;
+        }
+        .option-button {
+            border: 1px solid #007bff;
+            background-color: #fff;
+            color: #007bff;
+        }
+        .option-button:hover {
+            background-color: #007bff;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .option-button.selected {
+            background-color: #0056b3;
+            color: white;
+            border-color: #0056b3;
+        }
+        .action-button {
+            border-color: #28a745;
+            background-color: #28a745;
+            color: white;
+        }
+        .action-button:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            transform: translateY(-2px);
+        }
+        .back-button {
+             border-color: #6c757d;
+             background-color: #6c757d;
+             color: white;
+        }
+        .back-button:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="chat-box"></div>
+        <div id="options-container"></div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const bookData = {
+          "genres": ["Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance", "Historical Fiction", "Horror", "Dystopian", "Adventure", "Literary Fiction"],
+          "books": [
+            { "title": "The Hobbit", "author": "J.R.R. Tolkien", "genres": ["Fantasy", "Adventure"], "description": "A classic fantasy novel about a hobbit who goes on an unexpected journey." },
+            { "title": "Dune", "author": "Frank Herbert", "genres": ["Science Fiction", "Adventure"], "description": "A landmark science fiction novel set in a distant future amidst a feudal interstellar society." },
+            { "title": "And Then There Were None", "author": "Agatha Christie", "genres": ["Mystery", "Thriller"], "description": "Ten strangers are lured to an isolated island and are killed off one by one." },
+            { "title": "Gone Girl", "author": "Gillian Flynn", "genres": ["Thriller", "Mystery"], "description": "A woman disappears on her fifth wedding anniversary, leaving her husband as the primary suspect." },
+            { "title": "Pride and Prejudice", "author": "Jane Austen", "genres": ["Romance", "Historical Fiction", "Literary Fiction"], "description": "A classic romance novel exploring issues of manners, upbringing, morality, and marriage." },
+            { "title": "The Nightingale", "author": "Kristin Hannah", "genres": ["Historical Fiction", "Adventure"], "description": "Tells the story of two sisters in France during World War II and their struggle to survive." },
+            { "title": "It", "author": "Stephen King", "genres": ["Horror", "Thriller"], "description": "A group of outcast kids fight an evil, shape-shifting entity that preys on the children of their town." },
+            { "title": "The Hunger Games", "author": "Suzanne Collins", "genres": ["Dystopian", "Science Fiction", "Adventure"], "description": "In a dystopian future, a teenage girl volunteers to take her younger sister's place in a televised fight to the death." },
+            { "title": "To Kill a Mockingbird", "author": "Harper Lee", "genres": ["Literary Fiction", "Historical Fiction"], "description": "A classic of modern American literature, dealing with the issues of racial injustice and the loss of innocence." },
+            { "title": "Mistborn: The Final Empire", "author": "Brandon Sanderson", "genres": ["Fantasy", "Adventure"], "description": "In a world where ash falls from the sky, a thieving crew attempts to overthrow a god-like emperor." },
+            { "title": "Project Hail Mary", "author": "Andy Weir", "genres": ["Science Fiction"], "description": "An astronaut wakes up on a solo mission in deep space with no memory of how he got there." },
+            { "title": "The Silent Patient", "author": "Alex Michaelides", "genres": ["Thriller", "Mystery"], "description": "A psychotherapist becomes obsessed with a famous painter who has gone silent after murdering her husband." },
+            { "title": "The Love Hypothesis", "author": "Ali Hazelwood", "genres": ["Romance"], "description": "A Ph.D. candidate fakes a relationship with a hotshot professor to convince her friends she's dating someone." },
+            { "title": "All the Light We Cannot See", "author": "Anthony Doerr", "genres": ["Historical Fiction", "Literary Fiction"], "description": "The story of a blind French girl and a German boy whose paths collide in occupied France during World War II." },
+            { "title": "The Shining", "author": "Stephen King", "genres": ["Horror"], "description": "A family heads to an isolated hotel for the winter where a sinister presence influences the father into violence." },
+            { "title": "1984", "author": "George Orwell", "genres": ["Dystopian", "Science Fiction", "Literary Fiction"], "description": "A novel about the dangers of totalitarianism, where Big Brother is always watching." },
+            { "title": "Treasure Island", "author": "Robert Louis Stevenson", "genres": ["Adventure", "Historical Fiction"], "description": "An adventure novel about pirates and buried gold." },
+            { "title": "The Name of the Wind", "author": "Patrick Rothfuss", "genres": ["Fantasy"], "description": "The story of a magically gifted young man who grows to be the most notorious wizard his world has ever seen." },
+            { "title": "Neuromancer", "author": "William Gibson", "genres": ["Science Fiction", "Dystopian"], "description": "A washed-up computer hacker is hired for one last job, which pulls him into a world of artificial intelligence and cybernetics." },
+            { "title": "The Murder of Roger Ackroyd", "author": "Agatha Christie", "genres": ["Mystery"], "description": "A classic Hercule Poirot mystery with a revolutionary twist ending." }
+          ]
+        };
+
+        // --- P5.JS SKETCH ---
+        let chatBox;
+        let optionsContainer;
+        let selectedGenres = [];
+
+        function setup() {
+            noCanvas(); // We don't need a canvas for this UI
+            chatBox = select('#chat-box');
+            optionsContainer = select('#options-container');
+            startConversation();
+        }
+
+        function startConversation() {
+            // --- NEW: Video Introduction ---
+            // Replace this URL with your raw GitHub video link
+            const introVideoUrl = 'https://github.com/telugutunakalu/example_videos/raw/refs/heads/main/raya_intro_vid.mp4'; 
+            addVideoMessage(introVideoUrl);
+
+            // Delay the welcome text to appear after the video
+            setTimeout(() => {
+                addBotMessage("Hello there! I'm your personal book bot. How can I help you find your next great read today?");
+                displayInitialOptions();
+            }, 500); // A brief delay for a smoother effect
+        }
+
+        // --- NEW: Function to add a video message ---
+        function addVideoMessage(videoSrc) {
+            let msgDiv = createDiv();
+            msgDiv.class('message bot-message video-message');
+
+            // Create the video element using p5.js and set attributes
+            let video = createVideo(videoSrc);
+            video.parent(msgDiv);
+            video.attribute('autoplay', '');
+            video.attribute('muted', ''); // Muted is required for most browsers to autoplay
+            video.attribute('loop', '');
+            video.attribute('playsinline', ''); // Important for playback on iOS
+
+            msgDiv.parent(chatBox);
+            scrollToBottom();
+        }
+
+        function displayInitialOptions() {
+            optionsContainer.html(''); // Clear previous options
+            
+            let findByGenreButton = createButton('Find a book by genre');
+            findByGenreButton.class('action-button');
+            findByGenreButton.parent(optionsContainer);
+            findByGenreButton.mousePressed(() => {
+                addUserMessage('I\'d like to find a book by genre.');
+                addBotMessage('Excellent choice! Pick one or more genres below, then hit "Find Books".');
+                displayGenreOptions();
+            });
+
+            let randomButton = createButton('Surprise me!');
+            randomButton.class('action-button');
+            randomButton.parent(optionsContainer);
+            randomButton.mousePressed(suggestRandomBook);
+        }
+
+        function displayGenreOptions() {
+            optionsContainer.html(''); // Clear previous options
+            selectedGenres = []; // Reset selections
+            
+            bookData.genres.forEach(genre => {
+                let button = createButton(genre);
+                button.class('option-button');
+                button.parent(optionsContainer);
+                button.mousePressed(() => toggleGenre(genre, button));
+            });
+
+            let findButton = createButton('Find Books');
+            findButton.class('action-button');
+            findButton.parent(optionsContainer);
+            findButton.mousePressed(findBooks);
+
+            let backButton = createButton('Go Back');
+            backButton.class('back-button');
+            backButton.parent(optionsContainer);
+            backButton.mousePressed(() => {
+                addUserMessage('Let\'s go back.');
+                addBotMessage('Sure thing! What would you like to do?');
+                displayInitialOptions();
+            });
+        }
+
+        function suggestRandomBook() {
+            addUserMessage('Surprise me!');
+            const randomIndex = floor(random(bookData.books.length));
+            const book = bookData.books[randomIndex];
+            
+            let response = "Here's a random suggestion for you:";
+            response += formatBook(book);
+            addBotMessage(response, true);
+
+            setTimeout(() => {
+                addBotMessage("I hope you like it! What should we do next?");
+                displayInitialOptions();
+            }, 1000);
+        }
+        
+        function toggleGenre(genre, button) {
+            const index = selectedGenres.indexOf(genre);
+            if (index > -1) {
+                selectedGenres.splice(index, 1); // Remove genre
+                button.removeClass('selected');
+            } else {
+                selectedGenres.push(genre); // Add genre
+                button.addClass('selected');
+            }
+        }
+
+        function findBooks() {
+            if (selectedGenres.length === 0) {
+                addBotMessage("Please select at least one genre first.");
+                return;
+            }
+
+            addUserMessage(`Looking for books in: ${selectedGenres.join(', ')}`);
+
+            const recommendations = bookData.books.filter(book => {
+                return selectedGenres.every(genre => book.genres.includes(genre));
+            });
+
+            if (recommendations.length > 0) {
+                let response = "Here are some books that match your selection:";
+                recommendations.forEach(book => {
+                    response += formatBook(book);
+                });
+                addBotMessage(response, true);
+            } else {
+                addBotMessage("I'm sorry, I couldn't find any books that match all the selected genres. Try a different combination!");
+            }
+
+            setTimeout(() => {
+                addBotMessage("Feel free to search again! What would you like to do next?");
+                displayInitialOptions();
+            }, 1000);
+        }
+
+        function formatBook(book) {
+            return `
+                <div class="book-recommendation">
+                    <div class="book-title">${book.title}</div>
+                    <div class="book-author">by ${book.author}</div>
+                    <div class="book-description">${book.description}</div>
+                </div>
+            `;
+        }
+
+        function addBotMessage(message, isRecommendation = false) {
+            let msgDiv = createDiv();
+            msgDiv.class('message bot-message');
+            if (isRecommendation) {
+                msgDiv.html(message);
+            } else {
+                msgDiv.elt.innerText = message;
+            }
+            msgDiv.parent(chatBox);
+            scrollToBottom();
+        }
+
+        function addUserMessage(message) {
+            let msgDiv = createDiv(message);
+            msgDiv.class('message user-message');
+            msgDiv.parent(chatBox);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatBox.elt.scrollTop = chatBox.elt.scrollHeight;
+        }
+    </script>
+</body>
+</html>
