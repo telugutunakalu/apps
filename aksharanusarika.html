@@ -2,485 +2,476 @@
 <html lang="te">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>తెలుగు తునకలు: అక్షరానుసారిక: v0.0.2a</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>తెలుగు తునకలు: అక్షరానుసారిక: v0.0.3a</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
-      margin: 0;
-      padding: 1rem; /* Use padding for spacing from screen edges */
-      max-width: 800px; /* Increased max-width slightly for larger screens */
-      margin-left: auto; /* Center content when max-width is active */
-      margin-right: auto; /* Center content when max-width is active */
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      margin: 1rem auto;
+      padding: 0 1rem;
+      max-width: 800px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       line-height: 1.6;
       color: #333;
-      background-color: #f9f9f9; /* Light background for the whole page */
+      background-color: #f8f9fa;
     }
-
-    /* Top Banner (Main heading) */
-    h1.main-banner {
+    .main-banner {
       text-align: center;
-      margin-bottom: 1.5rem; /* Increased margin */
-      font-size: clamp(1.3rem, 4vw, 1.6rem); /* Responsive font size */
-      color: #444;
-      border-bottom: 2px solid #ccc;
-      padding-bottom: 0.75rem; /* Increased padding */
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+      color: #1971c2;
+      border-bottom: 2px solid #4dabf7;
+      padding-bottom: 0.5rem;
     }
-
     textarea {
       width: 100%;
-      min-height: 150px; /* Slightly increased min-height */
-      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      min-height: 150px;
+      font-size: 1.1rem;
       padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      resize: vertical; /* Allow vertical resize */
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid #ced4da;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-
+    textarea:focus {
+      outline: none;
+      border-color: #228be6;
+      box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.2);
+    }
     button {
-      display: block; /* Make button block to control width easily */
-      width: 100%; /* Full width button on mobile */
-      max-width: 250px; /* Max width for larger screens, centered */
-      margin: 1rem auto; /* Center button */
-      padding: 0.75rem 1rem;
-      font-size: clamp(0.95rem, 2.8vw, 1.05rem);
+      display: block;
+      margin: 1rem auto 0;
+      padding: 0.75rem 1.5rem;
+      font-size: 1.1rem;
+      font-weight: bold;
       cursor: pointer;
-      background-color: #007bff;
-      color: white;
       border: none;
-      border-radius: 4px;
-      transition: background-color 0.2s ease;
+      border-radius: 8px;
+      background-color: #228be6;
+      color: white;
+      transition: background-color 0.2s;
     }
     button:hover {
-      background-color: #0056b3;
+      background-color: #1c7ed6;
     }
-
     .results-area {
-      margin-top: 1.5rem;
-    }
-
-    /* This heading is shown after clicking Analyze */
-    h2.analysis-heading {
-      text-align: center;
       margin-top: 2rem;
-      margin-bottom: 1.5rem; /* Added margin bottom */
-      font-weight: bold;
-      font-size: clamp(1.1rem, 3.5vw, 1.3rem);
-      color: #444;
     }
-    /* Added this for the detailed analysis heading too */
-    .results-area > h2 {
+    .analysis-heading {
       text-align: center;
       margin-top: 2.5rem;
-      margin-bottom: 1rem;
       font-weight: bold;
-      font-size: clamp(1.1rem, 3.5vw, 1.3rem);
-      color: #444;
+      font-size: 1.5rem;
+      color: #343a40;
     }
-
-
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1rem; /* Increased margin */
-      font-size: clamp(0.85rem, 2.2vw, 0.95rem); /* Responsive font for table */
+      margin-top: 1rem;
     }
     th, td {
-      border: 1px solid #ccc;
-      padding: 10px; /* Increased padding */
+      border: 1px solid #dee2e6;
+      padding: 12px;
       text-align: left;
-      word-break: break-word; /* Break long words in cells */
     }
     th {
-      background: #f0f0f0; /* Slightly different background for headers */
-      font-weight: 600; /* Bolder headers */
+      background-color: #f1f3f5;
+      font-weight: 600;
     }
-
-    /* The main flex container for info & category counts */
+    td:first-child {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    /* Layout from v0.0.2a */
     .summary-flex {
       display: flex;
-      flex-wrap: wrap; /* Default wrap for larger screens */
-      gap: 1.5rem; /* Increased gap */
+      flex-wrap: wrap;
+      gap: 1.5rem;
       align-items: flex-start;
-      margin-top: 1rem;
-      margin-bottom: 2rem; /* Increased margin */
+      margin-top: 1.5rem;
+      margin-bottom: 2rem;
     }
-
-    /* The left column that stacks boxes (Info, Pie Chart, Category Info) */
     .summary-col {
       display: flex;
       flex-direction: column;
       gap: 1.5rem; /* space between boxes */
-      flex: 1 1 300px; /* Allow shrinking, base width 300px, allow growing */
-      min-width: 280px; /* Minimum width before wrapping or squishing too much */
+      flex: 1 1 0; /* share space with the other column */
+      min-width: 300px;
     }
-
-    /* Each info box */
     .summary-box {
-      padding: 1rem; /* Increased padding */
-      border: 1px solid #ddd;
-      border-radius: 6px; /* More rounded */
-      background: #fff; /* White background for boxes */
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow */
+      padding: 1rem 1.5rem;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .summary-box h2 {
       margin-top: 0;
-      font-size: clamp(1rem, 3vw, 1.15rem); /* Responsive */
-      color: #333;
-      border-bottom: 1px solid #eee;
+      color: #1971c2;
+      border-bottom: 1px solid #f1f3f5;
       padding-bottom: 0.5rem;
-      margin-bottom: 0.75rem;
+      font-size: 1.2rem;
     }
-
     pre {
       white-space: pre-wrap;
       word-wrap: break-word;
-      background-color: #fdfdfd;
-      padding: 0.75rem;
+      background-color: #f8f9fa;
+      padding: 1rem;
       border-radius: 4px;
-      border: 1px solid #eee;
-      max-height: 200px; /* Limit height of pre block */
-      overflow-y: auto; /* Allow scrolling for long pre content */
-      font-size: clamp(0.8rem, 2vw, 0.9rem);
+      border: 1px solid #e9ecef;
     }
-
     .chart-container {
-      margin: 0 auto;
-      width: 100%; /* Take full width of its parent (.summary-box) */
-      max-width: 100%; /* Ensure it doesn't overflow parent */
-      height: clamp(250px, 40vh, 400px); /* Responsive height */
-      background: #fff; /* Match summary box background */
-      padding: 0; /* Padding handled by summary-box now */
-      /* border and border-radius handled by summary-box */
+      position: relative;
+      height: 350px;
+      width: 100%;
     }
-    /* Chart.js canvas will be sized by its container */
-
-    /* Media Query for smaller screens */
-    @media (max-width: 700px) { /* Breakpoint for stacking summary */
-      .summary-flex {
-        flex-direction: column; /* Stack columns vertically */
-      }
-      .summary-col {
-        flex-basis: auto; /* Reset flex-basis */
-        width: 100%; /* Full width for columns */
-      }
-      /* Ensure right column (category counts table) also takes full width */
-      .summary-flex > .summary-box {
-          flex: 1 1 100%;
-      }
-      button {
-        max-width: none; /* Allow button to be full width */
-      }
-    }
-     @media (max-width: 480px) {
-      body {
-        padding: 0.5rem; /* Reduce padding on very small screens */
-      }
-      h1.main-banner {
-        font-size: clamp(1.1rem, 5vw, 1.3rem);
-      }
-       textarea {
-        min-height: 100px;
-      }
-      th, td {
-        padding: 6px;
-      }
-      .results-area > h2, h2.analysis-heading {
-        font-size: clamp(1rem, 4vw, 1.2rem);
-      }
-      .summary-box h2 {
-        font-size: clamp(0.9rem, 3.5vw, 1.05rem);
-      }
-    }
-
   </style>
   <!-- Include Chart.js from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <h1 class="main-banner">తెలుగు తునకలు: అక్షరానుసారిక: v0.0.2a</h1>
+  <h1 class="main-banner">తెలుగు తునకలు: అక్షరానుసారిక: v0.0.3a</h1>
 
-  <textarea id="teluguInput" placeholder="మీ తెలుగు పరచూరిని ఇక్కడ ఉంచండి (పంక్ష్యుయేషన్లు, లైన్లు ఉంటేనూ పరవాలేదు) ..." rows="6"></textarea>
-  <button id="analyzeBtn">Analyze Text</button>
+  <textarea id="teluguInput" placeholder="మీ తెలుగు వాక్యాన్ని ఇక్కడ ఉంచండి..."></textarea><br />
+  <button id="analyzeBtn">విశ్లేషించు (Analyze)</button>
 
-  <div class="results-area" id="resultsContainer">
-    <!-- Analysis results will be injected here -->
-  </div>
+  <div class="results-area" id="resultsContainer"></div>
 
   <script>
     //////////////////////////////////////////////////////////////////////////
-    // 1) Basic 32-bit hash for unique ID (Not true MD5, but a simple fallback)
+    // DATA AND CONSTANTS (v0.0.3a)
     //////////////////////////////////////////////////////////////////////////
+    const dependentToIndependent = {
+        "ా": "ఆ", "ి": "ఇ", "ీ": "ఈ", "ు": "ఉ", "ూ": "ఊ", "ృ": "ఋ",
+        "ౄ": "ౠ", "ె": "ఎ", "ే": "ఏ", "ై": "ఐ", "ొ": "ఒ", "ో": "ఓ", "ౌ": "ఔ"
+    };
+    const halant = "్";
+    const teluguConsonants = new Set([
+        "క", "ఖ", "గ", "ఘ", "ఙ", "చ", "ఛ", "జ", "ఝ", "ఞ", "ట", "ఠ", "డ", "ఢ", "ణ",
+        "త", "థ", "ద", "ధ", "న", "ప", "ఫ", "బ", "భ", "మ", "య", "ర", "ల", "వ",
+        "శ", "ష", "స", "హ", "ళ", "ఱ"
+    ]);
+    const longVowels = new Set(["ా", "ీ", "ూ", "ే", "ో", "ౌ", "ౄ"]);
+    const independentVowels = new Set([
+        "అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఋ", "ౠ", "ఎ", "ఏ", "ఐ", "ఒ", "ఓ", "ఔ"
+    ]);
+    const diacritics = new Set(["ం", "ః"]);
+    const dependentVowels = new Set(Object.keys(dependentToIndependent));
+
+    // Grammatical and Phonetic Sets
+    const PLUTAMULU = new Set(["ఐ", "ఔ"]);
+    const SARALAMULU = new Set(["గ", "జ", "డ", "ద", "బ"]);
+    const PARUSHAMULU = new Set(["క", "చ", "ట", "త", "ప"]);
+    const STHIRAMULU = new Set([
+        "ఖ", "ఘ", "ఙ", "ఛ", "ఝ", "ఞ", "ఠ", "ఢ", "ణ", "థ", "ధ", "న",
+        "ఫ", "భ", "మ", "య", "ర", "ఱ", "ల", "ళ", "వ", "శ", "ష", "స", "హ"
+    ]);
+    const KA_VARGAMU = new Set(["క", "ఖ", "గ", "ఘ", "ఙ"]);
+    const CHA_VARGAMU = new Set(["చ", "ౘ", "ఛ", "జ", "ౙ", "ఝ", "ఞ"]);
+    const TA_VARGAMU = new Set(["ట", "ఠ", "డ", "ఢ", "ణ"]);
+    const THA_VARGAMU = new Set(["త", "థ", "ద", "ధ", "న"]);
+    const PA_VARGAMU = new Set(["ప", "ఫ", "బ", "భ", "మ"]);
+    const SPARSHA_MULU = new Set([...KA_VARGAMU, ...CHA_VARGAMU, ...TA_VARGAMU, ...THA_VARGAMU, ...PA_VARGAMU]);
+    const OOSHMA_MULU = new Set(["శ", "స", "ష", "హ"]);
+    const ANTASTA_MULU = new Set(["య", "ర", "ఱ", "ల", "ళ", "వ"]);
+    const KANTHYAMULU = new Set(["అ", "ఆ", "క", "ఖ", "గ", "ఘ", "ఙ", "హ"]);
+    const TAALAVYAMULU = new Set(["ఇ", "ఈ", "చ", "ఛ", "జ", "ఝ", "య", "శ"]);
+    const MOORDHANYAMULU = new Set(["ఋ", "ౠ", "ట", "ఠ", "డ", "ఢ", "ణ", "ష", "ఱ", "ర"]);
+    const DANTYAMULU = new Set(["ఌ", "ౡ", "త", "థ", "ద", "ధ", "ౘ", "ౙ", "ల", "స"]);
+    const OOSHTYAMULU = new Set(["ఉ", "ఊ", "ప", "ఫ", "బ", "భ", "మ"]);
+    const ANUNAASIKA_MULU = new Set(["ఙ", "ఞ", "ణ", "న", "మ"]);
+    const KANTHATAALAVYA_MULU = new Set(["ఎ", "ఏ", "ఐ"]);
+    const KANTHOSH_TYAMULU = new Set(["ఒ", "ఓ", "ఔ"]);
+    const DANTYOSH_TYAMULU = new Set(["వ"]);
+
+    //////////////////////////////////////////////////////////////////////////
+    // HELPER FUNCTIONS
+    //////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * Creates a simple 32-bit hash from a string for a unique ID.
+     */
     function simpleHash(str) {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
         const chr = str.charCodeAt(i);
         hash = ((hash << 5) - hash) + chr;
-        // Convert to 32-bit integer
-        hash |= 0;
+        hash |= 0; // Convert to 32bit integer
       }
-      // Return as unsigned (positive) 32-bit integer in hex
       return (hash >>> 0).toString(16);
     }
 
-    //////////////////////////////////////////////////////////////////////////
-    // 2) Data / Lookup sets
-    //////////////////////////////////////////////////////////////////////////
-    const HALANT = "్";
-
-    // Dependent->Independent vowel mapping
-    const dependentToIndependent = {
-      "ా": "ఆ", "ి": "ఇ", "ీ": "ఈ", "ు": "ఉ", "ూ": "ఊ", "ృ": "ఋ",
-      "ౄ": "ౠ", "ె": "ఎ", "ే": "ఏ", "ై": "ఐ", "ొ": "ఒ", "ో": "ఓ", "ౌ": "ఔ"
-    };
-
-    // Basic sets
-    const teluguConsonants = new Set([
-      "క", "ఖ", "గ", "ఘ", "ఙ", "చ", "ఛ", "జ", "ఝ", "ఞ", "ట", "ఠ", "డ", "ఢ", "ణ",
-      "త", "థ", "ద", "ధ", "న", "ప", "ఫ", "బ", "భ", "మ", "య", "ర", "ల", "వ",
-      "శ", "ష", "స", "హ", "ళ", "ఱ"
-    ]);
-
-    const longVowels = new Set(["ా", "ీ", "ూ", "ే", "ో", "ౌ", "ౄ"]);
-
-    const independentVowels = new Set([
-      "అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఋ", "ౠ", "ఎ", "ఏ", "ఐ", "ఒ", "ఓ", "ఔ"
-    ]);
-
-    const diacritics = new Set(["ం", "ః"]);
-
-    const dependentVowels = new Set(Object.keys(dependentToIndependent));
-
-    // ----------------- Additional Category Sets -----------------
-    const PLUTAMULU     = new Set(["ఐ", "ఔ"]);
-    const SARALAMULU    = new Set(["గ", "జ", "డ", "ద", "బ"]);
-    const PARUSHAMULU   = new Set(["క", "చ", "ట", "త", "ప"]);
-    const STHIRAMULU    = new Set([
-      "ఖ", "ఘ", "ఙ", "ఛ", "ఝ", "ఞ", "ఠ", "ఢ", "ణ", "థ", "ధ", "న",
-      "ఫ", "భ", "మ", "య", "ర", "ఱ", "ల", "ళ", "వ", "శ", "ష", "స", "హ"
-    ]);
-    const KA_VARGAMU    = new Set(["క", "ఖ", "గ", "ఘ", "ఙ"]);
-    const CHA_VARGAMU   = new Set(["చ", "ౘ", "ఛ", "జ", "ౙ", "ఝ", "ఞ"]);
-    const TA_VARGAMU   = new Set(["ట", "ఠ", "డ", "ఢ", "ణ"]);
-    const THA_VARGAMU  = new Set(["త", "థ", "ద", "ధ", "న"]);
-    const PA_VARGAMU   = new Set(["ప", "ఫ", "బ", "భ", "మ"]);
-    const SPARSHA_MULU  = new Set([...KA_VARGAMU, ...CHA_VARGAMU, ...TA_VARGAMU, ...THA_VARGAMU, ...PA_VARGAMU]);
-    const OOSHMA_MULU   = new Set(["శ", "స", "ష", "హ"]);
-    const ANTASTA_MULU  = new Set(["య", "ర", "ఱ", "ల", "ళ", "వ"]);
-    const KANTHYAMULU       = new Set(["అ", "ఆ", "క", "ఖ", "గ", "ఘ", "ఙ", "హ"]);
-    const TAALAVYAMULU     = new Set(["ఇ", "ఈ", "చ", "ఛ", "జ", "ఝ", "య", "శ"]);
-    const MOORDHANYAMULU   = new Set(["ఋ", "ౠ", "ట", "ఠ", "డ", "ఢ", "ణ", "ష", "ఱ", "ర"]);
-    const DANTYAMULU       = new Set(["ఌ", "ౡ", "త", "థ", "ద", "ధ", "ౘ", "ౙ", "ల", "స"]);
-    const OOSHTYAMULU      = new Set(["ఉ", "ఊ", "ప", "ఫ", "బ", "భ", "మ"]);
-    const ANUNAASIKAMULU    = new Set(["ఙ", "ఞ", "ణ", "న", "మ"]);
-    const KANTHATAALAVYA_MU = new Set(["ఎ", "ఏ", "ఐ"]);
-    const KANTHOSH_TYAMULU = new Set(["ఒ", "ఓ", "ఔ"]);
-    const DANTYOSH_TYAMULU  = new Set(["వ"]);
-
     function addLetterCategories(ch, categories) {
-      if (PLUTAMULU.has(ch))    categories.add("ప్లుతము");
-      if (SARALAMULU.has(ch))   categories.add("సరళము");
-      if (PARUSHAMULU.has(ch))  categories.add("పరుషము");
-      if (STHIRAMULU.has(ch))   categories.add("స్థిరము");
-      if (KA_VARGAMU.has(ch))   categories.add("క వర్గము");
-      if (CHA_VARGAMU.has(ch))  categories.add("చ వర్గము");
-      if (TA_VARGAMU.has(ch))   categories.add("ట వర్గము");
-      if (THA_VARGAMU.has(ch))  categories.add("త వర్గము");
-      if (PA_VARGAMU.has(ch))   categories.add("ప వర్గము");
-      if (SPARSHA_MULU.has(ch))   categories.add("స్పర్శము");
-      if (OOSHMA_MULU.has(ch))    categories.add("ఊష్మాము");
-      if (ANTASTA_MULU.has(ch))   categories.add("అంతస్తము");
-      if (KANTHYAMULU.has(ch))        categories.add("కంఠ్యము");
-      if (TAALAVYAMULU.has(ch))       categories.add("తాలవ్యము");
-      if (MOORDHANYAMULU.has(ch))     categories.add("మూర్ధన్యము");
-      if (DANTYAMULU.has(ch))         categories.add("దంత్యము");
-      if (OOSHTYAMULU.has(ch))        categories.add("ఓష్ఠ్యము");
-      if (ANUNAASIKAMULU.has(ch))     categories.add("అనునాసికము");
-      if (KANTHATAALAVYA_MU.has(ch))  categories.add("కంఠతాలవ్యము");
-      if (KANTHOSH_TYAMULU.has(ch))   categories.add("కంఠోష్ఠ్యము");
-      if (DANTYOSH_TYAMULU.has(ch))   categories.add("దంత్యోష్ఠ్యము");
+        if (PLUTAMULU.has(ch)) categories.add("ప్లుతములు");
+        if (SARALAMULU.has(ch)) categories.add("సరళములు");
+        if (PARUSHAMULU.has(ch)) categories.add("పరుషములు");
+        if (STHIRAMULU.has(ch)) categories.add("స్థిరములు");
+        if (KA_VARGAMU.has(ch)) categories.add("క వర్గము");
+        if (CHA_VARGAMU.has(ch)) categories.add("చ వర్గము");
+        if (TA_VARGAMU.has(ch)) categories.add("ట వర్గము");
+        if (THA_VARGAMU.has(ch)) categories.add("త వర్గము");
+        if (PA_VARGAMU.has(ch)) categories.add("ప వర్గము");
+        if (SPARSHA_MULU.has(ch)) categories.add("స్పర్శములు");
+        if (OOSHMA_MULU.has(ch)) categories.add("ఊష్మాలు");
+        if (ANTASTA_MULU.has(ch)) categories.add("అంతస్తములు");
+        if (KANTHYAMULU.has(ch)) categories.add("కంఠ్యములు");
+        if (TAALAVYAMULU.has(ch)) categories.add("తాలవ్యములు");
+        if (MOORDHANYAMULU.has(ch)) categories.add("మూర్ధన్యములు");
+        if (DANTYAMULU.has(ch)) categories.add("దంత్యములు");
+        if (OOSHTYAMULU.has(ch)) categories.add("ఓష్ఠ్యములు");
+        if (ANUNAASIKA_MULU.has(ch)) categories.add("అనునాసికములు");
+        if (KANTHATAALAVYA_MULU.has(ch)) categories.add("కంఠతాలవ్యములు");
+        if (KANTHOSH_TYAMULU.has(ch)) categories.add("కంఠోష్ఠ్యములు");
+        if (DANTYOSH_TYAMULU.has(ch)) categories.add("దంత్యోష్ఠ్యములు");
     }
+
+    //////////////////////////////////////////////////////////////////////////
+    // CORE LOGIC (v0.0.3a)
+    //////////////////////////////////////////////////////////////////////////
 
     function categorizeAksharam(aksharam) {
-      const categories = new Set();
-      if (independentVowels.has(aksharam)) categories.add("అచ్చు");
-      else if (diacritics.has(aksharam)) {
-        categories.add("అచ్చు");
-        if (aksharam === "ం") categories.add("అనుస్వరం");
-        else if (aksharam === "ః") categories.add("విసర్గ అక్షరం");
-      }
-      let hasConsonant = false;
-      for (let c of aksharam) if (teluguConsonants.has(c)) { hasConsonant = true; categories.add("హల్లు"); break; }
-      for (let lv of longVowels) if (aksharam.includes(lv)) { categories.add("దీర్ఘ అక్షరం"); break; }
-      if (aksharam.includes("ః")) categories.add("విసర్గ అక్షరం");
-      if (aksharam.includes("ం")) categories.add("అనుస్వరం");
-      let foundConjunct = false, foundDouble = false;
-      for (let i = 0; i < aksharam.length - 2; i++) {
-        if (teluguConsonants.has(aksharam[i]) && aksharam[i+1] === HALANT && teluguConsonants.has(aksharam[i+2])) {
-          if (aksharam[i] === aksharam[i+2]) foundDouble = true; else foundConjunct = true;
+        const categories = new Set();
+        if (independentVowels.has(aksharam[0])) {
+            categories.add("అచ్చు");
+        } else if (diacritics.has(aksharam)) {
+            categories.add("అచ్చు");
         }
-      }
-      if (foundConjunct) categories.add("సంయుక్తాక్షరం");
-      if (foundDouble) categories.add("ద్విత్వాక్షరం");
-      const isLetter = (categories.has("హల్లు") || categories.has("అచ్చు"));
-      const isLong = categories.has("దీర్ఘ అక్షరం"), isAnus = categories.has("అనుస్వరం"), isVis = categories.has("విసర్గ అక్షరం");
-      if (isLetter && !isLong && !isAnus && !isVis) categories.add("హ్రస్వాక్షరం");
-      for (let ch of aksharam) addLetterCategories(ch, categories);
-      let foundDiacritic = false;
-      for (let dvSign in dependentToIndependent) {
-        if (aksharam.includes(dvSign)) {
-          foundDiacritic = true;
-          addLetterCategories(dependentToIndependent[dvSign], categories);
+        if ([...aksharam].some(c => teluguConsonants.has(c))) {
+            categories.add("హల్లు");
         }
-      }
-      if (hasConsonant && !foundDiacritic) addLetterCategories("అ", categories);
-      return Array.from(categories).sort();
+        if ([...aksharam].some(c => longVowels.has(c))) {
+            categories.add("దీర్ఘ");
+        }
+        if (aksharam.includes("ః")) categories.add("విసర్గ అక్షరం");
+        if (aksharam.includes("ం")) categories.add("అనుస్వారం");
+
+        let foundConjunct = false;
+        let foundDouble = false;
+        for (let i = 0; i < aksharam.length - 2; i++) {
+            if (teluguConsonants.has(aksharam[i]) &&
+                aksharam[i + 1] === halant &&
+                teluguConsonants.has(aksharam[i + 2])) {
+                if (aksharam[i] === aksharam[i + 2]) {
+                    foundDouble = true;
+                } else {
+                    foundConjunct = true;
+                }
+            }
+        }
+        if (foundConjunct) categories.add("సంయుక్తాక్షరం");
+        if (foundDouble) categories.add("ద్విత్వాక్షరం");
+
+        if ((categories.has("హల్లు") || categories.has("అచ్చు")) &&
+            !categories.has("దీర్ఘ") &&
+            !categories.has("అనుస్వారం") &&
+            !categories.has("విసర్గ అక్షరం")) {
+            categories.add("హ్రస్వాక్షరం");
+        }
+
+        for (const ch of aksharam) {
+            addLetterCategories(ch, categories);
+        }
+
+        let foundDependentVowel = false;
+        for (const dvSign in dependentToIndependent) {
+            if (aksharam.includes(dvSign)) {
+                foundDependentVowel = true;
+                addLetterCategories(dependentToIndependent[dvSign], categories);
+                break; 
+            }
+        }
+
+        if ([...aksharam].some(c => teluguConsonants.has(c)) && !foundDependentVowel) {
+            addLetterCategories("అ", categories);
+        }
+
+        return Array.from(categories).sort();
     }
 
-    function splitAksharalu(text) {
-      const aksharalu = []; let i = 0;
-      while (i < text.length) {
-        const current = [];
-        if (teluguConsonants.has(text[i])) {
-          current.push(text[i]); i++;
-          while (i < text.length && text[i] === HALANT) {
-            current.push(text[i]); i++;
-            if (i < text.length && teluguConsonants.has(text[i])) { current.push(text[i]); i++; }
-            else break;
-          }
-          while (i < text.length && (dependentVowels.has(text[i]) || diacritics.has(text[i]))) {
-            current.push(text[i]); i++;
-          }
-        } else { current.push(text[i]); i++; }
-        aksharalu.push(current.join(""));
-      }
-      const finalAksharalu = [];
-      function isHalantChunk(ch) { return (ch.length === 2 && teluguConsonants.has(ch[0]) && ch[1] === HALANT); }
-      for (let chunk of aksharalu) {
-        if (finalAksharalu.length > 0 && isHalantChunk(chunk)) finalAksharalu[finalAksharalu.length - 1] += chunk;
-        else finalAksharalu.push(chunk);
-      }
-      return finalAksharalu;
+    function splitAksharalu(word) {
+        const aksharalu = [];
+        let i = 0;
+        const n = word.length;
+        while (i < n) {
+            let current = [];
+            const char = word[i];
+            if (teluguConsonants.has(char)) {
+                current.push(char);
+                i++;
+                while (i < n && word[i] === halant) {
+                    current.push(word[i]);
+                    i++;
+                    if (i < n && teluguConsonants.has(word[i])) {
+                        current.push(word[i]);
+                        i++;
+                    } else {
+                        break;
+                    }
+                }
+                while (i < n && (dependentVowels.has(word[i]) || diacritics.has(word[i]))) {
+                    current.push(word[i]);
+                    i++;
+                }
+            } else {
+                current.push(char);
+                i++;
+                if (independentVowels.has(char) && i < n && diacritics.has(word[i])) {
+                    current.push(word[i]);
+                    i++;
+                }
+            }
+            aksharalu.push(current.join(""));
+        }
+
+        if (aksharalu.length < 2) {
+            return aksharalu.filter(ak => ak);
+        }
+        const finalAksharalu = [];
+        let buffer = aksharalu[0];
+        for (let j = 1; j < aksharalu.length; j++) {
+            if (buffer.endsWith(halant)) {
+                buffer += aksharalu[j];
+            } else {
+                finalAksharalu.push(buffer);
+                buffer = aksharalu[j];
+            }
+        }
+        finalAksharalu.push(buffer);
+        return finalAksharalu.filter(ak => ak);
     }
 
-    function analyzeTeluguText(rawText) {
-      const sanitized = rawText.replace(/[^\u0C00-\u0C7F]+/g, "");
-      const uniqueId = simpleHash(sanitized);
-      const aksharaluList = splitAksharalu(sanitized);
-      const analysis = {};
-      for (let aksharam of aksharaluList) {
-        const tags = categorizeAksharam(aksharam);
-        if (!analysis[aksharam]) analysis[aksharam] = { tags, count: 0 };
-        analysis[aksharam].count++;
-      }
-      const categoryCounts = {};
-      for (let aksharam in analysis) {
-        const info = analysis[aksharam];
-        for (let cat of info.tags) {
-          if (!categoryCounts[cat]) categoryCounts[cat] = 0;
-          categoryCounts[cat] += info.count;
+    function analyzeTeluguWord(word) {
+        const sanitized = word.replace(/[^\u0C00-\u0C7F]+/g, "");
+        const uniqueId = simpleHash(sanitized);
+        const aksharaluList = splitAksharalu(sanitized);
+        const analysis = {};
+        const categoryCounts = {};
+
+        for (const aksharam of aksharaluList) {
+            const tags = categorizeAksharam(aksharam);
+            const key = aksharam;
+            if (!analysis[key]) {
+                analysis[key] = { tags, count: 0 };
+            }
+            analysis[key].count++;
         }
-      }
-      return { uniqueId, analysis, categoryCounts };
+        
+        for (const key in analysis) {
+            const info = analysis[key];
+            for (const cat of info.tags) {
+                categoryCounts[cat] = (categoryCounts[cat] || 0) + info.count;
+            }
+        }
+
+        return { uniqueId, analysis, categoryCounts };
     }
+
+    //////////////////////////////////////////////////////////////////////////
+    // UI AND DISPLAY LOGIC
+    //////////////////////////////////////////////////////////////////////////
+    let chartInstance = null;
 
     document.getElementById("analyzeBtn").addEventListener("click", () => {
-      const rawText = document.getElementById("teluguInput").value || "";
-      const resultsContainer = document.getElementById("resultsContainer");
-      if (!rawText.trim()) {
-        resultsContainer.innerHTML = "<p style='text-align:center; color:red;'>Please enter some Telugu text to analyze.</p>";
-        return;
-      }
-      const { uniqueId, analysis, categoryCounts } = analyzeTeluguText(rawText);
-      const sortedCats = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]); // Sort by count desc
-      const secondaryBanner = `<h2 class="analysis-heading">అక్షర విశ్లేషణ</h2>`;
-      const summaryHtml = `
-        <div class="summary-flex">
-          <div class="summary-col">
-            <div class="summary-box">
-              <h2>సమాచారం (Info)</h2>
-              <p><strong>Unique ID:</strong> ${uniqueId}</p>
-              <h3>Original Input:</h3>
-              <pre>${rawText.replace(/</g, "<").replace(/>/g, ">")}</pre>
-            </div>
-            <div class="summary-box">
-              <h2>వర్గాల వారీగా పై చార్ట్ (Category Pie Chart)</h2>
-              <div class="chart-container">
-                <canvas id="categoryChart"></canvas>
+        const rawText = document.getElementById("teluguInput").value || "";
+        const resultsContainer = document.getElementById("resultsContainer");
+
+        if (!rawText.trim()) {
+            resultsContainer.innerHTML = "<p style='text-align:center;'>దయచేసి విశ్లేషణ కోసం కొంత వాక్యాన్ని నమోదు చేయండి.</p>";
+            return;
+        }
+
+        const { uniqueId, analysis, categoryCounts } = analyzeTeluguWord(rawText);
+        const sortedCats = Object.keys(categoryCounts).sort();
+        const sortedAnalysis = Object.entries(analysis).sort((a, b) => b[1].count - a[1].count);
+
+        // --- Build HTML for display (v0.0.2a layout) ---
+        const summaryHtml = `
+            <div class="summary-flex">
+              <!-- LEFT COLUMN -->
+              <div class="summary-col">
+                <div class="summary-box">
+                  <h2>సమాచారం (Info)</h2>
+                  <p><strong>Unique ID:</strong> ${uniqueId}</p>
+                  <strong>Original Input:</strong>
+                  <pre>${rawText}</pre>
+                </div>
+                <div class="summary-box">
+                  <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                  </div>
+                </div>
+              </div>
+              <!-- RIGHT COLUMN -->
+              <div class="summary-box" style="flex:1;">
+                <h2>Category Counts</h2>
+                <table>
+                  <thead>
+                    <tr><th>Category</th><th>Count</th></tr>
+                  </thead>
+                  <tbody>
+                    ${sortedCats.map(cat => `
+                      <tr>
+                        <td>${cat}</td>
+                        <td>${categoryCounts[cat]}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
-          <div class="summary-box" style="flex: 1 1 300px; min-width:280px;"> <!-- Ensure right column has flex properties -->
-            <h2>వర్గాల గణన (Category Counts)</h2>
+        `;
+
+        const analysisTable = `
+            <h2 class="analysis-heading">అక్షర విశ్లేషణ</h2>
             <table>
-              <thead><tr><th>వర్గం (Category)</th><th>గణన (Count)</th></tr></thead>
+              <thead>
+                <tr><th>అక్షరం (Syllable)</th><th>గణన (Count)</th><th>వర్గాలు (Tags)</th></tr>
+              </thead>
               <tbody>
-                ${sortedCats.map(cat => `<tr><td>${cat}</td><td>${categoryCounts[cat]}</td></tr>`).join('')}
+                ${sortedAnalysis.map(([aksharam, info]) => `
+                  <tr>
+                    <td>${aksharam}</td>
+                    <td>${info.count}</td>
+                    <td>${info.tags.join(", ")}</td>
+                  </tr>
+                `).join('')}
               </tbody>
             </table>
-          </div>
-        </div>`;
-      const analysisTable = `
-        <h2>వివరణాత్మక విశ్లేషణ (Detailed Analysis)</h2>
-        <table>
-          <thead><tr><th>అక్షరం (Aksharam)</th><th>గణన (Count)</th><th>వర్గాలు (Tags)</th></tr></thead>
-          <tbody>
-            ${Object.entries(analysis).sort(([,a],[,b]) => b.count - a.count).map(([aksharam, info]) => `
-              <tr><td>${aksharam}</td><td>${info.count}</td><td>${info.tags.join(", ")}</td></tr>`).join('')}
-          </tbody>
-        </table>`;
-      resultsContainer.innerHTML = secondaryBanner + summaryHtml + analysisTable;
-      const ctx = document.getElementById('categoryChart').getContext('2d');
-      const backgroundColors = sortedCats.map((_, index) => `hsl(${(index * 360 / Math.max(1, sortedCats.length)) % 360}, 70%, 65%)`); // Added Math.max to prevent division by zero
-      new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: sortedCats,
-          datasets: [{
-            label: 'Category Counts',
-            data: sortedCats.map(cat => categoryCounts[cat]),
-            backgroundColor: backgroundColors,
-            borderColor: '#fff',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                  boxWidth: 12,
-                  font: {
-                      size: 11 // CORRECTED: Use a static number
-                  }
-              }
+        `;
+
+        resultsContainer.innerHTML = summaryHtml + analysisTable;
+
+        // --- Create Pie Chart ---
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        const backgroundColors = sortedCats.map((_, index) =>
+            `hsl(${index * (360 / sortedCats.length)}, 70%, 60%)`
+        );
+
+        chartInstance = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: sortedCats,
+                datasets: [{
+                    label: 'Category Count',
+                    data: sortedCats.map(cat => categoryCounts[cat]),
+                    backgroundColor: backgroundColors,
+                    borderColor: '#fff',
+                    borderWidth: 1
+                }]
             },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        let label = context.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.parsed !== null) {
-                            label += context.parsed;
-                        }
-                        const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
-                        const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) + '%' : '0%';
-                        label += ` (${percentage})`;
-                        return label;
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
                     }
                 }
             }
-          }
-        }
-      });
+        });
     });
   </script>
 
