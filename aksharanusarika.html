@@ -3,28 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>తెలుగు తునకలు: అక్షరానుసారిక: v0.0.3a</title>
+  <title> అక్షరానుసారిక v0.0.4a (aksharanusarika v0.0.4a)</title>
+  
+  <!-- Chart.js library for visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <style>
+    /* General Body and Font Styling */
     body {
       margin: 1rem auto;
       padding: 0 1rem;
-      max-width: 800px;
+      max-width: 900px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       line-height: 1.6;
       color: #333;
       background-color: #f8f9fa;
     }
+
+    /* Main Heading */
     .main-banner {
       text-align: center;
       margin-bottom: 1.5rem;
-      font-size: 1.8rem;
+      font-size: 2rem;
       color: #1971c2;
       border-bottom: 2px solid #4dabf7;
       padding-bottom: 0.5rem;
     }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      border-bottom: 2px solid #dee2e6;
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      border: none;
+      background-color: transparent;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #495057;
+      border-bottom: 3px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn:hover {
+      color: #1971c2;
+    }
+    .tab-btn.active {
+      color: #1c7ed6;
+      border-bottom-color: #1c7ed6;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Input and Buttons */
+    .input-group {
+        margin-bottom: 1rem;
+    }
     textarea {
       width: 100%;
-      min-height: 150px;
+      min-height: 120px;
       font-size: 1.1rem;
       padding: 0.75rem;
       box-sizing: border-box;
@@ -37,7 +80,7 @@
       border-color: #228be6;
       box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.2);
     }
-    button {
+    button.analyze-btn {
       display: block;
       margin: 1rem auto 0;
       padding: 0.75rem 1.5rem;
@@ -50,9 +93,11 @@
       color: white;
       transition: background-color 0.2s;
     }
-    button:hover {
+    button.analyze-btn:hover {
       background-color: #1c7ed6;
     }
+    
+    /* Results Area */
     .results-area {
       margin-top: 2rem;
     }
@@ -67,6 +112,7 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     th, td {
       border: 1px solid #dee2e6;
@@ -78,10 +124,11 @@
       font-weight: 600;
     }
     td:first-child {
-        font-weight: bold;
-        font-size: 1.1rem;
+      font-weight: bold;
+      font-size: 1.1rem;
     }
-    /* Layout from v0.0.2a */
+    
+    /* Responsive Flex Layout for Summaries */
     .summary-flex {
       display: flex;
       flex-wrap: wrap;
@@ -91,11 +138,7 @@
       margin-bottom: 2rem;
     }
     .summary-col {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem; /* space between boxes */
-      flex: 1 1 0; /* share space with the other column */
-      min-width: 300px;
+      flex: 1 1 300px;
     }
     .summary-box {
       padding: 1rem 1.5rem;
@@ -103,6 +146,7 @@
       border-radius: 8px;
       background: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
     }
     .summary-box h2 {
       margin-top: 0;
@@ -124,22 +168,86 @@
       height: 350px;
       width: 100%;
     }
+    .score-box {
+        text-align: center;
+        padding: 1rem;
+    }
+    .score-box .score-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1c7ed6;
+    }
+    .score-box .score-label {
+        font-size: 1rem;
+        color: #495057;
+    }
+    
+    /* Comparison Specific Styles */
+    .comparison-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    .comparison-features ul {
+        padding-left: 20px;
+        margin: 0;
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+      .tab-nav {
+        flex-direction: column;
+      }
+      .tab-btn {
+        text-align: center;
+        border-bottom: 2px solid #dee2e6;
+      }
+      .tab-btn.active {
+        border-bottom-color: #1c7ed6;
+      }
+    }
   </style>
-  <!-- Include Chart.js from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <h1 class="main-banner">తెలుగు తునకలు: అక్షరానుసారిక: v0.0.3a</h1>
+  <h1 class="main-banner">అక్షరానుసారిక v0.0.4a</h1>
+  <h2 class="main-banner">(aksharanusarika v0.0.4a)</h1>
+  
+  <!-- Tab Navigation -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="openTab('singleAnalysis')">పద విశ్లేషణ (Single string Analysis)</button>
+    <button class="tab-btn" onclick="openTab('comparativeAnalysis')">తులనాత్మక విశ్లేషణ (Comparative Analysis)</button>
+  </nav>
 
-  <textarea id="teluguInput" placeholder="మీ తెలుగు వాక్యాన్ని ఇక్కడ ఉంచండి..."></textarea><br />
-  <button id="analyzeBtn">విశ్లేషించు (Analyze)</button>
+  <!-- Tab 1: Single Analysis -->
+  <div id="singleAnalysis" class="tab-content active">
+    <div class="input-group">
+      <textarea id="singleInput" placeholder="మీ తెలుగు వాక్యాన్ని ఇక్కడ ఉంచండి..."></textarea>
+    </div>
+    <button id="analyzeSingleBtn" class="analyze-btn">విశ్లేషించు (Analyze)</button>
+    <div class="results-area" id="singleResultContainer"></div>
+  </div>
 
-  <div class="results-area" id="resultsContainer"></div>
+  <!-- Tab 2: Comparative Analysis -->
+  <div id="comparativeAnalysis" class="tab-content">
+    <div class="comparison-grid">
+      <div class="input-group">
+        <textarea id="compareInput1" placeholder="మొదటి పదం/వాక్యం..."></textarea>
+      </div>
+      <div class="input-group">
+        <textarea id="compareInput2" placeholder="రెండవ పదం/వాక్యం..."></textarea>
+      </div>
+    </div>
+    <button id="analyzeCompareBtn" class="analyze-btn">పోల్చు (Compare)</button>
+    <div class="results-area" id="compareResultContainer"></div>
+  </div>
 
   <script>
     //////////////////////////////////////////////////////////////////////////
-    // DATA AND CONSTANTS (v0.0.3a)
+    // LINGUISTIC DATA AND CONSTANTS (Ported from Python)
     //////////////////////////////////////////////////////////////////////////
     const dependentToIndependent = {
         "ా": "ఆ", "ి": "ఇ", "ీ": "ఈ", "ు": "ఉ", "ూ": "ఊ", "ృ": "ఋ",
@@ -158,7 +266,6 @@
     const diacritics = new Set(["ం", "ః"]);
     const dependentVowels = new Set(Object.keys(dependentToIndependent));
 
-    // Grammatical and Phonetic Sets
     const PLUTAMULU = new Set(["ఐ", "ఔ"]);
     const SARALAMULU = new Set(["గ", "జ", "డ", "ద", "బ"]);
     const PARUSHAMULU = new Set(["క", "చ", "ట", "త", "ప"]);
@@ -185,20 +292,17 @@
     const DANTYOSH_TYAMULU = new Set(["వ"]);
 
     //////////////////////////////////////////////////////////////////////////
-    // HELPER FUNCTIONS
+    // CORE LOGIC FUNCTIONS (Ported from Python)
     //////////////////////////////////////////////////////////////////////////
-    
-    /**
-     * Creates a simple 32-bit hash from a string for a unique ID.
-     */
+
     function simpleHash(str) {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
         const chr = str.charCodeAt(i);
         hash = ((hash << 5) - hash) + chr;
-        hash |= 0; // Convert to 32bit integer
+        hash |= 0;
       }
-      return (hash >>> 0).toString(16);
+      return 'id-' + (hash >>> 0).toString(16);
     }
 
     function addLetterCategories(ch, categories) {
@@ -225,63 +329,41 @@
         if (DANTYOSH_TYAMULU.has(ch)) categories.add("దంత్యోష్ఠ్యములు");
     }
 
-    //////////////////////////////////////////////////////////////////////////
-    // CORE LOGIC (v0.0.3a)
-    //////////////////////////////////////////////////////////////////////////
-
     function categorizeAksharam(aksharam) {
         const categories = new Set();
-        if (independentVowels.has(aksharam[0])) {
-            categories.add("అచ్చు");
-        } else if (diacritics.has(aksharam)) {
-            categories.add("అచ్చు");
-        }
-        if ([...aksharam].some(c => teluguConsonants.has(c))) {
-            categories.add("హల్లు");
-        }
-        if ([...aksharam].some(c => longVowels.has(c))) {
-            categories.add("దీర్ఘ");
-        }
+        if (independentVowels.has(aksharam[0])) categories.add("అచ్చు");
+        else if (diacritics.has(aksharam)) categories.add("అచ్చు");
+        
+        if ([...aksharam].some(c => teluguConsonants.has(c))) categories.add("హల్లు");
+        if ([...aksharam].some(c => longVowels.has(c))) categories.add("దీర్ఘ");
         if (aksharam.includes("ః")) categories.add("విసర్గ అక్షరం");
         if (aksharam.includes("ం")) categories.add("అనుస్వారం");
 
-        let foundConjunct = false;
-        let foundDouble = false;
+        let foundConjunct = false, foundDouble = false;
         for (let i = 0; i < aksharam.length - 2; i++) {
-            if (teluguConsonants.has(aksharam[i]) &&
-                aksharam[i + 1] === halant &&
-                teluguConsonants.has(aksharam[i + 2])) {
-                if (aksharam[i] === aksharam[i + 2]) {
-                    foundDouble = true;
-                } else {
-                    foundConjunct = true;
-                }
+            if (teluguConsonants.has(aksharam[i]) && aksharam[i+1] === halant && teluguConsonants.has(aksharam[i+2])) {
+                if (aksharam[i] === aksharam[i+2]) foundDouble = true;
+                else foundConjunct = true;
             }
         }
         if (foundConjunct) categories.add("సంయుక్తాక్షరం");
         if (foundDouble) categories.add("ద్విత్వాక్షరం");
 
-        if ((categories.has("హల్లు") || categories.has("అచ్చు")) &&
-            !categories.has("దీర్ఘ") &&
-            !categories.has("అనుస్వారం") &&
-            !categories.has("విసర్గ అక్షరం")) {
+        if ((categories.has("హల్లు") || categories.has("అచ్చు")) && !categories.has("దీర్ఘ") && !categories.has("అనుస్వారం") && !categories.has("విసర్గ అక్షరం")) {
             categories.add("హ్రస్వాక్షరం");
         }
 
-        for (const ch of aksharam) {
-            addLetterCategories(ch, categories);
-        }
+        for (const ch of aksharam) addLetterCategories(ch, categories);
 
         let foundDependentVowel = false;
         for (const dvSign in dependentToIndependent) {
             if (aksharam.includes(dvSign)) {
                 foundDependentVowel = true;
                 addLetterCategories(dependentToIndependent[dvSign], categories);
-                break; 
             }
         }
 
-        if ([...aksharam].some(c => teluguConsonants.has(c)) && !foundDependentVowel) {
+        if ([...aksharam].some(c => teluguConsonants.has(c)) && !foundDependentVowel && !aksharam.includes(halant)) {
             addLetterCategories("అ", categories);
         }
 
@@ -291,61 +373,37 @@
     function splitAksharalu(word) {
         const aksharalu = [];
         let i = 0;
-        const n = word.length;
-        while (i < n) {
-            let current = [];
-            const char = word[i];
-            if (teluguConsonants.has(char)) {
-                current.push(char);
-                i++;
-                while (i < n && word[i] === halant) {
-                    current.push(word[i]);
-                    i++;
-                    if (i < n && teluguConsonants.has(word[i])) {
-                        current.push(word[i]);
-                        i++;
-                    } else {
-                        break;
-                    }
+        while (i < word.length) {
+            let current = "";
+            if (teluguConsonants.has(word[i])) {
+                current += word[i++];
+                while (i < word.length && word[i] === halant) {
+                    current += word[i++];
+                    if (i < word.length && teluguConsonants.has(word[i])) {
+                        current += word[i++];
+                    } else break;
                 }
-                while (i < n && (dependentVowels.has(word[i]) || diacritics.has(word[i]))) {
-                    current.push(word[i]);
-                    i++;
+                while (i < word.length && (dependentVowels.has(word[i]) || diacritics.has(word[i]))) {
+                    current += word[i++];
                 }
             } else {
-                current.push(char);
-                i++;
-                if (independentVowels.has(char) && i < n && diacritics.has(word[i])) {
-                    current.push(word[i]);
-                    i++;
+                let char = word[i++];
+                current += char;
+                if (independentVowels.has(char) && i < word.length && diacritics.has(word[i])) {
+                    current += word[i++];
                 }
             }
-            aksharalu.push(current.join(""));
+            aksharalu.push(current);
         }
-
-        if (aksharalu.length < 2) {
-            return aksharalu.filter(ak => ak);
-        }
-        const finalAksharalu = [];
-        let buffer = aksharalu[0];
-        for (let j = 1; j < aksharalu.length; j++) {
-            if (buffer.endsWith(halant)) {
-                buffer += aksharalu[j];
-            } else {
-                finalAksharalu.push(buffer);
-                buffer = aksharalu[j];
-            }
-        }
-        finalAksharalu.push(buffer);
-        return finalAksharalu.filter(ak => ak);
+        return aksharalu.filter(ak => ak);
     }
-
+    
     function analyzeTeluguWord(word) {
         const sanitized = word.replace(/[^\u0C00-\u0C7F]+/g, "");
-        const uniqueId = simpleHash(sanitized);
         const aksharaluList = splitAksharalu(sanitized);
         const analysis = {};
         const categoryCounts = {};
+        let allTags = new Set();
 
         for (const aksharam of aksharaluList) {
             const tags = categorizeAksharam(aksharam);
@@ -360,120 +418,220 @@
             const info = analysis[key];
             for (const cat of info.tags) {
                 categoryCounts[cat] = (categoryCounts[cat] || 0) + info.count;
+                allTags.add(cat);
             }
         }
 
-        return { uniqueId, analysis, categoryCounts };
+        return {
+            word: sanitized,
+            uniqueId: simpleHash(sanitized),
+            aksharalu: Object.entries(analysis).map(([aksharam, data]) => ({ aksharam, ...data })),
+            categoryCounts,
+            tags: allTags
+        };
+    }
+    
+    function compareTeluguWords(word1, word2) {
+        const analysis1 = analyzeTeluguWord(word1);
+        const analysis2 = analyzeTeluguWord(word2);
+
+        const tags1 = analysis1.tags;
+        const tags2 = analysis2.tags;
+
+        const commonTags = new Set([...tags1].filter(tag => tags2.has(tag)));
+        const allTagsUnion = new Set([...tags1, ...tags2]);
+        const uniqueToWord1 = new Set([...tags1].filter(tag => !tags2.has(tag)));
+        const uniqueToWord2 = new Set([...tags2].filter(tag => !tags1.has(tag)));
+
+        const jaccardSimilarity = allTagsUnion.size > 0 ? commonTags.size / allTagsUnion.size : 0;
+        const jaccardDistance = 1.0 - jaccardSimilarity;
+
+        return {
+            word1Analysis: analysis1,
+            word2Analysis: analysis2,
+            comparison: {
+                commonTags: Array.from(commonTags).sort(),
+                uniqueToWord1: Array.from(uniqueToWord1).sort(),
+                uniqueToWord2: Array.from(uniqueToWord2).sort(),
+                jaccardSimilarity,
+                jaccardDistance
+            }
+        };
     }
 
     //////////////////////////////////////////////////////////////////////////
     // UI AND DISPLAY LOGIC
     //////////////////////////////////////////////////////////////////////////
-    let chartInstance = null;
+    
+    // Global state for charts to prevent duplicates
+    let singleChartInstance = null;
+    let compareChartInstance = null;
 
-    document.getElementById("analyzeBtn").addEventListener("click", () => {
-        const rawText = document.getElementById("teluguInput").value || "";
-        const resultsContainer = document.getElementById("resultsContainer");
+    // --- Tab Switching Logic ---
+    function openTab(tabName) {
+        const tabContents = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove("active");
+        }
+        const tabButtons = document.getElementsByClassName("tab-btn");
+        for (let i = 0; i < tabButtons.length; i++) {
+            tabButtons[i].classList.remove("active");
+        }
+        document.getElementById(tabName).classList.add("active");
+        event.currentTarget.classList.add("active");
+    }
+    
+    // --- Single Analysis ---
+    document.getElementById("analyzeSingleBtn").addEventListener("click", () => {
+        const rawText = document.getElementById("singleInput").value;
+        const resultsContainer = document.getElementById("singleResultContainer");
 
         if (!rawText.trim()) {
             resultsContainer.innerHTML = "<p style='text-align:center;'>దయచేసి విశ్లేషణ కోసం కొంత వాక్యాన్ని నమోదు చేయండి.</p>";
             return;
         }
 
-        const { uniqueId, analysis, categoryCounts } = analyzeTeluguWord(rawText);
-        const sortedCats = Object.keys(categoryCounts).sort();
-        const sortedAnalysis = Object.entries(analysis).sort((a, b) => b[1].count - a[1].count);
+        const { uniqueId, aksharalu, categoryCounts } = analyzeTeluguWord(rawText);
+        const sortedCats = Object.entries(categoryCounts).sort((a,b) => b[1] - a[1]);
+        const sortedAksharalu = aksharalu.sort((a,b) => b.count - a.count);
 
-        // --- Build HTML for display (v0.0.2a layout) ---
         const summaryHtml = `
             <div class="summary-flex">
-              <!-- LEFT COLUMN -->
               <div class="summary-col">
                 <div class="summary-box">
                   <h2>సమాచారం (Info)</h2>
                   <p><strong>Unique ID:</strong> ${uniqueId}</p>
-                  <strong>Original Input:</strong>
-                  <pre>${rawText}</pre>
+                  <strong>Original Input:</strong><pre>${rawText}</pre>
                 </div>
                 <div class="summary-box">
-                  <div class="chart-container">
-                    <canvas id="categoryChart"></canvas>
-                  </div>
+                  <div class="chart-container"><canvas id="singleCategoryChart"></canvas></div>
                 </div>
               </div>
-              <!-- RIGHT COLUMN -->
-              <div class="summary-box" style="flex:1;">
-                <h2>Category Counts</h2>
-                <table>
-                  <thead>
-                    <tr><th>Category</th><th>Count</th></tr>
-                  </thead>
-                  <tbody>
-                    ${sortedCats.map(cat => `
-                      <tr>
-                        <td>${cat}</td>
-                        <td>${categoryCounts[cat]}</td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
+              <div class="summary-col">
+                <div class="summary-box">
+                  <h2>Category Counts</h2>
+                  <table>
+                    <thead><tr><th>Category</th><th>Count</th></tr></thead>
+                    <tbody>
+                      ${sortedCats.map(([cat, count]) => `<tr><td>${cat}</td><td>${count}</td></tr>`).join('')}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-        `;
+            </div>`;
 
         const analysisTable = `
             <h2 class="analysis-heading">అక్షర విశ్లేషణ</h2>
             <table>
-              <thead>
-                <tr><th>అక్షరం (Syllable)</th><th>గణన (Count)</th><th>వర్గాలు (Tags)</th></tr>
-              </thead>
+              <thead><tr><th>అక్షరం</th><th>గణన</th><th>వర్గాలు</th></tr></thead>
               <tbody>
-                ${sortedAnalysis.map(([aksharam, info]) => `
-                  <tr>
-                    <td>${aksharam}</td>
-                    <td>${info.count}</td>
-                    <td>${info.tags.join(", ")}</td>
-                  </tr>
-                `).join('')}
+                ${sortedAksharalu.map(info => `<tr><td>${info.aksharam}</td><td>${info.count}</td><td>${info.tags.join(", ")}</td></tr>`).join('')}
               </tbody>
-            </table>
-        `;
+            </table>`;
 
         resultsContainer.innerHTML = summaryHtml + analysisTable;
 
-        // --- Create Pie Chart ---
-        if (chartInstance) {
-            chartInstance.destroy();
-        }
-        const ctx = document.getElementById('categoryChart').getContext('2d');
-        const backgroundColors = sortedCats.map((_, index) =>
-            `hsl(${index * (360 / sortedCats.length)}, 70%, 60%)`
-        );
-
-        chartInstance = new Chart(ctx, {
+        if (singleChartInstance) singleChartInstance.destroy();
+        const ctx = document.getElementById('singleCategoryChart').getContext('2d');
+        const labels = sortedCats.map(item => item[0]);
+        singleChartInstance = new Chart(ctx, {
             type: 'pie',
             data: {
-                labels: sortedCats,
+                labels: labels,
                 datasets: [{
                     label: 'Category Count',
-                    data: sortedCats.map(cat => categoryCounts[cat]),
-                    backgroundColor: backgroundColors,
-                    borderColor: '#fff',
+                    data: sortedCats.map(item => item[1]),
+                    backgroundColor: labels.map((_, i) => `hsl(${i * (360 / labels.length)}, 70%, 60%)`),
                     borderWidth: 1
                 }]
             },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+        });
+    });
+
+    // --- Comparative Analysis ---
+    document.getElementById("analyzeCompareBtn").addEventListener("click", () => {
+        const text1 = document.getElementById("compareInput1").value;
+        const text2 = document.getElementById("compareInput2").value;
+        const resultsContainer = document.getElementById("compareResultContainer");
+
+        if (!text1.trim() || !text2.trim()) {
+            resultsContainer.innerHTML = "<p style='text-align:center;'>దయచేసి పోలిక కోసం రెండు టెక్స్ట్ బాక్స్‌లలో వాక్యాన్ని నమోదు చేయండి.</p>";
+            return;
+        }
+        
+        const { word1Analysis, word2Analysis, comparison } = compareTeluguWords(text1, text2);
+        
+        const resultsHtml = `
+            <div class="summary-flex">
+              <!-- Word 1 Info -->
+              <div class="summary-box summary-col">
+                <h2>మొదటి వాక్యం</h2>
+                <p><strong>Unique ID:</strong> ${word1Analysis.uniqueId}</p>
+                <pre>${text1}</pre>
+              </div>
+              <!-- Word 2 Info -->
+              <div class="summary-box summary-col">
+                <h2>రెండవ వాక్యం</h2>
+                <p><strong>Unique ID:</strong> ${word2Analysis.uniqueId}</p>
+                <pre>${text2}</pre>
+              </div>
+            </div>
+            
+            <h2 class="analysis-heading">పోలిక కొలమానాలు (Comparison Metrics)</h2>
+            <div class="summary-flex">
+                <div class="summary-box summary-col score-box">
+                    <div class="score-value">${comparison.jaccardSimilarity.toFixed(3)}</div>
+                    <div class="score-label">Jaccard Similarity</div>
+                </div>
+                <div class="summary-box summary-col score-box">
+                    <div class="score-value">${comparison.jaccardDistance.toFixed(3)}</div>
+                    <div class="score-label">Jaccard Distance</div>
+                </div>
+            </div>
+            
+            <div class="summary-box">
+                <h2>లక్షణాల పోలిక (Feature Comparison)</h2>
+                <div class="chart-container" style="height: 250px;"><canvas id="compareChart"></canvas></div>
+            </div>
+
+            <div class="comparison-grid">
+                <div class="summary-box comparison-features">
+                    <h2>సాధారణ లక్షణాలు (${comparison.commonTags.length})</h2>
+                    <ul>${comparison.commonTags.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul>
+                </div>
+                <div class="summary-box comparison-features">
+                    <h2>ప్రత్యేక లక్షణాలు (Unique Features)</h2>
+                    <p><strong>'${word1Analysis.word}'లో మాత్రమే (${comparison.uniqueToWord1.length}):</strong></p>
+                    <ul>${comparison.uniqueToWord1.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul>
+                    <hr>
+                    <p><strong>'${word2Analysis.word}'లో మాత్రమే (${comparison.uniqueToWord2.length}):</strong></p>
+                    <ul>${comparison.uniqueToWord2.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul>
+                </div>
+            </div>
+        `;
+        resultsContainer.innerHTML = resultsHtml;
+        
+        if (compareChartInstance) compareChartInstance.destroy();
+        const ctx = document.getElementById('compareChart').getContext('2d');
+        compareChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Linguistic Features'],
+                datasets: [
+                    { label: 'Common', data: [comparison.commonTags.length], backgroundColor: '#4dabf7' },
+                    { label: `Unique to '${word1Analysis.word}'`, data: [comparison.uniqueToWord1.length], backgroundColor: '#74c0fc' },
+                    { label: `Unique to '${word2Analysis.word}'`, data: [comparison.uniqueToWord2.length], backgroundColor: '#a5d8ff' }
+                ]
+            },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    }
-                }
+                indexAxis: 'y',
+                scales: { x: { stacked: true }, y: { stacked: true } },
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } }
             }
         });
     });
   </script>
-
 </body>
 </html>
