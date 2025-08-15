@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> అక్షరానుసారిక v0.0.4a (aksharanusarika v0.0.4a)</title>
+  <title>అక్షరానుసారిక v0.0.4a (aksharanusarika v0.0.4a)</title>
   
   <!-- Chart.js library for visualizations -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -193,8 +193,17 @@
         margin: 0;
     }
 
+    /* Wrapper for scrollable tables */
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+    }
+
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
+      .main-banner {
+        font-size: 1.7rem;
+      }
       .comparison-grid {
         grid-template-columns: 1fr;
       }
@@ -208,12 +217,19 @@
       .tab-btn.active {
         border-bottom-color: #1c7ed6;
       }
+      .chart-container {
+        height: 300px;
+      }
+      .summary-box {
+        padding: 1rem;
+      }
     }
   </style>
 </head>
 <body>
 
-  <h1 class="main-banner">అక్షరానుసారిక v0.0.4a</h1>  
+  <h1 class="main-banner">అక్షరానుసారిక v0.0.4a</h1>
+  
   <!-- Tab Navigation -->
   <nav class="tab-nav">
     <button class="tab-btn active" onclick="openTab('singleAnalysis')">పద విశ్లేషణ (Single string Analysis)</button>
@@ -508,24 +524,28 @@
               <div class="summary-col">
                 <div class="summary-box">
                   <h2>Category Counts</h2>
-                  <table>
-                    <thead><tr><th>Category</th><th>Count</th></tr></thead>
-                    <tbody>
-                      ${sortedCats.map(([cat, count]) => `<tr><td>${cat}</td><td>${count}</td></tr>`).join('')}
-                    </tbody>
-                  </table>
+                  <div class="table-wrapper">
+                    <table>
+                      <thead><tr><th>Category</th><th>Count</th></tr></thead>
+                      <tbody>
+                        ${sortedCats.map(([cat, count]) => `<tr><td>${cat}</td><td>${count}</td></tr>`).join('')}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>`;
 
         const analysisTable = `
             <h2 class="analysis-heading">అక్షర విశ్లేషణ</h2>
-            <table>
-              <thead><tr><th>అక్షరం</th><th>గణన</th><th>వర్గాలు</th></tr></thead>
-              <tbody>
-                ${sortedAksharalu.map(info => `<tr><td>${info.aksharam}</td><td>${info.count}</td><td>${info.tags.join(", ")}</td></tr>`).join('')}
-              </tbody>
-            </table>`;
+            <div class="table-wrapper">
+              <table>
+                <thead><tr><th>అక్షరం</th><th>గణన</th><th>వర్గాలు</th></tr></thead>
+                <tbody>
+                  ${sortedAksharalu.map(info => `<tr><td>${info.aksharam}</td><td>${info.count}</td><td>${info.tags.join(", ")}</td></tr>`).join('')}
+                </tbody>
+              </table>
+            </div>`;
 
         resultsContainer.innerHTML = summaryHtml + analysisTable;
 
@@ -631,5 +651,6 @@
         });
     });
   </script>
+
 </body>
 </html>
