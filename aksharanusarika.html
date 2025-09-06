@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>aksharanusarika v0.0.5a అక్షరానుసారిక v0.0.5a</title>
+  <title>aksharanusarika v0.0.6a అక్షరానుసారిక v0.0.6a</title>
   
-  <!-- Chart.js library for visualizations -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
@@ -142,12 +141,13 @@
       display: flex;
       flex-wrap: wrap;
       gap: 1.5rem;
-      align-items: flex-start;
+      align-items: stretch; /* Changed to stretch for equal height columns */
       margin-top: 1.5rem;
-      margin-bottom: 2rem;
     }
     .summary-col {
       flex: 1 1 100%; /* Default to full width on mobile */
+      display: flex; /* Enable flex for children */
+      flex-direction: column; /* Stack children vertically */
     }
     .summary-box {
       padding: 1rem 1.5rem;
@@ -155,7 +155,9 @@
       border-radius: 8px;
       background: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      margin-bottom: 1.5rem;
+      width: 100%;
+      box-sizing: border-box;
+      flex-grow: 1; /* Allow box to grow */
     }
     .summary-box h2 {
       margin-top: 0;
@@ -232,6 +234,33 @@
         text-align: center;
         word-break: break-all;
     }
+    
+    /* Gana Combination Styles */
+    .gana-combinations-list {
+        padding-left: 0;
+        list-style: none;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1rem;
+        max-height: 400px; /* Add scroll for very long lists */
+        overflow-y: auto;
+    }
+    .gana-combinations-list li {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+        border: 1px solid #e9ecef;
+    }
+    .gana-combinations-list .gana-part {
+        display: inline-block;
+    }
+    .gana-combinations-list .syllable {
+        color: #d9480f; /* Orange color for syllables */
+        font-weight: bold;
+    }
+    .gana-combinations-list .gana-name {
+        color: #1864ab; /* Blue color for Gana name */
+    }
 
     /* Desktop and Tablet Responsiveness */
     @media (min-width: 600px) {
@@ -246,7 +275,8 @@
             flex-grow: 0; /* Let buttons take their natural width */
         }
         .summary-col {
-            flex: 1 1 300px; /* Two columns on larger screens */
+            flex-basis: 0; /* Allow columns to grow/shrink equally */
+            flex-grow: 1;
         }
         .comparison-grid {
             grid-template-columns: 1fr 1fr; /* Two columns on larger screens */
@@ -260,15 +290,13 @@
 <body>
 
 <div class="container">
-  <h1 class="main-banner">అక్షరానుసారిక v0.0.5a</h1>
+  <h1 class="main-banner">అక్షరానుసారిక v0.0.6a</h1>
 
-  <!-- Tab Navigation -->
   <nav class="tab-nav">
-    <button class="tab-btn active" onclick="openTab('singleAnalysis')">అక్షర విశ్లేషణ (Single Analysis)</button>
-    <button class="tab-btn" onclick="openTab('comparativeAnalysis')">తులనాత్మక విశ్లేషణ (Comparative Analysis)</button>
+    <button class="tab-btn active" onclick="openTab(event, 'singleAnalysis')">అక్షర విశ్లేషణ (Single Analysis)</button>
+    <button class="tab-btn" onclick="openTab(event, 'comparativeAnalysis')">తులనాత్మక విశ్లేషణ (Comparative Analysis)</button>
   </nav>
 
-  <!-- Tab 1: Single Analysis -->
   <div id="singleAnalysis" class="tab-content active">
     <div class="input-group">
       <textarea id="singleInput" placeholder="మీ తెలుగు వాక్యాన్ని ఇక్కడ ఉంచండి..."></textarea>
@@ -277,7 +305,6 @@
     <div class="results-area" id="singleResultContainer"></div>
   </div>
 
-  <!-- Tab 2: Comparative Analysis -->
   <div id="comparativeAnalysis" class="tab-content">
     <div class="comparison-grid">
       <div class="input-group">
@@ -294,7 +321,7 @@
 
   <script>
     //////////////////////////////////////////////////////////////////////////
-    // LINGUISTIC DATA AND CONSTANTS (v0.0.5a)
+    // LINGUISTIC DATA AND CONSTANTS (v0.0.6a)
     //////////////////////////////////////////////////////////////////////////
     const dependentToIndependent = {
         "ా": "ఆ", "ి": "ఇ", "ీ": "ఈ", "ు": "ఉ", "ూ": "ఊ", "ృ": "ఋ",
@@ -338,9 +365,18 @@
     const KANTHATAALAVYA_MULU = new Set(["ఎ", "ఏ", "ఐ"]);
     const KANTHOSH_TYAMULU = new Set(["ఒ", "ఓ", "ఔ"]);
     const DANTYOSH_TYAMULU = new Set(["వ"]);
+    
+    const GANA_DEFINITIONS = {
+        "Ekaakshara Ganas (1-Syllable)": {"U": "Guru", "I": "Laghu"},
+        "Rendakshara Ganas (2-Syllable)": {"II": "Lalamu", "IU": "Lagamu (Va)", "UI": "Galamu (Ha)", "UU": "Gagamu"},
+        "Moodakshara Ganas (3-Syllable)": {"IUU": "Ya", "UUU": "Ma", "UUI": "Ta", "UIU": "Ra", "IUI": "Ja", "UII": "Bha", "III": "Na", "IIU": "Sa"},
+        "Surya Ganas": {"III": "Na", "UI": "Ha"},
+        "Indra Ganas": {"IIIU": "Naga", "IIUI": "Sala", "IIII": "Nala", "UII": "Bha", "UIU": "Ra", "UUI": "Ta"},
+        "Chandra Ganas": {"UIII": "Bhala", "UIIU": "Bhagaru", "UUII": "Tala", "UUIU": "Taga", "UUUI": "Malagha", "IIIII": "Nalala", "IIIUU": "Nagaga", "IIIIU": "Nava", "IIUUI": "Saha", "IIUIU": "Sava", "IIUUU": "Sagaga", "IIIUI": "Naha", "UIUU": "Raguru", "IIII": "Nala"}
+    };
 
     //////////////////////////////////////////////////////////////////////////
-    // CORE LOGIC FUNCTIONS (v0.0.5a)
+    // CORE LOGIC FUNCTIONS (v0.0.6a)
     //////////////////////////////////////////////////////////////////////////
 
     function simpleHash(str) {
@@ -512,6 +548,73 @@
         return ganamMarkers;
     }
 
+    class GanaAnalyzer {
+        constructor(definitions) {
+            this.definitions = definitions;
+            this.flatGanas = this._flattenDefinitions(definitions);
+            this.memo = {};
+        }
+
+        _flattenDefinitions(definitions) {
+            const flatMap = {};
+            for (const category in definitions) {
+                for (const pattern in definitions[category]) {
+                    flatMap[pattern] = definitions[category][pattern];
+                }
+            }
+            return flatMap;
+        }
+
+        findSequentialCombinations(syllables) {
+            this.memo = {}; // Reset memo for each new analysis
+            return this._findCombinationsRecursiveMemoized(syllables);
+        }
+
+        _findCombinationsRecursiveMemoized(remainingSyllables) {
+            const key = remainingSyllables.join(',');
+            if (key in this.memo) {
+                return this.memo[key];
+            }
+            if (remainingSyllables.length === 0) {
+                return [[]];
+            }
+
+            const allPossiblePartitions = [];
+            for (let i = 1; i <= remainingSyllables.length; i++) {
+                const prefix = remainingSyllables.slice(0, i).join('');
+                if (prefix in this.flatGanas) {
+                    const ganaInfo = { name: this.flatGanas[prefix], pattern: prefix };
+                    const suffix = remainingSyllables.slice(i);
+                    const suffixCombinations = this._findCombinationsRecursiveMemoized(suffix);
+                    for (const combo of suffixCombinations) {
+                        allPossiblePartitions.push([ganaInfo, ...combo]);
+                    }
+                }
+            }
+            this.memo[key] = allPossiblePartitions;
+            return allPossiblePartitions;
+        }
+    }
+    
+    function mapSyllablesToPartition(partition, syllables) {
+        const mappedPartition = [];
+        let syllableIndex = 0;
+        for (const gana of partition) {
+            const patternLen = gana.pattern.length;
+            const syllableSlice = syllables.slice(syllableIndex, syllableIndex + patternLen);
+            const syllableText = syllableSlice.join('');
+            
+            mappedPartition.push({
+                syllable_text: syllableText,
+                name: gana.name,
+                pattern: gana.pattern
+            });
+            syllableIndex += patternLen;
+        }
+        return mappedPartition;
+    }
+
+
     function calculateGanaJaccard(markers1, markers2) {
         const getBigrams = (markers) => {
             const bigrams = new Set();
@@ -644,8 +747,10 @@
     let singleGanaChartInstance = null;
     let compareChartInstance = null;
     let compareGanaChartInstance = null;
+    
+    const ganaAnalyzer = new GanaAnalyzer(GANA_DEFINITIONS);
 
-    function openTab(tabName) {
+    function openTab(event, tabName) {
         document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
         document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
         document.getElementById(tabName).classList.add("active");
@@ -654,19 +759,59 @@
 
     function createGanaTable(aksharaluList, ganaMarkers) {
         if (!ganaMarkers || ganaMarkers.length === 0) return '';
+        const pureAksharalu = aksharaluList.filter(ak => !ignorable_chars.has(ak));
+        const pureMarkers = ganaMarkers.filter(m => m !== "");
+        if(pureMarkers.length === 0) return '';
+
         let tableRows = '';
-        aksharaluList.forEach((aksharam, i) => {
-            if (ganaMarkers[i] !== "") {
-                tableRows += `<tr><td>${aksharam}</td><td>${ganaMarkers[i]}</td></tr>`;
-            }
+        pureAksharalu.forEach((aksharam, i) => {
+            tableRows += `<tr><td>${aksharam}</td><td>${pureMarkers[i]}</td></tr>`;
         });
-        if (!tableRows) return '';
+        
         return `
             <h2 class="analysis-heading">గురు లఘు విభజన (Prosody Analysis)</h2>
             <table>
               <thead><tr><th>అక్షరం</th><th>గురులఘువులు (Guru/Laghu)</th></tr></thead>
               <tbody>${tableRows}</tbody>
             </table>`;
+    }
+
+    function createGanaCombinationsHtml(aksharaluList, ganaMarkers) {
+        const pureAksharalu = aksharaluList.filter(ak => !ignorable_chars.has(ak));
+        const pureGanas = ganaMarkers.filter(m => m !== "");
+        
+        if (pureGanas.length === 0) return '';
+
+        const sequentialCombos = ganaAnalyzer.findSequentialCombinations(pureGanas);
+        
+        if (sequentialCombos.length === 0) return '';
+        
+        let listItems = '';
+        if (sequentialCombos.length <= 50) {
+            sequentialCombos.forEach((combo, index) => {
+                const mappedCombo = mapSyllablesToPartition(combo, pureAksharalu);
+                const partitionStr = mappedCombo.map(gana => 
+                    `<span class="gana-part"><span class="syllable">${gana.syllable_text}</span> - <span class="gana-name">${gana.name}(${gana.pattern})</span></span>`
+                ).join(' + ');
+                listItems += `<li>${partitionStr}</li>`;
+            });
+        } else {
+            const firstCombo = mapSyllablesToPartition(sequentialCombos[0], pureAksharalu);
+            const partitionStr = firstCombo.map(gana => 
+                `<span class="gana-part"><span class="syllable">${gana.syllable_text}</span> - <span class="gana-name">${gana.name}(${gana.pattern})</span></span>`
+            ).join(' + ');
+            listItems += `<li><i>(Showing 1 of ${sequentialCombos.length})</i> ${partitionStr}</li>`;
+        }
+        
+        // REFACTORED: Returns only the inner content for better reusability
+        return `
+            <h2 class="analysis-heading" style="margin-top: 2.5rem; margin-bottom: 1rem;">వివరణాత్మక గణ కలయికలు</h2>
+            <div class="summary-box" style="margin-bottom:0;">
+              <h2>${sequentialCombos.length} possible way(s) to partition</h2>
+              <ul class="gana-combinations-list">
+                  ${listItems}
+              </ul>
+            </div>`;
     }
 
     function createGanaChart(canvasId, chartInstance, datasets) {
@@ -723,8 +868,10 @@
         const analysisTable = `<h2 class="analysis-heading">అక్షర విశ్లేషణ</h2><table><thead><tr><th>అక్షరం</th><th>గణన</th><th>వర్గాలు</th></tr></thead><tbody>${sortedAksharalu.map(info => `<tr><td>${info.aksharam}</td><td>${info.count}</td><td>${info.tags.join(", ")}</td></tr>`).join('')}</tbody></table>`;
         const ganaTable = createGanaTable(aksharaluList, ganaMarkers);
         const ganaChartHtml = `<div class="summary-box"><div class="chart-container"><canvas id="singleGanaChart"></canvas></div></div>`;
+        
+        const ganaCombinationsHtml = createGanaCombinationsHtml(aksharaluList, ganaMarkers);
 
-        resultsContainer.innerHTML = summaryHtml + analysisTable + ganaTable + ganaChartHtml;
+        resultsContainer.innerHTML = summaryHtml + analysisTable + ganaTable + ganaCombinationsHtml + ganaChartHtml;
 
         if (singleChartInstance) singleChartInstance.destroy();
         const ctxPie = document.getElementById('singleCategoryChart').getContext('2d');
@@ -753,6 +900,21 @@
         
         const ganaTable1 = createGanaTable(word1Analysis.aksharaluList, word1Analysis.ganaMarkers);
         const ganaTable2 = createGanaTable(word2Analysis.aksharaluList, word2Analysis.ganaMarkers);
+
+        // Generate detailed combinations HTML for both inputs
+        const ganaCombinationsHtml1 = createGanaCombinationsHtml(word1Analysis.aksharaluList, word1Analysis.ganaMarkers);
+        const ganaCombinationsHtml2 = createGanaCombinationsHtml(word2Analysis.aksharaluList, word2Analysis.ganaMarkers);
+
+        // Conditionally create the combinations row only if there's content to show
+        let combinationsRowHtml = '';
+        if (ganaCombinationsHtml1 || ganaCombinationsHtml2) {
+            combinationsRowHtml = `
+                <div class="summary-flex">
+                    <div class="summary-col">${ganaCombinationsHtml1 || '<div class="summary-box"></div>'}</div>
+                    <div class="summary-col">${ganaCombinationsHtml2 || '<div class="summary-box"></div>'}</div>
+                </div>`;
+        }
+
         const ganaChartCompareHtml = `<h2 class="analysis-heading">గురు లఘు క్రమ పోలిక (Guru, Laghu Sequence Comparison)</h2><div class="summary-box"><div class="chart-container"><canvas id="compareGanaChart"></canvas></div></div>`;
         
         const lcsPanelHtml = `
@@ -772,12 +934,27 @@
                     <div class="lcs-result">${comparison.lcs.join(' ') || 'None'}</div>
                 </div>
             </div>`;
-
+        
         const resultsHtml = `
             <div class="summary-flex">
-              <div class="summary-box summary-col"><h2>మొదటి వాక్యం</h2><p><strong>Unique ID:</strong> ${word1Analysis.uniqueId}</p><pre>${text1}</pre>${ganaTable1}</div>
-              <div class="summary-box summary-col"><h2>రెండవ వాక్యం</h2><p><strong>Unique ID:</strong> ${word2Analysis.uniqueId}</p><pre>${text2}</pre>${ganaTable2}</div>
+              <div class="summary-col">
+                <div class="summary-box">
+                    <h2>మొదటి వాక్యం</h2>
+                    <p><strong>Unique ID:</strong> ${word1Analysis.uniqueId}</p>
+                    <pre>${text1}</pre>
+                    ${ganaTable1}
+                </div>
+              </div>
+              <div class="summary-col">
+                <div class="summary-box">
+                    <h2>రెండవ వాక్యం</h2>
+                    <p><strong>Unique ID:</strong> ${word2Analysis.uniqueId}</p>
+                    <pre>${text2}</pre>
+                    ${ganaTable2}
+                </div>
+              </div>
             </div>
+            ${combinationsRowHtml}
             <h2 class="analysis-heading">పోలిక కొలమానాలు (Comparison Metrics)</h2>
             <div class="summary-flex">
                 <div class="summary-box summary-col score-box"><div class="score-value">${comparison.jaccardSimilarity.toFixed(3)}</div><div class="score-label">Linguistic Jaccard Similarity</div></div>
@@ -788,7 +965,7 @@
             ${ganaChartCompareHtml}
             ${lcsPanelHtml}
             <div class="summary-box"><h2>లక్షణాల పోలిక (Feature Comparison)</h2><div class="chart-container" style="height: 250px;"><canvas id="compareChart"></canvas></div></div>
-            <div class="comparison-grid"><div class="summary-box comparison-features"><h2>సాధారణ లక్షణాలు (${comparison.commonTags.length})</h2><ul>${comparison.commonTags.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul></div><div class="summary-box comparison-features"><h2>ప్రత్యేక లక్షణాలు (Unique Features)</h2><p><strong>'${word1Analysis.word}'లో మాత్రమే (${comparison.uniqueToWord1.length}):</strong></p><ul>${comparison.uniqueToWord1.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul><hr><p><strong>'${word2Analysis.word}'లో మాత్రమే (${comparison.uniqueToWord2.length}):</strong></p><ul>${comparison.uniqueToWord2.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul></div></div>`;
+            <div class="comparison-grid"><div class="summary-box comparison-features"><h2>సాధారణ లక్షణాలు (${comparison.commonTags.length})</h2><ul>${comparison.commonTags.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul></div><div class="summary-box comparison-features"><h2>ప్రత్యేక లక్షణాలు (Unique Features)</h2><p><strong>'${truncateText(word1Analysis.word, 10)}'లో మాత్రమే (${comparison.uniqueToWord1.length}):</strong></p><ul>${comparison.uniqueToWord1.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul><hr><p><strong>'${truncateText(word2Analysis.word, 10)}'లో మాత్రమే (${comparison.uniqueToWord2.length}):</strong></p><ul>${comparison.uniqueToWord2.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul></div></div>`;
         resultsContainer.innerHTML = resultsHtml;
         
         if (compareChartInstance) compareChartInstance.destroy();
