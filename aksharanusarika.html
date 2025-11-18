@@ -313,7 +313,7 @@
 <body>
 
 <div class="container">
-  <h1 class="main-banner">అక్షరానుసారిక v0.0.7a</h1>
+  <h1 class="main-banner">అక్షరానుసారిక v0.0.6a</h1>
 
   <nav class="tab-nav">
     <button class="tab-btn active" onclick="openTab(event, 'singleAnalysis')">అక్షర విశ్లేషణ (Single Analysis)</button>
@@ -347,7 +347,7 @@
 
   <script>
     //////////////////////////////////////////////////////////////////////////
-    // LINGUISTIC DATA AND CONSTANTS (v0.0.7a)
+    // LINGUISTIC DATA AND CONSTANTS (v0.0.6a)
     //////////////////////////////////////////////////////////////////////////
     const dependentToIndependent = {
         "ా": "ఆ", "ి": "ఇ", "ీ": "ఈ", "ు": "ఉ", "ూ": "ఊ", "ృ": "ఋ",
@@ -402,7 +402,7 @@
     };
 
     //////////////////////////////////////////////////////////////////////////
-    // CORE LOGIC FUNCTIONS (v0.0.7a)
+    // CORE LOGIC FUNCTIONS (v0.0.6a)
     //////////////////////////////////////////////////////////////////////////
 
     function simpleHash(str) {
@@ -579,6 +579,8 @@
             this.definitions = definitions;
             this.flatGanas = this._flattenDefinitions(definitions);
             this.memo = {};
+            this.maxCombinations = 100; // Limit total combinations
+            this.foundCombinations = 0;
         }
 
         _flattenDefinitions(definitions) {
@@ -591,12 +593,19 @@
             return flatMap;
         }
 
-        findSequentialCombinations(syllables) {
+        findSequentialCombinations(syllables, maxCombinations = 100) {
             this.memo = {}; // Reset memo for each new analysis
+            this.maxCombinations = maxCombinations;
+            this.foundCombinations = 0;
             return this._findCombinationsRecursiveMemoized(syllables);
         }
 
         _findCombinationsRecursiveMemoized(remainingSyllables) {
+            // Early termination if we found enough combinations
+            if (this.foundCombinations >= this.maxCombinations) {
+                return [];
+            }
+
             const key = remainingSyllables.join(',');
             if (key in this.memo) {
                 return this.memo[key];
@@ -607,13 +616,23 @@
 
             const allPossiblePartitions = [];
             for (let i = 1; i <= remainingSyllables.length; i++) {
+                // Check limit during iteration
+                if (this.foundCombinations >= this.maxCombinations) {
+                    break;
+                }
+
                 const prefix = remainingSyllables.slice(0, i).join('');
                 if (prefix in this.flatGanas) {
                     const ganaInfo = { name: this.flatGanas[prefix], pattern: prefix };
                     const suffix = remainingSyllables.slice(i);
                     const suffixCombinations = this._findCombinationsRecursiveMemoized(suffix);
+
                     for (const combo of suffixCombinations) {
+                        if (this.foundCombinations >= this.maxCombinations) {
+                            break;
+                        }
                         allPossiblePartitions.push([ganaInfo, ...combo]);
+                        this.foundCombinations++;
                     }
                 }
             }
@@ -766,7 +785,7 @@
     }
 
     //////////////////////////////////////////////////////////////////////////
-    // JSON OUTPUT HELPER FUNCTIONS (v0.0.7a+)
+    // JSON OUTPUT HELPER FUNCTIONS (v0.0.6a+)
     //////////////////////////////////////////////////////////////////////////
 
     function calculateLinguisticStatistics(analysis) {
@@ -924,19 +943,24 @@
             positions: aksharamPositions[akData.aksharam] || []
         }));
 
-        // Gana marker details
+        // Gana marker details - properly map aksharas to their gana markers
         const pureAksharalu = analysis.aksharaluList.filter(ak => !ignorable_chars.has(ak));
         const ganaMarkerDetails = [];
 
-        pureAksharalu.forEach((aksharam, idx) => {
-            if (idx < ganaMarkers.length && ganaMarkers[idx]) {
-                ganaMarkerDetails.push({
-                    aksharam,
-                    marker: ganaMarkers[idx],
-                    position: idx
-                });
+        let pureIdx = 0;
+        for (let i = 0; i < analysis.aksharaluList.length; i++) {
+            const aksharam = analysis.aksharaluList[i];
+            if (!ignorable_chars.has(aksharam)) {
+                if (i < ganaMarkers.length && ganaMarkers[i]) {
+                    ganaMarkerDetails.push({
+                        aksharam,
+                        marker: ganaMarkers[i],
+                        position: pureIdx
+                    });
+                }
+                pureIdx++;
             }
-        });
+        }
 
         // Gana combinations analysis
         const pureGanas = ganaMarkers.filter(m => m !== "");
@@ -944,19 +968,16 @@
         let combinationsLimited = false;
 
         if (pureGanas.length > 0) {
-            const combinations = ganaAnalyzer.findSequentialCombinations(pureGanas);
+            // Limit to 20 combinations for performance (early termination in recursion)
+            const MAX_COMBINATIONS = 20;
+            const combinations = ganaAnalyzer.findSequentialCombinations(pureGanas, MAX_COMBINATIONS);
 
-            const MAX_COMBINATIONS = 50;
-            if (combinations.length > MAX_COMBINATIONS) {
-                ganaCombinationsList = combinations.slice(0, MAX_COMBINATIONS).map(combo =>
-                    mapSyllablesToPartition(combo, pureAksharalu)
-                );
-                combinationsLimited = true;
-            } else {
-                ganaCombinationsList = combinations.map(combo =>
-                    mapSyllablesToPartition(combo, pureAksharalu)
-                );
-            }
+            // Check if we hit the limit
+            combinationsLimited = combinations.length >= MAX_COMBINATIONS;
+
+            ganaCombinationsList = combinations.map(combo =>
+                mapSyllablesToPartition(combo, pureAksharalu)
+            );
         }
 
         // Calculate statistics
@@ -986,7 +1007,7 @@
             metadata: {
                 schemaVersion: "1.0.0",
                 analysisTimestamp: new Date().toISOString(),
-                analyzerVersion: "0.0.7a+",
+                analyzerVersion: "0.0.6a+",
                 inputHash: textHash,
                 processingTimeMs: parseFloat(processingTime)
             },
@@ -1139,28 +1160,30 @@
     function createGanaCombinationsHtml(aksharaluList, ganaMarkers) {
         const pureAksharalu = aksharaluList.filter(ak => !ignorable_chars.has(ak));
         const pureGanas = ganaMarkers.filter(m => m !== "");
-        
+
         if (pureGanas.length === 0) return '';
 
-        const sequentialCombos = ganaAnalyzer.findSequentialCombinations(pureGanas);
-        
+        // Limit to 20 combinations for performance
+        const MAX_COMBOS = 20;
+        const sequentialCombos = ganaAnalyzer.findSequentialCombinations(pureGanas, MAX_COMBOS);
+
         if (sequentialCombos.length === 0) return '';
-        
+
         let listItems = '';
-        if (sequentialCombos.length <= 50) {
+        if (sequentialCombos.length <= MAX_COMBOS) {
             sequentialCombos.forEach((combo, index) => {
                 const mappedCombo = mapSyllablesToPartition(combo, pureAksharalu);
-                const partitionStr = mappedCombo.map(gana => 
+                const partitionStr = mappedCombo.map(gana =>
                     `<span class="gana-part"><span class="syllable">${gana.syllable_text}</span> - <span class="gana-name">${gana.name}(${gana.pattern})</span></span>`
                 ).join(' + ');
                 listItems += `<li>${partitionStr}</li>`;
             });
         } else {
             const firstCombo = mapSyllablesToPartition(sequentialCombos[0], pureAksharalu);
-            const partitionStr = firstCombo.map(gana => 
+            const partitionStr = firstCombo.map(gana =>
                 `<span class="gana-part"><span class="syllable">${gana.syllable_text}</span> - <span class="gana-name">${gana.name}(${gana.pattern})</span></span>`
             ).join(' + ');
-            listItems += `<li><i>(Showing 1 of ${sequentialCombos.length})</i> ${partitionStr}</li>`;
+            listItems += `<li><i>(Showing 1 of ${sequentialCombos.length}+)</i> ${partitionStr}</li>`;
         }
         
         // REFACTORED: Returns only the inner content for better reusability
@@ -1207,9 +1230,18 @@
         if (text.length <= maxLength) return text;
         return text.substring(0, maxLength).trim() + '...';
     }
-    
+
+    // --- Initialize Event Listeners ---
+    function initializeEventListeners() {
+
     // --- Single Analysis ---
-    document.getElementById("analyzeSingleBtn").addEventListener("click", () => {
+    const analyzeSingleBtn = document.getElementById("analyzeSingleBtn");
+    if (!analyzeSingleBtn) {
+        console.error("analyzeSingleBtn not found!");
+        return;
+    }
+
+    analyzeSingleBtn.addEventListener("click", () => {
         const rawText = document.getElementById("singleInput").value;
         const resultsContainer = document.getElementById("singleResultContainer");
         const downloadContainer = document.getElementById("downloadContainer");
@@ -1220,8 +1252,15 @@
             return;
         }
 
-        // Generate comprehensive JSON - single source of truth
-        currentAnalysisJSON = generateComprehensiveJSON(rawText);
+        // Show loading indicator
+        resultsContainer.innerHTML = "<p style='text-align:center; font-size:1.2rem; color:#1971c2;'>⏳ విశ్లేషిస్తున్నాం... (Analyzing...)</p>";
+        downloadContainer.style.display = 'none';
+
+        // Use setTimeout to allow UI to update before heavy processing
+        setTimeout(() => {
+            try {
+                // Generate comprehensive JSON - single source of truth
+                currentAnalysisJSON = generateComprehensiveJSON(rawText);
 
         // Show download button
         downloadContainer.style.display = 'block';
@@ -1262,10 +1301,21 @@
             const ganaDataset = [{ label: 'Gana Sequence', data: ganaData, borderColor: '#1c7ed6', backgroundColor: 'rgba(28, 126, 214, 0.1)', fill: true }];
             singleGanaChartInstance = createGanaChart('singleGanaChart', singleGanaChartInstance, ganaDataset);
         }
+            } catch (error) {
+                console.error("Analysis error:", error);
+                resultsContainer.innerHTML = "<p style='text-align:center; color:red;'>విశ్లేషణలో లోపం సంభవించింది. దయచేసి మళ్లీ ప్రయత్నించండి. (An error occurred during analysis. Please try again.)</p>";
+            }
+        }, 10); // Small delay to allow UI update
     });
 
     // Download JSON button handler
-    document.getElementById("downloadJsonBtn").addEventListener("click", () => {
+    const downloadJsonBtn = document.getElementById("downloadJsonBtn");
+    if (!downloadJsonBtn) {
+        console.error("downloadJsonBtn not found!");
+        return;
+    }
+
+    downloadJsonBtn.addEventListener("click", () => {
         if (currentAnalysisJSON) {
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
             const filename = `telugu_analysis_${timestamp}.json`;
@@ -1274,7 +1324,13 @@
     });
 
     // --- Comparative Analysis ---
-    document.getElementById("analyzeCompareBtn").addEventListener("click", () => {
+    const analyzeCompareBtn = document.getElementById("analyzeCompareBtn");
+    if (!analyzeCompareBtn) {
+        console.error("analyzeCompareBtn not found!");
+        return;
+    }
+
+    analyzeCompareBtn.addEventListener("click", () => {
         const text1 = document.getElementById("compareInput1").value;
         const text2 = document.getElementById("compareInput2").value;
         const resultsContainer = document.getElementById("compareResultContainer");
@@ -1283,8 +1339,14 @@
             resultsContainer.innerHTML = "<p style='text-align:center;'>దయచేసి పోలిక కోసం రెండు టెక్స్ట్ బాక్స్‌లలో వాక్యాన్ని నమోదు చేయండి.</p>";
             return;
         }
-        
-        const { word1Analysis, word2Analysis, comparison } = compareTeluguWords(text1, text2);
+
+        // Show loading indicator
+        resultsContainer.innerHTML = "<p style='text-align:center; font-size:1.2rem; color:#1971c2;'>⏳ పోల్చుతున్నాం... (Comparing...)</p>";
+
+        // Use setTimeout to allow UI to update before heavy processing
+        setTimeout(() => {
+            try {
+                const { word1Analysis, word2Analysis, comparison } = compareTeluguWords(text1, text2);
         
         const ganaTable1 = createGanaTable(word1Analysis.aksharaluList, word1Analysis.ganaMarkers);
         const ganaTable2 = createGanaTable(word2Analysis.aksharaluList, word2Analysis.ganaMarkers);
@@ -1369,7 +1431,23 @@
             ];
             compareGanaChartInstance = createGanaChart('compareGanaChart', compareGanaChartInstance, ganaDatasets);
         }
+            } catch (error) {
+                console.error("Comparison error:", error);
+                resultsContainer.innerHTML = "<p style='text-align:center; color:red;'>పోలికలో లోపం సంభవించింది. దయచేసి మళ్లీ ప్రయత్నించండి. (An error occurred during comparison. Please try again.)</p>";
+            }
+        }, 10); // Small delay to allow UI update
     });
+
+    } // End of initializeEventListeners function
+
+    // Call the initialization function
+    // Check if DOM is already loaded or wait for it
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeEventListeners);
+    } else {
+        // DOM already loaded, call immediately
+        initializeEventListeners();
+    }
   </script>
 
 </body>
