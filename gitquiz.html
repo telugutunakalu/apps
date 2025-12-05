@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Time-Travel Quiz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Afacad+Flux:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #bc84ee; /* Purple from slides */
+            --secondary: #dcfd8b; /* Lime from slides */
+            --accent: #ff823a; /* Orange from slides */
+            --dark: #1e293b;
+            --text: #475569;
+            --bg: #f0f4f8;
+            --white: #ffffff;
+            --correct: #4ade80;
+            --wrong: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Afacad Flux', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background-color: var(--white);
+            border-radius: 24px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Decorative blobs */
+        .quiz-container::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+            opacity: 0.5;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .header {
+            background-color: var(--dark);
+            color: var(--secondary);
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-family: 'Comfortaa', cursive;
+            margin: 0;
+            font-size: 2rem;
+            color: var(--primary);
+            text-shadow: 2px 2px 0px var(--secondary);
+        }
+
+        .header p {
+            margin-top: 10px;
+            color: #cbd5e1;
+            font-size: 1.1rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            font-weight: 600;
+        }
+
+        .difficulty-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .diff-Easy { background-color: #dcfce7; color: #166534; }
+        .diff-Medium { background-color: #fef9c3; color: #854d0e; }
+        .diff-Hard { background-color: #ffedd5; color: #9a3412; }
+        .diff-Difficult { background-color: #fee2e2; color: #991b1b; }
+
+        .question-area {
+            padding: 2rem;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .question-text {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--dark);
+            font-family: 'Comfortaa', cursive;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .option-btn {
+            background: var(--white);
+            border: 2px solid #e2e8f0;
+            padding: 1.2rem;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Afacad Flux', sans-serif;
+            text-align: left;
+            position: relative;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background-color: #fdf4ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(188, 132, 238, 0.2);
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct);
+            border-color: #22c55e;
+            color: white;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong);
+            border-color: #ef4444;
+            color: white;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid #e2e8f0;
+            background-color: #fff;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Comfortaa', cursive;
+            transition: transform 0.2s, background-color 0.2s;
+            display: none; /* Hidden by default */
+            box-shadow: 0 4px 0 #9f65d4;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            background-color: #a855f7;
+        }
+
+        /* Results Screen */
+        .results-screen {
+            text-align: center;
+            padding: 4rem 2rem;
+            display: none;
+        }
+
+        .score-circle {
+            width: 180px;
+            height: 180px;
+            background: var(--dark);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 2rem;
+            border: 8px solid var(--secondary);
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+            font-family: 'Comfortaa', cursive;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .message {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: var(--text);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e2e8f0;
+            width: 100%;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Confetti Animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+            z-index: 100;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <h1>Git Time-Travel Quiz</h1>
+        <p>Test your knowledge of the Git universe!</p>
+    </div>
+    
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+        <span id="question-count">Question 1/30</span>
+        <span id="difficulty-badge" class="difficulty-badge diff-Easy">Easy</span>
+        <span id="score-display">Score: 0</span>
+    </div>
+
+    <!-- Quiz Content -->
+    <div class="question-area" id="quiz-area">
+        <div class="question-text" id="question">Loading...</div>
+        <div class="options-grid" id="options">
+            <!-- Options injected here -->
+        </div>
+    </div>
+
+    <!-- Results Content -->
+    <div class="results-screen" id="results-area">
+        <div class="score-circle" id="final-score">0%</div>
+        <h2 id="result-title" style="font-family: 'Comfortaa'; color: var(--dark); font-size: 2.5rem; margin: 0 0 10px 0;">Good Job!</h2>
+        <p class="message" id="result-message">You've completed the training.</p>
+        <button class="btn" id="restart-btn" style="display: inline-block;">Play Again</button>
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="next-btn">Next Question ➜</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        // --- EASY (5 Questions) ---
+        {
+            text: "What is Git compared to in our fun guide?",
+            options: ["A filing cabinet", "A time machine", "A cloud server", "A race car"],
+            correct: 1,
+            difficulty: "Easy"
+        },
+        {
+            text: "Which command takes a permanent snapshot of your work?",
+            options: ["git snap", "git save", "git commit", "git record"],
+            correct: 2,
+            difficulty: "Easy"
+        },
+        {
+            text: "What is the 'Mothership' referring to?",
+            options: ["Your local computer", "The remote repository", "The main branch", "The internet"],
+            correct: 1,
+            difficulty: "Easy"
+        },
+        {
+            text: "Which command sends your code to the remote repository?",
+            options: ["git upload", "git send", "git push", "git blast"],
+            correct: 2,
+            difficulty: "Easy"
+        },
+        {
+            text: "What does 'git add .' do?",
+            options: ["Deletes files", "Packs files into the staging box", "Sends files to the internet", "Creates a new folder"],
+            correct: 1,
+            difficulty: "Easy"
+        },
+
+        // --- MEDIUM (5 Questions) ---
+        {
+            text: "What does `git checkout -b new-feature` do?",
+            options: ["Checks if the feature exists", "Deletes a feature", "Creates and switches to a new branch", "Updates the master branch"],
+            correct: 2,
+            difficulty: "Medium"
+        },
+        {
+            text: "What is the purpose of `.gitignore`?",
+            options: ["To delete files permanently", "To list files Git should ignore", "To ignore user commands", "To hide files from your computer"],
+            correct: 1,
+            difficulty: "Medium"
+        },
+        {
+            text: "What metaphor is used for `git pull --rebase`?",
+            options: ["A car crash", "A zipper merge", "A traffic jam", "A roundabout"],
+            correct: 1,
+            difficulty: "Medium"
+        },
+        {
+            text: "What flag is used with `git commit` to add a message inline?",
+            options: ["-m", "-msg", "--text", "-s"],
+            correct: 0,
+            difficulty: "Medium"
+        },
+        {
+            text: "According to best practices, what should you do before pushing?",
+            options: ["Delete all branches", "Pull updates from the remote", "Turn off your computer", "Rewrite all history"],
+            correct: 1,
+            difficulty: "Medium"
+        },
+
+        // --- HARD (5 Questions) ---
+        {
+            text: "What does `git rebase -i` allow you to do?",
+            options: ["Install new plugins", "Interactive history rewriting", "Ignore merge conflicts", "Initialize a repository"],
+            correct: 1,
+            difficulty: "Hard"
+        },
+        {
+            text: "If you see `<<<< HEAD` in your code, what happened?",
+            options: ["A virus was found", "A merge conflict occurred", "The header file is missing", "Git crashed"],
+            correct: 1,
+            difficulty: "Hard"
+        },
+        {
+            text: "Why is `git pull --rebase` considered 'polite'?",
+            options: ["It asks for permission first", "It puts your work linearly on top", "It sends a thank you note", "It creates a merge commit bubble"],
+            correct: 1,
+            difficulty: "Hard"
+        },
+        {
+            text: "Which of these is NOT something mentioned to put in `.gitignore`?",
+            options: ["Secrets", "System files", "Source code", "Logs"],
+            correct: 2,
+            difficulty: "Hard"
+        },
+        {
+            text: "What is the 'staging area' compared to?",
+            options: ["A trash can", "A moving box", "A photo album", "A spaceship"],
+            correct: 1,
+            difficulty: "Hard"
+        },
+
+        // --- DIFFICULT (5 Questions) ---
+        {
+            text: "In an interactive rebase, which action combines multiple commits into one?",
+            options: ["Pick", "Squash", "Drop", "Edit"],
+            correct: 1,
+            difficulty: "Difficult"
+        },
+        {
+            text: "After resolving a conflict manually, what is the sequence to finish?",
+            options: ["git commit -> git push", "git add . -> git rebase --continue", "git rebase --finish", "git push --force"],
+            correct: 1,
+            difficulty: "Difficult"
+        },
+        {
+            text: "Why does the guide suggest you 'Commit Often'?",
+            options: ["To fill up the hard drive", "To create 'save points'", "To annoy your teammates", "To increase your contribution graph"],
+            correct: 1,
+            difficulty: "Difficult"
+        },
+        {
+            text: "What specific command enables you to 'Rewrite bad commit messages'?",
+            options: ["git commit --amend", "git rebase -i (Reword)", "git msg --fix", "git history --edit"],
+            correct: 1,
+            difficulty: "Difficult"
+        },
+        {
+            text: "When `git add .` packs the box, where are the items moving FROM?",
+            options: ["The Remote", "The Staging Area", "The Working Desk", "The Repository"],
+            correct: 2,
+            difficulty: "Difficult"
+        },
+
+        // --- ADVANCED EXPERT (10 Questions - Difficult) ---
+        {
+            text: "You forgot to include a file in your last commit. Which command adds it to the previous commit?",
+            options: ["git commit --amend", "git commit --join", "git commit --append", "git commit --extend"],
+            correct: 0,
+            difficulty: "Difficult"
+        },
+        {
+            text: "Which flag allows you to stage all modified tracked files and commit them in one command?",
+            options: ["git commit -all", "git commit -a", "git commit --stage", "git commit -s"],
+            correct: 1,
+            difficulty: "Difficult"
+        },
+        {
+            text: "You need to apply a single specific commit from 'dev' to 'main' without merging the whole branch. What do you use?",
+            options: ["git cherry-pick", "git merge --single", "git rebase --one", "git checkout --commit"],
+            correct: 0,
+            difficulty: "Difficult"
+        },
+        {
+            text: "What is the key difference between `git stash pop` and `git stash apply`?",
+            options: ["Pop deletes the stash after applying; Apply keeps it", "Apply deletes the stash; Pop keeps it", "Pop works on all branches; Apply only on current", "There is no difference"],
+            correct: 0,
+            difficulty: "Difficult"
+        },
+        {
+            text: "Which command moves HEAD back to a previous commit but keeps your changes staged (ready to commit)?",
+            options: ["git reset --hard", "git reset --soft", "git revert", "git checkout HEAD~1"],
+            correct: 1,
+            difficulty: "Difficult"
+        },
+        {
+            text: "How do you forcefully remove all untracked files and directories from your working directory?",
+            options: ["git clean -fd", "git rm -rf", "git wipe --all", "git reset --hard"],
+            correct: 0,
+            difficulty: "Difficult"
+        },
+        {
+            text: "Your colleague asks who wrote the buggy code on line 42. Which command tells you?",
+            options: ["git who", "git blame", "git credit", "git history"],
+            correct: 1,
+            difficulty: "Difficult"
+        },
+        {
+            text: "Git refuses to delete a branch because it hasn't been merged. Which flag forces the deletion?",
+            options: ["-f", "--force-delete", "-D", "--kill"],
+            correct: 2,
+            difficulty: "Difficult"
+        },
+        {
+            text: "Which command downloads changes from the remote but does NOT integrate them into your working files?",
+            options: ["git pull", "git sync", "git fetch", "git clone"],
+            correct: 2,
+            difficulty: "Difficult"
+        },
+        {
+            text: "You pushed a commit that broke production. What is the safest way to undo it without rewriting history?",
+            options: ["git reset --hard", "git revert", "git push --delete", "git commit --amend"],
+            correct: 1,
+            difficulty: "Difficult"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let isAnswered = false;
+
+    // DOM Elements
+    const questionText = document.getElementById('question');
+    const optionsGrid = document.getElementById('options');
+    const nextBtn = document.getElementById('next-btn');
+    const questionCount = document.getElementById('question-count');
+    const scoreDisplay = document.getElementById('score-display');
+    const diffBadge = document.getElementById('difficulty-badge');
+    const progressBar = document.getElementById('progress');
+    const quizArea = document.getElementById('quiz-area');
+    const resultsArea = document.getElementById('results-area');
+    const statsBar = document.getElementById('statsBar');
+    const finalScore = document.getElementById('final-score');
+    const restartBtn = document.getElementById('restart-btn');
+    const resultTitle = document.getElementById('result-title');
+    const resultMsg = document.getElementById('result-message');
+
+    function loadQuestion() {
+        isAnswered = false;
+        nextBtn.style.display = 'none';
+        
+        const currentQ = questions[currentQuestionIndex];
+        
+        // Update UI Text
+        questionText.textContent = currentQ.text;
+        questionCount.textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+        
+        // Update Difficulty Badge
+        diffBadge.textContent = currentQ.difficulty;
+        diffBadge.className = `difficulty-badge diff-${currentQ.difficulty}`;
+
+        // Update Progress Bar
+        const progressPercent = ((currentQuestionIndex) / questions.length) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+
+        // Render Options
+        optionsGrid.innerHTML = '';
+        currentQ.options.forEach((option, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = option;
+            btn.onclick = () => selectOption(index, btn);
+            optionsGrid.appendChild(btn);
+        });
+    }
+
+    function selectOption(selectedIndex, btn) {
+        if (isAnswered) return;
+        isAnswered = true;
+
+        const currentQ = questions[currentQuestionIndex];
+        const allBtns = document.querySelectorAll('.option-btn');
+        
+        // Disable all buttons
+        allBtns.forEach(b => b.disabled = true);
+
+        if (selectedIndex === currentQ.correct) {
+            btn.classList.add('correct');
+            score++;
+            scoreDisplay.textContent = `Score: ${score}`;
+            triggerConfetti(5); // Small confetti for correct answer
+        } else {
+            btn.classList.add('wrong');
+            // Highlight correct answer
+            allBtns[currentQ.correct].classList.add('correct');
+        }
+
+        // Show Next Button
+        nextBtn.style.display = 'block';
+    }
+
+    nextBtn.addEventListener('click', () => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    });
+
+    function showResults() {
+        quizArea.style.display = 'none';
+        statsBar.style.display = 'none';
+        nextBtn.style.display = 'none';
+        resultsArea.style.display = 'block';
+        progressBar.style.width = '100%';
+
+        const percentage = Math.round((score / questions.length) * 100);
+        finalScore.textContent = `${percentage}%`;
+
+        if (percentage === 100) {
+            resultTitle.textContent = "Time Travel Master!";
+            resultMsg.textContent = "Perfect score! You are a true Git Legend.";
+            triggerConfetti(100);
+        } else if (percentage >= 80) {
+            resultTitle.textContent = "Git Expert!";
+            resultMsg.textContent = "Awesome job! You know your way around the repository.";
+            triggerConfetti(50);
+        } else if (percentage >= 50) {
+            resultTitle.textContent = "Good Start!";
+            resultMsg.textContent = "You're getting there. A little more practice and you'll be set.";
+        } else {
+            resultTitle.textContent = "Keep Practicing";
+            resultMsg.textContent = "Don't worry! Review the slides and try again.";
+        }
+    }
+
+    restartBtn.addEventListener('click', () => {
+        currentQuestionIndex = 0;
+        score = 0;
+        scoreDisplay.textContent = 'Score: 0';
+        quizArea.style.display = 'flex';
+        statsBar.style.display = 'flex';
+        resultsArea.style.display = 'none';
+        loadQuestion();
+    });
+
+    // Confetti Effect
+    function triggerConfetti(amount) {
+        const colors = ['#bc84ee', '#dcfd8b', '#ff823a', '#4ade80'];
+        
+        for (let i = 0; i < amount; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+            document.body.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 5000);
+        }
+    }
+
+    // Start Quiz
+    loadQuestion();
+
+</script>
+
+</body>
+</html>
