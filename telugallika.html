@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>తెలుగల్లిక - Telugu Crossword Puzzle</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           CSS VARIABLES
+        ============================================ */
+        :root {
+            --primary: #6B21A8;
+            --primary-light: #A855F7;
+            --primary-dark: #581C87;
+            --secondary: #F59E0B;
+            --secondary-light: #FCD34D;
+            --accent: #EC4899;
+            --accent-light: #F9A8D4;
+
+            --bg-gradient-start: #F5F3FF;
+            --bg-gradient-end: #FDF4FF;
+            --card-bg: #FFFFFF;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+            --text-dark: #1F2937;
+            --text-muted: #6B7280;
+            --text-light: #9CA3AF;
+
+            --success: #10B981;
+            --success-light: #D1FAE5;
+            --error: #EF4444;
+            --error-light: #FEE2E2;
+            --warning: #F59E0B;
+            --warning-light: #FEF3C7;
+            --info: #3B82F6;
+            --info-light: #DBEAFE;
+
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 24px;
+
+            --cols: 5;
+            --cell-size: min(calc((100vw - 48px) / var(--cols)), 50px);
+        }
+
+        /* ============================================
+           BASE STYLES
+        ============================================ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Noto Sans Telugu', 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           HEADER
+        ============================================ */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            padding: 20px 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.9);
+            font-weight: 400;
+        }
+
+        /* ============================================
+           CONTAINER
+        ============================================ */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* ============================================
+           CARDS
+        ============================================ */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--card-shadow-lg);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+            border-radius: 2px;
+        }
+
+        /* ============================================
+           INPUT SECTION (Collapsible)
+        ============================================ */
+        .input-section details {
+            width: 100%;
+        }
+
+        .input-section summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 12px 0;
+            font-weight: 600;
+            color: var(--primary);
+            list-style: none;
+        }
+
+        .input-section summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .input-section summary::after {
+            content: '▼';
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+
+        .input-section details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .input-section textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: var(--border-radius-sm);
+            font-family: 'Noto Sans Telugu', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            margin-top: 12px;
+        }
+
+        .input-section textarea:focus {
+            border-color: var(--primary-light);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+        }
+
+        .hint-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* ============================================
+           BUTTONS
+        ============================================ */
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        .btn:active::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            grid-column: span 2;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(107, 33, 168, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #34D399 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+        }
+
+        /* ============================================
+           STATUS MESSAGES
+        ============================================ */
+        .status {
+            padding: 12px 16px;
+            border-radius: var(--border-radius-sm);
+            margin-top: 16px;
+            display: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-success {
+            background: var(--success-light);
+            color: #065F46;
+            border-left: 4px solid var(--success);
+            display: block;
+        }
+
+        .status-error {
+            background: var(--error-light);
+            color: #991B1B;
+            border-left: 4px solid var(--error);
+            display: block;
+        }
+
+        .status-info {
+            background: var(--info-light);
+            color: #1E40AF;
+            border-left: 4px solid var(--info);
+            display: block;
+        }
+
+        /* ============================================
+           MAIN CONTENT LAYOUT
+        ============================================ */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ============================================
+           CROSSWORD GRID
+        ============================================ */
+        .grid-section {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .grid-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        #crossword-grid {
+            display: inline-grid;
+            gap: 0;
+            border: 3px solid var(--primary-dark);
+            border-radius: 4px;
+            background: var(--primary-dark);
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 1px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Noto Sans Telugu', sans-serif;
+            font-size: calc(var(--cell-size) * 0.45);
+            font-weight: 500;
+            position: relative;
+            background: white;
+            cursor: text;
+            transition: background-color 0.2s ease;
+        }
+
+        .cell-input {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            padding-top: 6px;
+        }
+
+        .cell-input:focus {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .cell:focus-within {
+            outline: 3px solid var(--secondary);
+            outline-offset: -3px;
+            z-index: 1;
+        }
+
+        .cell-black {
+            background: var(--primary-dark);
+            cursor: default;
+        }
+
+        .cell-number {
+            position: absolute;
+            top: 1px;
+            left: 3px;
+            font-size: calc(var(--cell-size) * 0.22);
+            font-weight: 700;
+            color: var(--accent);
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .cell-correct {
+            background: var(--success-light) !important;
+            border-color: var(--success) !important;
+        }
+
+        .cell-error {
+            background: var(--error-light) !important;
+            border-color: var(--error) !important;
+        }
+
+        .cell-empty-warning {
+            background: var(--warning-light) !important;
+            border-color: var(--warning) !important;
+        }
+
+        .cell-highlighted {
+            background: rgba(168, 85, 247, 0.15) !important;
+        }
+
+        /* ============================================
+           CLUES SECTION (Tabbed on Mobile)
+        ============================================ */
+        .clues-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .clues-tab {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: #F3F4F6;
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clues-tab.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .clues-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .clues-group {
+            display: none;
+        }
+
+        .clues-group.active {
+            display: block;
+        }
+
+        .clues-group h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-size: 1rem;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .clue-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #F9FAFB;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .clue-item:hover, .clue-item:active {
+            background: rgba(168, 85, 247, 0.1);
+            border-left-color: var(--primary);
+        }
+
+        .clue-number {
+            font-weight: 700;
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+        .clue-length {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-left: 4px;
+        }
+
+        /* ============================================
+           EMPTY STATE
+        ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+        }
+
+        /* ============================================
+           TABLET & DESKTOP STYLES
+        ============================================ */
+        @media (min-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            .logo {
+                font-size: 3rem;
+            }
+
+            .button-group {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .btn-primary {
+                grid-column: span 1;
+            }
+
+            :root {
+                --cell-size: min(calc((100vw - 80px) / var(--cols)), 50px);
+            }
+        }
+
+        @media (min-width: 768px) {
+            .header {
+                padding: 30px 20px;
+            }
+
+            .logo {
+                font-size: 3.5rem;
+            }
+
+            .tagline {
+                font-size: 1rem;
+            }
+
+            .main-content {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+
+            .grid-section {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .clues-section {
+                flex: 0 0 350px;
+                max-height: 500px;
+            }
+
+            .clues-content {
+                max-height: 400px;
+            }
+
+            .card {
+                padding: 24px;
+            }
+
+            .input-section textarea {
+                height: 150px;
+            }
+
+            :root {
+                --cell-size: 50px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .clues-section {
+                flex: 0 0 400px;
+            }
+        }
+
+        /* ============================================
+           PRINT STYLES
+        ============================================ */
+        @media print {
+            .header, .input-section, .button-group, .status, .clues-tabs {
+                display: none !important;
+            }
+
+            .cell-input {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">తెలుగల్లిక</h1>
+            <p class="tagline">Telugu Crossword Puzzle</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Input Section -->
+        <div class="card input-section">
+            <details open>
+                <summary>పదాలు జోడించు (Add Words)</summary>
+                <textarea id="csv-input">word,hint
+పాఠశాల,విద్యార్థులు చదువుకునే చోటు
+శాలువా,చలిలో కప్పుకునేది
+వాన,ఆకాశం నుండి పడేది
+నది,నీరు ప్రవహించే మార్గం
+దినం,24 గంటలు
+తల,శరీరంలో పై భాగం
+నల్ల,చీకటి రంగు
+లత,చెట్టుపై ఎక్కే మొక్క</textarea>
+                <p class="hint-text">Format: word,hint (first line is header)</p>
+            </details>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="generateCrossword()">
+                    <span>రూపొందించు</span>
+                </button>
+                <button class="btn btn-success" onclick="validateAnswers()">
+                    <span>తనిఖీ</span>
+                </button>
+                <button class="btn btn-warning" onclick="showAnswers()">
+                    <span>సమాధానాలు</span>
+                </button>
+                <button class="btn btn-secondary" onclick="clearGrid()">
+                    <span>తుడిచివేయి</span>
+                </button>
+            </div>
+
+            <div id="status" class="status"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Grid Section -->
+            <div class="card grid-section">
+                <div class="card-title">పజిల్ గ్రిడ్</div>
+                <div class="grid-wrapper">
+                    <div id="crossword-grid">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🧩</div>
+                            <p>పదాలు జోడించి "రూపొందించు" నొక్కండి</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clues Section -->
+            <div class="card clues-section">
+                <div class="card-title">ఆధారాలు</div>
+
+                <div class="clues-tabs">
+                    <button class="clues-tab active" onclick="switchTab('across')">అడ్డం</button>
+                    <button class="clues-tab" onclick="switchTab('down')">నిలువు</button>
+                </div>
+
+                <div class="clues-content" id="clues-container">
+                    <div class="empty-state">
+                        <p>ఆధారాలు ఇక్కడ కనిపిస్తాయి</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================================================
+        // TELUGU AKSHARAM SEGMENTATION
+        // =============================================================================
+
+        const TELUGU_VOWELS = new Set('అఆఇఈఉఊఋఌఎఏఐఒఓఔ');
+        const TELUGU_CONSONANTS = new Set('కఖగఘఙచఛజఝఞటఠడఢణతథదధనపఫబభమయరలళవశషసహఱ');
+        const TELUGU_VOWEL_SIGNS = new Set('ాిీుూృౄెేైొోౌ');
+        const TELUGU_VIRAMA = '్';
+        const TELUGU_ANUSVARA = 'ం';
+        const TELUGU_VISARGA = 'ః';
+        const TELUGU_CHANDRABINDU = 'ఁ';
+        const TELUGU_MODIFIERS = new Set([TELUGU_ANUSVARA, TELUGU_VISARGA, TELUGU_CHANDRABINDU]);
+
+        function segmentTeluguWord(word) {
+            if (!word) return [];
+
+            const chars = [...word];
+            const n = chars.length;
+            const aksharams = [];
+            let i = 0;
+
+            while (i < n) {
+                const char = chars[i];
+                let aksharam = "";
+
+                if (TELUGU_VOWELS.has(char)) {
+                    aksharam = char;
+                    i++;
+                    while (i < n && TELUGU_MODIFIERS.has(chars[i])) {
+                        aksharam += chars[i];
+                        i++;
+                    }
+                }
+                else if (TELUGU_CONSONANTS.has(char)) {
+                    if (aksharams.length > 0 && aksharams[aksharams.length - 1].endsWith(TELUGU_VIRAMA)) {
+                        aksharam = aksharams.pop();
+                    }
+
+                    aksharam += char;
+                    i++;
+
+                    while (i < n - 1 && chars[i] === TELUGU_VIRAMA && TELUGU_CONSONANTS.has(chars[i + 1])) {
+                        aksharam += chars[i] + chars[i + 1];
+                        i += 2;
+                    }
+
+                    if (i < n && TELUGU_VOWEL_SIGNS.has(chars[i])) {
+                        aksharam += chars[i];
+                        i++;
+                    }
+
+                    if (i < n && chars[i] === TELUGU_VIRAMA) {
+                        aksharam += chars[i];
+                        i++;
+                    }
+
+                    while (i < n && TELUGU_MODIFIERS.has(chars[i])) {
+                        aksharam += chars[i];
+                        i++;
+                    }
+                }
+                else if (char === TELUGU_VIRAMA) {
+                    if (aksharams.length > 0) {
+                        aksharams[aksharams.length - 1] += char;
+                    }
+                    i++;
+                    continue;
+                }
+                else if (TELUGU_MODIFIERS.has(char)) {
+                    if (aksharams.length > 0) {
+                        aksharams[aksharams.length - 1] += char;
+                    } else {
+                        aksharam = char;
+                        aksharams.push(aksharam);
+                    }
+                    i++;
+                    continue;
+                }
+                else if (TELUGU_VOWEL_SIGNS.has(char)) {
+                    if (aksharams.length > 0) {
+                        aksharams[aksharams.length - 1] += char;
+                    }
+                    i++;
+                    continue;
+                }
+                else {
+                    aksharam = char;
+                    i++;
+                }
+
+                if (aksharam) {
+                    aksharams.push(aksharam);
+                }
+            }
+
+            const result = [];
+            let j = 0;
+            while (j < aksharams.length) {
+                const ak = aksharams[j];
+                if (ak.endsWith(TELUGU_VIRAMA) && j + 1 < aksharams.length) {
+                    const nextAk = aksharams[j + 1];
+                    if (nextAk && TELUGU_CONSONANTS.has(nextAk[0])) {
+                        result.push(ak + nextAk);
+                        j += 2;
+                        continue;
+                    }
+                }
+                result.push(ak);
+                j++;
+            }
+
+            return result;
+        }
+
+        // =============================================================================
+        // CROSSWORD DATA STRUCTURES
+        // =============================================================================
+
+        const Direction = { ACROSS: 'across', DOWN: 'down' };
+
+        class PlacedWord {
+            constructor(word, hint, aksharams, row, col, direction) {
+                this.word = word;
+                this.hint = hint;
+                this.aksharams = aksharams;
+                this.row = row;
+                this.col = col;
+                this.direction = direction;
+                this.number = 0;
+            }
+
+            getCells() {
+                const cells = [];
+                for (let i = 0; i < this.aksharams.length; i++) {
+                    if (this.direction === Direction.ACROSS) {
+                        cells.push([this.row, this.col + i, this.aksharams[i]]);
+                    } else {
+                        cells.push([this.row + i, this.col, this.aksharams[i]]);
+                    }
+                }
+                return cells;
+            }
+        }
+
+        class CrosswordGrid {
+            constructor() {
+                this.cells = new Map();
+                this.placedWords = [];
+            }
+
+            canPlace(word, aksharams, row, col, direction) {
+                let intersections = 0;
+
+                for (let i = 0; i < aksharams.length; i++) {
+                    const r = direction === Direction.ACROSS ? row : row + i;
+                    const c = direction === Direction.ACROSS ? col + i : col;
+                    const key = `${r},${c}`;
+
+                    if (this.cells.has(key)) {
+                        if (this.cells.get(key) !== aksharams[i]) {
+                            return [false, 0];
+                        } else {
+                            intersections++;
+                        }
+                    }
+                }
+
+                if (!this._checkAdjacencies(aksharams, row, col, direction)) {
+                    return [false, 0];
+                }
+
+                return [true, intersections];
+            }
+
+            _checkAdjacencies(aksharams, row, col, direction) {
+                let before, after;
+
+                if (direction === Direction.ACROSS) {
+                    before = `${row},${col - 1}`;
+                    after = `${row},${col + aksharams.length}`;
+                } else {
+                    before = `${row - 1},${col}`;
+                    after = `${row + aksharams.length},${col}`;
+                }
+
+                return !(this.cells.has(before) || this.cells.has(after));
+            }
+
+            placeWord(word, hint, aksharams, row, col, direction) {
+                const placed = new PlacedWord(word, hint, aksharams, row, col, direction);
+
+                for (const [r, c, aksharam] of placed.getCells()) {
+                    this.cells.set(`${r},${c}`, aksharam);
+                }
+
+                this.placedWords.push(placed);
+                return placed;
+            }
+
+            getBounds() {
+                if (this.cells.size === 0) return [0, 0, 0, 0];
+
+                const rows = [], cols = [];
+                for (const key of this.cells.keys()) {
+                    const [r, c] = key.split(',').map(Number);
+                    rows.push(r);
+                    cols.push(c);
+                }
+
+                return [Math.min(...rows), Math.max(...rows), Math.min(...cols), Math.max(...cols)];
+            }
+        }
+
+        // =============================================================================
+        // CROSSWORD GENERATION
+        // =============================================================================
+
+        function findIntersections(aksharams1, aksharams2) {
+            const intersections = [];
+            for (let i = 0; i < aksharams1.length; i++) {
+                for (let j = 0; j < aksharams2.length; j++) {
+                    if (aksharams1[i] === aksharams2[j]) {
+                        intersections.push([i, j]);
+                    }
+                }
+            }
+            return intersections;
+        }
+
+        function generateCrosswordGrid(wordsHints, maxWords = 15) {
+            const wordData = [];
+            for (const { word, hint } of wordsHints) {
+                const aksharams = segmentTeluguWord(word);
+                if (aksharams.length >= 2) {
+                    wordData.push({ word, hint, aksharams });
+                }
+            }
+
+            if (wordData.length === 0) {
+                return [new CrosswordGrid(), wordsHints];
+            }
+
+            if (maxWords && wordData.length > maxWords) {
+                for (let i = wordData.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [wordData[i], wordData[j]] = [wordData[j], wordData[i]];
+                }
+                wordData.splice(maxWords);
+            }
+
+            wordData.sort((a, b) => b.aksharams.length - a.aksharams.length);
+
+            const grid = new CrosswordGrid();
+            const unplaced = [];
+
+            const first = wordData[0];
+            grid.placeWord(first.word, first.hint, first.aksharams, 0, 0, Direction.ACROSS);
+
+            for (let idx = 1; idx < wordData.length; idx++) {
+                const { word, hint, aksharams } = wordData[idx];
+                let bestPlacement = null;
+                let bestScore = -1;
+
+                for (const placedWord of grid.placedWords) {
+                    const newDirection = placedWord.direction === Direction.ACROSS
+                        ? Direction.DOWN : Direction.ACROSS;
+
+                    const intersections = findIntersections(aksharams, placedWord.aksharams);
+
+                    for (const [idxNew, idxPlaced] of intersections) {
+                        let intRow, intCol;
+
+                        if (placedWord.direction === Direction.ACROSS) {
+                            intRow = placedWord.row;
+                            intCol = placedWord.col + idxPlaced;
+                        } else {
+                            intRow = placedWord.row + idxPlaced;
+                            intCol = placedWord.col;
+                        }
+
+                        let startRow, startCol;
+                        if (newDirection === Direction.ACROSS) {
+                            startRow = intRow;
+                            startCol = intCol - idxNew;
+                        } else {
+                            startRow = intRow - idxNew;
+                            startCol = intCol;
+                        }
+
+                        const [canPlace, intersectCount] = grid.canPlace(
+                            word, aksharams, startRow, startCol, newDirection
+                        );
+
+                        if (canPlace && intersectCount > bestScore) {
+                            bestScore = intersectCount;
+                            bestPlacement = [startRow, startCol, newDirection];
+                        }
+                    }
+                }
+
+                if (bestPlacement) {
+                    const [row, col, direction] = bestPlacement;
+                    grid.placeWord(word, hint, aksharams, row, col, direction);
+                } else {
+                    unplaced.push({ word, hint });
+                }
+            }
+
+            assignWordNumbers(grid);
+            return [grid, unplaced];
+        }
+
+        function assignWordNumbers(grid) {
+            const starts = grid.placedWords.map(w => [w.row, w.col, w]);
+            starts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+            const positionNumbers = new Map();
+            let currentNumber = 1;
+
+            for (const [row, col, word] of starts) {
+                const key = `${row},${col}`;
+                if (!positionNumbers.has(key)) {
+                    positionNumbers.set(key, currentNumber++);
+                }
+                word.number = positionNumbers.get(key);
+            }
+        }
+
+        // =============================================================================
+        // CSV PARSING
+        // =============================================================================
+
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return [];
+
+            const wordsHints = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const parts = line.split(',');
+                if (parts.length >= 2) {
+                    const word = parts[0].trim();
+                    const hint = parts.slice(1).join(',').trim();
+                    if (word) wordsHints.push({ word, hint });
+                }
+            }
+            return wordsHints;
+        }
+
+        // =============================================================================
+        // GRID RENDERING
+        // =============================================================================
+
+        let currentGrid = null;
+
+        function updateCellSize(numCols) {
+            document.documentElement.style.setProperty('--cols', numCols);
+        }
+
+        function renderGrid(grid) {
+            const container = document.getElementById('crossword-grid');
+            container.innerHTML = '';
+
+            if (grid.cells.size === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🧩</div>
+                        <p>పదాలు జోడించి "రూపొందించు" నొక్కండి</p>
+                    </div>`;
+                return;
+            }
+
+            const [minRow, maxRow, minCol, maxCol] = grid.getBounds();
+            const numRows = maxRow - minRow + 1;
+            const numCols = maxCol - minCol + 1;
+
+            updateCellSize(numCols);
+
+            container.style.gridTemplateColumns = `repeat(${numCols}, var(--cell-size))`;
+            container.style.gridTemplateRows = `repeat(${numRows}, var(--cell-size))`;
+
+            const starts = new Map();
+            for (const word of grid.placedWords) {
+                const key = `${word.row - minRow},${word.col - minCol}`;
+                if (!starts.has(key)) starts.set(key, []);
+                starts.get(key).push(word.number);
+            }
+
+            for (let r = 0; r < numRows; r++) {
+                for (let c = 0; c < numCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    const originalRow = r + minRow;
+                    const originalCol = c + minCol;
+                    const key = `${originalRow},${originalCol}`;
+
+                    if (grid.cells.has(key)) {
+                        const aksharam = grid.cells.get(key);
+                        cell.dataset.solution = aksharam;
+
+                        const normalizedKey = `${r},${c}`;
+                        if (starts.has(normalizedKey)) {
+                            const numSpan = document.createElement('span');
+                            numSpan.className = 'cell-number';
+                            numSpan.textContent = starts.get(normalizedKey)[0];
+                            cell.appendChild(numSpan);
+                        }
+
+                        const inputSpan = document.createElement('span');
+                        inputSpan.className = 'cell-input';
+                        inputSpan.contentEditable = 'true';
+                        cell.appendChild(inputSpan);
+
+                        inputSpan.addEventListener('keydown', handleKeyNavigation);
+                        inputSpan.addEventListener('input', handleCellInput);
+                    } else {
+                        cell.classList.add('cell-black');
+                    }
+
+                    container.appendChild(cell);
+                }
+            }
+
+            // Scroll grid into view
+            document.querySelector('.grid-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function renderClues(grid) {
+            const container = document.getElementById('clues-container');
+            container.innerHTML = '';
+
+            if (grid.placedWords.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>ఆధారాలు ఇక్కడ కనిపిస్తాయి</p></div>';
+                return;
+            }
+
+            const acrossWords = grid.placedWords
+                .filter(w => w.direction === Direction.ACROSS)
+                .sort((a, b) => a.number - b.number);
+
+            const downWords = grid.placedWords
+                .filter(w => w.direction === Direction.DOWN)
+                .sort((a, b) => a.number - b.number);
+
+            // Across clues
+            const acrossGroup = document.createElement('div');
+            acrossGroup.className = 'clues-group active';
+            acrossGroup.id = 'clues-across';
+
+            for (const word of acrossWords) {
+                const clueItem = document.createElement('div');
+                clueItem.className = 'clue-item';
+                clueItem.innerHTML = `
+                    <span class="clue-number">${word.number}.</span>
+                    ${word.hint}
+                    <span class="clue-length">(${word.aksharams.length})</span>
+                `;
+                clueItem.onclick = () => highlightWord(word);
+                acrossGroup.appendChild(clueItem);
+            }
+            container.appendChild(acrossGroup);
+
+            // Down clues
+            const downGroup = document.createElement('div');
+            downGroup.className = 'clues-group';
+            downGroup.id = 'clues-down';
+
+            for (const word of downWords) {
+                const clueItem = document.createElement('div');
+                clueItem.className = 'clue-item';
+                clueItem.innerHTML = `
+                    <span class="clue-number">${word.number}.</span>
+                    ${word.hint}
+                    <span class="clue-length">(${word.aksharams.length})</span>
+                `;
+                clueItem.onclick = () => highlightWord(word);
+                downGroup.appendChild(clueItem);
+            }
+            container.appendChild(downGroup);
+        }
+
+        function switchTab(direction) {
+            document.querySelectorAll('.clues-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.clues-group').forEach(group => {
+                group.classList.remove('active');
+            });
+            document.getElementById(`clues-${direction}`).classList.add('active');
+        }
+
+        function highlightWord(word) {
+            document.querySelectorAll('.cell-highlighted').forEach(cell => {
+                cell.classList.remove('cell-highlighted');
+            });
+
+            const [minRow, , minCol, ] = currentGrid.getBounds();
+
+            for (const [r, c, _] of word.getCells()) {
+                const cell = document.querySelector(
+                    `.cell[data-row="${r - minRow}"][data-col="${c - minCol}"]`
+                );
+                if (cell) cell.classList.add('cell-highlighted');
+            }
+
+            const firstCell = word.getCells()[0];
+            const cell = document.querySelector(
+                `.cell[data-row="${firstCell[0] - minRow}"][data-col="${firstCell[1] - minCol}"]`
+            );
+            if (cell) {
+                const inputSpan = cell.querySelector('.cell-input');
+                if (inputSpan) inputSpan.focus();
+            }
+        }
+
+        // =============================================================================
+        // USER INTERACTION
+        // =============================================================================
+
+        function handleCellInput(event) {
+            const inputSpan = event.target;
+            const cell = inputSpan.closest('.cell');
+            cell.classList.remove('cell-correct', 'cell-error', 'cell-empty-warning');
+        }
+
+        function handleKeyNavigation(event) {
+            const inputSpan = event.target;
+            const cell = inputSpan.closest('.cell');
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+
+            let targetRow = row, targetCol = col;
+
+            switch (event.key) {
+                case 'ArrowUp': targetRow = row - 1; event.preventDefault(); break;
+                case 'ArrowDown': targetRow = row + 1; event.preventDefault(); break;
+                case 'ArrowLeft': targetCol = col - 1; event.preventDefault(); break;
+                case 'ArrowRight': targetCol = col + 1; event.preventDefault(); break;
+                case 'Tab':
+                    targetCol = event.shiftKey ? col - 1 : col + 1;
+                    event.preventDefault();
+                    break;
+                default: return;
+            }
+
+            const targetCell = document.querySelector(
+                `.cell[data-row="${targetRow}"][data-col="${targetCol}"]:not(.cell-black)`
+            );
+
+            if (targetCell) {
+                const targetInput = targetCell.querySelector('.cell-input');
+                if (targetInput) targetInput.focus();
+            }
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status status-' + type;
+        }
+
+        function hideStatus() {
+            document.getElementById('status').className = 'status';
+        }
+
+        // =============================================================================
+        // MAIN FUNCTIONS
+        // =============================================================================
+
+        function generateCrossword() {
+            const csvText = document.getElementById('csv-input').value;
+
+            if (!csvText.trim()) {
+                showStatus('దయచేసి పదాలను జోడించండి', 'error');
+                return;
+            }
+
+            const wordsHints = parseCSV(csvText);
+
+            if (wordsHints.length === 0) {
+                showStatus('చెల్లుబాటు అయ్యే పదాలు కనుగొనబడలేదు', 'error');
+                return;
+            }
+
+            const [grid, unplaced] = generateCrosswordGrid(wordsHints);
+
+            if (grid.placedWords.length === 0) {
+                showStatus('క్రాస్‌వర్డ్ రూపొందించడం సాధ్యం కాలేదు', 'error');
+                return;
+            }
+
+            currentGrid = grid;
+            renderGrid(grid);
+            renderClues(grid);
+
+            let message = `${grid.placedWords.length} పదాలతో పజిల్ సిద్ధం!`;
+            if (unplaced.length > 0) {
+                message += ` (${unplaced.length} పదాలు వేయలేకపోయాము)`;
+            }
+            showStatus(message, 'success');
+
+            // Collapse input on mobile after generating
+            if (window.innerWidth < 768) {
+                document.querySelector('.input-section details').removeAttribute('open');
+            }
+        }
+
+        function validateAnswers() {
+            if (!currentGrid) {
+                showStatus('ముందుగా పజిల్ రూపొందించండి', 'error');
+                return;
+            }
+
+            const cells = document.querySelectorAll('.cell:not(.cell-black)');
+            let correct = 0, wrong = 0, empty = 0;
+
+            cells.forEach(cell => {
+                const inputSpan = cell.querySelector('.cell-input');
+                const userInput = (inputSpan ? inputSpan.textContent : '').normalize('NFC').trim();
+                const solution = (cell.dataset.solution || '').normalize('NFC').trim();
+
+                cell.classList.remove('cell-correct', 'cell-error', 'cell-empty-warning');
+
+                if (!userInput) {
+                    cell.classList.add('cell-empty-warning');
+                    empty++;
+                } else if (userInput === solution) {
+                    cell.classList.add('cell-correct');
+                    correct++;
+                } else {
+                    cell.classList.add('cell-error');
+                    wrong++;
+                }
+            });
+
+            if (wrong === 0 && empty === 0) {
+                showStatus(`అభినందనలు! అన్ని ${correct} సమాధానాలు సరైనవి!`, 'success');
+            } else {
+                showStatus(`సరైనవి: ${correct}, తప్పులు: ${wrong}, ఖాళీలు: ${empty}`, 'info');
+            }
+        }
+
+        function showAnswers() {
+            if (!currentGrid) {
+                showStatus('ముందుగా పజిల్ రూపొందించండి', 'error');
+                return;
+            }
+
+            document.querySelectorAll('.cell:not(.cell-black)').forEach(cell => {
+                const solution = cell.dataset.solution || '';
+                const inputSpan = cell.querySelector('.cell-input');
+
+                if (inputSpan) inputSpan.textContent = solution;
+
+                cell.classList.remove('cell-error', 'cell-empty-warning');
+                cell.classList.add('cell-correct');
+            });
+
+            showStatus('అన్ని సమాధానాలు చూపించబడ్డాయి!', 'info');
+        }
+
+        function clearGrid() {
+            if (!currentGrid) {
+                showStatus('ముందుగా పజిల్ రూపొందించండి', 'error');
+                return;
+            }
+
+            document.querySelectorAll('.cell:not(.cell-black)').forEach(cell => {
+                const inputSpan = cell.querySelector('.cell-input');
+                if (inputSpan) inputSpan.textContent = '';
+                cell.classList.remove('cell-correct', 'cell-error', 'cell-empty-warning', 'cell-highlighted');
+            });
+
+            hideStatus();
+        }
+    </script>
+</body>
+</html>
