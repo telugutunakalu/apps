@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>War & Peace: Book One Companion</title>
+    <style>
+        :root {
+            --paper: #f4f1ea;
+            --ink: #2b2b2b;
+            --gold: #c5a059;
+            --red: #8a2be2; /* Aristocratic purple tint */
+            --rostov: #4a6fa5;
+            --bolkonsky: #3e5c46;
+            --bezukhov: #8b4513;
+            --kuragin: #800000;
+            --neutral: #555;
+            --border: #dcd9d0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #e8e4d9;
+            font-family: 'Georgia', serif;
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--paper);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid #d4d0c5;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 2px solid var(--gold);
+            background: #fffdf5;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-weight: normal;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--gold);
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: center;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            padding: 15px 30px;
+            border: none;
+            background: none;
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            color: var(--neutral);
+        }
+
+        .nav-btn:hover {
+            background-color: #f9f9f9;
+        }
+
+        .nav-btn.active {
+            color: var(--ink);
+            border-bottom: 3px solid var(--gold);
+            font-weight: bold;
+        }
+
+        /* Content Areas */
+        .view-section {
+            display: none;
+            padding: 30px;
+            animation: fadeIn 0.5s;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Character Grid */
+        .filters {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .filter-btn {
+            padding: 5px 15px;
+            margin: 0 5px 5px 0;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn.active {
+            background: var(--gold);
+            color: white;
+            border-color: var(--gold);
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .char-card {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 4px;
+            transition: transform 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .char-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-color: var(--gold);
+        }
+
+        .family-tag {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 3px 10px;
+            font-size: 0.7rem;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .char-name {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .char-desc {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        /* Relationship Explorer */
+        .rel-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .rel-sidebar {
+            flex: 1;
+            min-width: 250px;
+            background: white;
+            border: 1px solid var(--border);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .rel-list-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .rel-list-item:hover {
+            background-color: #fcfcfc;
+        }
+
+        .rel-list-item.selected {
+            background-color: var(--gold);
+            color: white;
+        }
+
+        .rel-display {
+            flex: 2;
+            min-width: 300px;
+            background: white;
+            border: 1px solid var(--border);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .connection-box {
+            margin: 10px 0;
+            width: 100%;
+            text-align: left;
+        }
+
+        .connection-card {
+            background: #fdfdfd;
+            border-left: 4px solid #ccc;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            background-color: var(--gold);
+            top: 0;
+            bottom: 0;
+            left: 20px;
+            margin-left: -2px;
+        }
+
+        .timeline-item {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 100%;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            right: -17px;
+            background-color: white;
+            border: 4px solid var(--gold);
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+            left: 12px;
+        }
+
+        .content-box {
+            padding: 20px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .chapter-tag {
+            font-size: 0.8rem;
+            color: var(--gold);
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .place-tag {
+            font-style: italic;
+            font-family: monospace;
+            color: #777;
+            float: right;
+        }
+
+        /* Utilities */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background-color: var(--paper);
+            margin: 10% auto;
+            padding: 40px;
+            border: 1px solid var(--gold);
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: var(--ink);
+        }
+
+        @media screen and (max-width: 600px) {
+            .nav-btn { padding: 15px 10px; font-size: 0.8rem; }
+            .rel-container { flex-direction: column; }
+            .timeline::after { left: 15px; }
+            .timeline-item::after { left: 7px; }
+            .timeline-item { padding-left: 35px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>War and Peace</h1>
+        <h2>Companion to Book One (Chapters 1-28)</h2>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" onclick="switchTab('characters')">Characters</button>
+        <button class="nav-btn" onclick="switchTab('relations')">Relations Map</button>
+        <button class="nav-btn" onclick="switchTab('timeline')">Plot Timeline</button>
+    </nav>
+
+    <!-- CHARACTERS SECTION -->
+    <div id="characters" class="view-section active">
+        <div class="filters" id="familyFilters">
+            <!-- Populated by JS -->
+        </div>
+        <div class="char-grid" id="charGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- RELATIONS SECTION -->
+    <div id="relations" class="view-section">
+        <div style="margin-bottom: 20px; text-align: center; color: #666;">
+            Select a character on the left to reveal their web of connections.
+        </div>
+        <div class="rel-container">
+            <div class="rel-sidebar" id="relList">
+                <!-- List of names -->
+            </div>
+            <div class="rel-display" id="relDisplay">
+                <h3>Select a Character</h3>
+                <p>...to see their connections.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIMELINE SECTION -->
+    <div id="timeline" class="view-section">
+        <div class="timeline" id="timelineContainer">
+            <!-- Timeline items -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal for details -->
+<div id="detailModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modalTitle" style="border-bottom: 1px solid #ccc; padding-bottom: 10px;"></h2>
+        <p id="modalFamily" style="color: var(--gold); font-style: italic; margin-top: 10px;"></p>
+        <div id="modalBody" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<script>
+    // --- DATA ---
+    
+    const families = {
+        "Bezukhov": "#8b4513",
+        "Bolkonsky": "#3e5c46",
+        "Rostov": "#4a6fa5",
+        "Kuragin": "#800000",
+        "Drubetskoy": "#555",
+        "Other": "#777"
+    };
+
+    const characters = [
+        {
+            id: "pierre",
+            name: "Pierre Bezukhov",
+            family: "Bezukhov",
+            desc: "The illegitimate son of a wealthy Count. Socially awkward, absent-minded, but kind-hearted. Educated abroad.",
+            plot: "Starts as an outcast at Anna Scherer's party. Expelled from St. Petersburg for the bear incident. Travels to Moscow, where his father dies. Pierre inherits the massive fortune and title, becoming the most eligible bachelor.",
+            relations: [
+                { to: "Old Count Bezukhov", type: "Son (Illegitimate, then legitimized)" },
+                { to: "Prince Vasili", type: "Target of manipulation; Distant relative" },
+                { to: "Andrei", type: "Best Friend" },
+                { to: "Natasha", type: "Acquaintance (meets at Name Day party)" },
+                { to: "Anna Mikhailovna", type: "Protected by her during inheritance struggle" }
+            ]
+        },
+        {
+            id: "andrei",
+            name: "Prince Andrei Bolkonsky",
+            family: "Bolkonsky",
+            desc: "Handsome, intelligent, but cynical and bored with high society. Aide-de-camp to Kutuzov.",
+            plot: "Disillusioned with his marriage and society life. Leaves his pregnant wife at Bald Hills with his harsh father. Departs for war seeking glory ('his Toulon').",
+            relations: [
+                { to: "Pierre", type: "Best Friend" },
+                { to: "Lise", type: "Husband (Estranged emotionally)" },
+                { to: "Old Prince Bolkonsky", type: "Son" },
+                { to: "Marya", type: "Brother" },
+                { to: "Kutuzov", type: "Aide-de-camp" }
+            ]
+        },
+        {
+            id: "natasha",
+            name: "Natasha Rostov",
+            family: "Rostov",
+            desc: "13 years old (in Book 1). Full of life, charming, not conventionally beautiful but captivating.",
+            plot: "Celebrates her name day. Shows great emotional intelligence. Has a childhood romance with Boris.",
+            relations: [
+                { to: "Nikolai", type: "Sister" },
+                { to: "Sonya", type: "Cousin / Best Friend" },
+                { to: "Boris", type: "Childhood Sweetheart" },
+                { to: "Countess Rostov", type: "Daughter" }
+            ]
+        },
+        {
+            id: "nikolai",
+            name: "Nikolai Rostov",
+            family: "Rostov",
+            desc: "Eldest Rostov son. Enthusiastic, patriotic, and simple-hearted student.",
+            plot: "Abandons university to join the Hussars to fight Napoleon. Deeply in love with Sonya, defying his parents' wish for a rich marriage.",
+            relations: [
+                { to: "Natasha", type: "Brother" },
+                { to: "Sonya", type: "Cousin / Lover" },
+                { to: "Boris", type: "Friend" },
+                { to: "Julie Karagina", type: "Flirts with (for money/social pressure)" }
+            ]
+        },
+        {
+            id: "vasili",
+            name: "Prince Vasili Kuragin",
+            family: "Kuragin",
+            desc: "An elderly, influential statesman. A master schemer who constantly seeks advantage for his children.",
+            plot: "Tries to steal the Bezukhov inheritance but fails. Tries to marry his son Anatole to Marya Bolkonsky but fails.",
+            relations: [
+                { to: "Hélène", type: "Father" },
+                { to: "Anatole", type: "Father" },
+                { to: "Pierre", type: "Scheming against" },
+                { to: "Anna Scherer", type: "Close Confidant" }
+            ]
+        },
+        {
+            id: "marya",
+            name: "Princess Marya",
+            family: "Bolkonsky",
+            desc: "Plain-faced but with 'luminous eyes'. Deeply religious and self-sacrificing.",
+            plot: "Suffers under her father's strict tutelage in geometry. Almost accepts Anatole's proposal but rejects him after catching him flirting with her companion.",
+            relations: [
+                { to: "Old Prince Bolkonsky", type: "Daughter (Victim of his bullying)" },
+                { to: "Andrei", type: "Sister" },
+                { to: "Anatole", type: "Potential Suitor (Rejected)" },
+                { to: "Julie Karagina", type: "Pen-pal" }
+            ]
+        },
+        {
+            id: "lise",
+            name: "Lise (The Little Princess)",
+            family: "Bolkonsky",
+            desc: "Andrei's pregnant wife. Charming, society-loving, has a slight downy lip.",
+            plot: "Terrified of childbirth and being left alone in the country. Does not understand why Andrei is unhappy.",
+            relations: [
+                { to: "Andrei", type: "Wife" },
+                { to: "Marya", type: "Sister-in-law" }
+            ]
+        },
+        {
+            id: "old_bolkonsky",
+            name: "Old Prince Bolkonsky",
+            family: "Bolkonsky",
+            desc: "Retired general-in-chief. Eccentric, rigorous, industrious. Obsessed with order.",
+            plot: "Torments his daughter with math lessons. Hides his deep love for his son behind a stern mask.",
+            relations: [
+                { to: "Andrei", type: "Father" },
+                { to: "Marya", type: "Father" }
+            ]
+        },
+        {
+            id: "anatole",
+            name: "Anatole Kuragin",
+            family: "Kuragin",
+            desc: "Handsome, wild, immoral, and reckless.",
+            plot: "Part of the bear incident with Pierre. Goes to Bald Hills to court Marya but ruins it by flirting with Mlle Bourienne.",
+            relations: [
+                { to: "Vasili", type: "Son" },
+                { to: "Hélène", type: "Brother" },
+                { to: "Pierre", type: "Drinking Buddy (formerly)" }
+            ]
+        },
+        {
+            id: "sonya",
+            name: "Sonya",
+            family: "Rostov",
+            desc: "The 'sterile flower'. Poor cousin living with the Rostovs. Quiet and self-sacrificing.",
+            plot: "Desperately in love with Nikolai but knows she has no dowry. Jealous of Julie Karagina.",
+            relations: [
+                { to: "Nikolai", type: "Cousin / Lover" },
+                { to: "Natasha", type: "Best Friend" }
+            ]
+        },
+        {
+            id: "anna_m",
+            name: "Anna Mikhailovna",
+            family: "Drubetskoy",
+            desc: "An impoverished princess. A fierce 'fighting mother' who begs for her son.",
+            plot: "Secures a position for her son Boris in the Guards. Fights Vasili Kuragin physically over the portfolio to ensure Pierre gets his inheritance.",
+            relations: [
+                { to: "Boris", type: "Mother" },
+                { to: "Pierre", type: "Ally (for her own gain)" },
+                { to: "Countess Rostov", type: "Old Friend" }
+            ]
+        },
+        {
+            id: "dolokhov",
+            name: "Dolokhov",
+            family: "Other",
+            desc: "Officer of the Semenov regiment. A gambler, brawler, and daredevil.",
+            plot: "Leader of the bear incident. Demoted to the ranks.",
+            relations: [
+                { to: "Anatole", type: "Friend" },
+                { to: "Pierre", type: "Friend (initially)" }
+            ]
+        }
+    ];
+
+    const timelineEvents = [
+        {
+            chapters: "Ch 1-5",
+            location: "St. Petersburg",
+            title: "The Soiree & The Bear",
+            desc: "Introduction to the elite at Anna Scherer's party. Pierre and Andrei discuss Napoleon. Pierre goes drinking with Anatole and Dolokhov, leading to the infamous bear incident."
+        },
+        {
+            chapters: "Ch 6-11",
+            location: "Moscow",
+            title: "The Rostov Name Day",
+            desc: "Contrast to Petersburg. The Rostovs are chaotic and loving. The young generation (Natasha, Nikolai, Sonya, Boris) navigate puppy love and future ambitions."
+        },
+        {
+            chapters: "Ch 12-13, 18-21",
+            location: "Moscow",
+            title: "The Death of Count Bezukhov",
+            desc: "A tense struggle over the mosaic portfolio (the will). Anna Mikhailovna battles Prince Vasili. The Old Count dies. Pierre inherits everything."
+        },
+        {
+            chapters: "Ch 22-25",
+            location: "Bald Hills",
+            title: "The Failed Match",
+            desc: "Prince Vasili and Anatole visit the Bolkonsky estate. Anatole is meant to woo Marya, but gets distracted by her French companion. Marya rejects the marriage."
+        },
+        {
+            chapters: "Ch 26-28",
+            location: "Bald Hills",
+            title: "Departure for War",
+            desc: "Prince Andrei arrives, drops off his pregnant wife, has a stoic goodbye with his father, and leaves for the Austrian front."
+        }
+    ];
+
+    // --- APP LOGIC ---
+
+    // 1. Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+        initCharacters();
+        initRelations();
+        initTimeline();
+    });
+
+    function switchTab(tabName) {
+        // Hide all sections
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        // Show selected
+        document.getElementById(tabName).classList.add('active');
+        
+        // Update Nav
+        const buttons = document.getElementsByClassName('nav-btn');
+        for (let btn of buttons) {
+            if (btn.innerText.toLowerCase().includes(tabName.split(' ')[0])) {
+                btn.classList.add('active');
+            }
+        }
+    }
+
+    // 2. Character Render
+    function initCharacters() {
+        const grid = document.getElementById('charGrid');
+        const filterContainer = document.getElementById('familyFilters');
+
+        // Create Filters
+        const allBtn = document.createElement('button');
+        allBtn.className = 'filter-btn active';
+        allBtn.innerText = 'All';
+        allBtn.onclick = () => filterChars('All', allBtn);
+        filterContainer.appendChild(allBtn);
+
+        Object.keys(families).forEach(fam => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn';
+            btn.innerText = fam;
+            btn.onclick = () => filterChars(fam, btn);
+            filterContainer.appendChild(btn);
+        });
+
+        // Render Cards
+        renderCharCards(characters);
+    }
+
+    function renderCharCards(list) {
+        const grid = document.getElementById('charGrid');
+        grid.innerHTML = '';
+        list.forEach(char => {
+            const card = document.createElement('div');
+            card.className = 'char-card';
+            card.onclick = () => showModal(char);
+
+            const color = families[char.family] || families['Other'];
+            
+            card.innerHTML = `
+                <div class="family-tag" style="background:${color}">${char.family}</div>
+                <div class="char-name">${char.name}</div>
+                <div class="char-desc">${char.desc.substring(0, 60)}...</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function filterChars(family, btnElement) {
+        // Update buttons
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        // Filter List
+        if (family === 'All') {
+            renderCharCards(characters);
+        } else {
+            const filtered = characters.filter(c => c.family === family);
+            renderCharCards(filtered);
+        }
+    }
+
+    // 3. Relations Logic
+    function initRelations() {
+        const list = document.getElementById('relList');
+        characters.sort((a,b) => a.name.localeCompare(b.name)).forEach(char => {
+            const item = document.createElement('div');
+            item.className = 'rel-list-item';
+            item.innerText = char.name;
+            item.onclick = () => selectRelation(char, item);
+            list.appendChild(item);
+        });
+    }
+
+    function selectRelation(char, itemElement) {
+        // UI Highlight
+        document.querySelectorAll('.rel-list-item').forEach(i => i.classList.remove('selected'));
+        itemElement.classList.add('selected');
+
+        const display = document.getElementById('relDisplay');
+        const famColor = families[char.family] || '#000';
+
+        let relHTML = `
+            <h2 style="color:${famColor}">${char.name}</h2>
+            <p style="margin-bottom:20px; font-style:italic;">${char.family} Family</p>
+            <div class="connection-box">
+        `;
+
+        if (char.relations && char.relations.length > 0) {
+            char.relations.forEach(rel => {
+                // Find family color of the target
+                const targetChar = characters.find(c => c.name.includes(rel.to) || rel.to.includes(c.name.split(' ')[0]));
+                const targetColor = targetChar ? families[targetChar.family] : '#555';
+
+                relHTML += `
+                    <div class="connection-card" style="border-left-color: ${targetColor}">
+                        <strong>${rel.to}</strong>: ${rel.type}
+                    </div>
+                `;
+            });
+        } else {
+            relHTML += `<p>No direct major relations listed for Book 1 context.</p>`;
+        }
+
+        relHTML += `</div>`;
+        display.innerHTML = relHTML;
+    }
+
+    // 4. Timeline Render
+    function initTimeline() {
+        const container = document.getElementById('timelineContainer');
+        
+        timelineEvents.forEach(event => {
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            
+            item.innerHTML = `
+                <div class="content-box">
+                    <span class="place-tag">${event.location}</span>
+                    <span class="chapter-tag">${event.chapters}</span>
+                    <h3>${event.title}</h3>
+                    <p>${event.desc}</p>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    // 5. Modal Logic
+    function showModal(char) {
+        const modal = document.getElementById('detailModal');
+        document.getElementById('modalTitle').innerText = char.name;
+        document.getElementById('modalFamily').innerText = char.family + " Family";
+        
+        document.getElementById('modalBody').innerHTML = `
+            <p><strong>Description:</strong> ${char.desc}</p>
+            <br>
+            <p><strong>Book 1 Plot Arc:</strong><br> ${char.plot}</p>
+        `;
+        
+        modal.style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').style.display = "none";
+    }
+
+    // Close modal on outside click
+    window.onclick = function(event) {
+        const modal = document.getElementById('detailModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+</script>
+
+</body>
+</html>
