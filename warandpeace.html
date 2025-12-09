@@ -340,12 +340,79 @@
             color: var(--ink);
         }
 
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media screen and (max-width: 768px) {
+            body { 
+                padding: 10px; 
+            }
+            .container { 
+                width: 100%; 
+                box-shadow: none; 
+                border: none; 
+                border-radius: 0;
+            }
+            h1 { font-size: 1.8rem; }
+            .nav-btn { padding: 10px 15px; font-size: 0.9rem; }
+            
+            .view-section {
+                padding: 15px;
+            }
+        }
+
         @media screen and (max-width: 600px) {
-            .nav-btn { padding: 15px 10px; font-size: 0.8rem; }
+            /* Navigation - Horizontal Scroll for Mobile */
+            nav {
+                justify-content: flex-start;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none; /* Firefox */
+            }
+            nav::-webkit-scrollbar {
+                display: none; /* Chrome/Safari */
+            }
+            .nav-btn { flex: 0 0 auto; }
+
+            /* Character Grid */
+            .char-grid {
+                grid-template-columns: 1fr; /* Stack vertically on small phones */
+            }
+
+            /* Relations */
             .rel-container { flex-direction: column; }
-            .timeline::after { left: 15px; }
-            .timeline-item::after { left: 7px; }
-            .timeline-item { padding-left: 35px; }
+            .rel-sidebar { 
+                max-height: 250px; 
+                min-width: 100%; 
+                border-bottom: 2px solid var(--gold);
+            }
+            .rel-display { 
+                min-width: 100%; 
+                padding: 15px; 
+                border-left: none;
+                border-top: 1px solid var(--border);
+            }
+            
+            /* Timeline */
+            .timeline::after { left: 10px; }
+            .timeline-item::after { left: 2px; }
+            .timeline-item { padding-left: 30px; padding-right: 0; }
+            .place-tag { 
+                float: none; 
+                display: block; 
+                margin-bottom: 5px; 
+                font-size: 0.8rem;
+            }
+            
+            /* Modal */
+            .modal-content { 
+                width: 95%; 
+                margin: 20% auto; 
+                padding: 20px; 
+            }
+            .close {
+                font-size: 32px;
+                padding: 5px;
+            }
         }
     </style>
 </head>
