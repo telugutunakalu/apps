@@ -77,7 +77,8 @@ button, a, [role="button"], label { touch-action: manipulation; }
 
 /* App frame: full dynamic viewport height, top bar + stage. Games set .tt-app--game to lock scrolling. */
 .tt-app { min-height: 100dvh; display: grid; grid-template-rows: auto 1fr; }
-.tt-app--game { height: 100dvh; overflow: hidden; touch-action: none; }
+.tt-app--game { height: 100dvh; overflow: hidden; touch-action: none; grid-template-rows: minmax(0, 1fr); }
+.tt-app--game > .tt-stage { grid-row: 1; }   /* the top bar floats over the stage, so the stage takes the whole frame */
 .tt-stage { position: relative; min-height: 0; min-width: 0; }
 
 /* ---------- top bar ---------- */
@@ -93,7 +94,8 @@ button, a, [role="button"], label { touch-action: manipulation; }
 .tt-back .tt-icon { width: 20px; height: 20px; }
 .tt-back__label { white-space: nowrap; }
 @media (max-width: 420px) { .tt-back__label { display: none; } .tt-back { padding: 0 10px; } }
-.tt-beta { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 2px 8px; border-radius: var(--tt-pill);
+.tt-beta { position: absolute; z-index: 1; top: calc(2px + var(--tt-safe-t)); left: calc(4px + var(--tt-safe-l)); pointer-events: none;
+  font-size: 10px; font-weight: 800; line-height: 1.5; padding: 0 6px; border-radius: var(--tt-pill);
   background: var(--tt-warn); color: #2a1d00; white-space: nowrap; }
 
 /* ---------- buttons ---------- */
