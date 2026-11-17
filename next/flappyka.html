@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="te" data-theme="dark" data-accent="chili">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0f0c16">
+<title>ఫ్లాపీ 'క' — తెలుగు తునకలు</title>
+<meta name="description" content="'క' తో ఎగురుతూ ఆలయ స్తంభాల మధ్య దూసుకుపోండి — దారిలో గుణింతం నేర్చుకోండి!">
+<meta property="og:title" content="ఫ్లాపీ 'క' — తెలుగు తునకలు">
+<meta property="og:description" content="'క' తో ఎగురుతూ గుణింతం నేర్చుకోండి.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff4f4f'/%3E%3Ctext x='32' y='45' font-size='38' text-anchor='middle' fill='%23fff'%3E%E0%B0%95%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../lib/v1/tt.css">
+<style>
+  .hud { position: absolute; z-index: 16; left: 0; right: 0; top: calc(60px + var(--tt-safe-t)); display: flex; flex-direction: column;
+         align-items: center; gap: 6px; padding: 0 10px; pointer-events: none; }
+  .hud[hidden] { display: none; }
+  .score { font-family: var(--tt-font-display); font-size: clamp(44px, 12vw, 72px); line-height: 1; color: #fff;
+           text-shadow: 0 4px 0 rgba(0,0,0,.25), 0 8px 30px rgba(0,0,0,.35); font-variant-numeric: tabular-nums; }
+  .score.pop { animation: pop .25s var(--tt-ease); }
+  @keyframes pop { 50% { transform: scale(1.18); } }
+  .target { display: flex; align-items: center; gap: 10px; padding: 4px 16px 4px 14px; border-radius: var(--tt-pill);
+            background: var(--tt-glass); border: 1px solid var(--tt-glass-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .target[hidden] { display: none; }
+  .target small { color: var(--tt-muted); font-size: 14px; }
+  .target b { font-size: 36px; line-height: 1.25; color: var(--tt-accent); }
+  .target .arrow { color: var(--tt-faint); }
+  .target .now { font-size: 22px; font-weight: 700; }
+  .row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 560px; }
+  .row span { min-width: 30px; padding: 0 5px; height: 30px; display: grid; place-items: center; border-radius: 8px; font-size: 17px; font-weight: 700;
+              background: var(--tt-glass); color: var(--tt-muted); }
+  .row span.done { background: var(--tt-accent); color: var(--tt-accent-ink); }
+  .row span.cur { outline: 2px solid var(--tt-accent); color: var(--tt-ink); }
+  @media (max-width: 720px), (max-height: 520px) { .row { display: none; } }
+  .ready { position: absolute; z-index: 14; left: 0; right: 0; bottom: calc(14% + var(--tt-safe-b)); display: flex; justify-content: center; pointer-events: none; }
+  .ready[hidden] { display: none; }
+  .ready span { font-size: 18px; animation: bob 1s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-8px); } }
+  .intro p { margin: 6px 0; }
+  .intro .ctl { color: var(--tt-ink); font-weight: 700; }
+  .intro small { display: block; margin-top: 10px; color: var(--tt-faint); }
+  @media (max-height: 520px) {
+    .hud { top: calc(52px + var(--tt-safe-t)); flex-direction: row; justify-content: center; gap: 10px; }
+    .score { font-size: 40px; }
+    .target b { font-size: 26px; }
+  }
+</style>
+<script type="importmap">{ "imports": { "three": "../lib/v1/vendor/three/three.module.min.js", "three/addons/": "../lib/v1/vendor/three/addons/", "tt/": "../lib/v1/" } }</script>
+</head>
+<body>
+<noscript>ఈ ఆట ఆడటానికి JavaScript అవసరం.</noscript>
+<script type="module">
+import { createApp, createLoop, pointerControls, keyControls, fontsReady, haptic, isTouch, params } from "tt/shell.js";
+import { el, setChildren } from "tt/safe.js";
+import { sfx, speak } from "tt/sfx.js";
+import * as te from "tt/telugu.js";
+import { THREE, createRenderer, createComposer, autoResize, glyphTexture, Burst, skyDome, dotTexture, qualityTier } from "tt/three-kit.js";
+
+/* ============================== tuning ============================== */
+const DEBUG = params().has("debug");
+const tier = qualityTier();
+const rand = te.rng(params().has("seed") ? +params().get("seed") : Date.now() >>> 0);
+const PLAY_H = 10;             // ground at y = 0, ceiling at y = 10
+const R = 0.4;                 // player hit radius (round: fairer than the old 60×60 box)
+const PILLAR_HW = 0.7, ORB_R = 0.5, SPACING = 5.8;
+const PRESETS = {              // gravity, flap velocity, gap height, scroll speed (world units / s)
+  easy:   { g: 21, flap: 7.4, gap: 4.4, speed: 3.4 },
+  normal: { g: 26, flap: 8.4, gap: 3.7, speed: 4.2 },
+  hard:   { g: 30, flap: 9.1, gap: 3.2, speed: 5.0 },
+};
+const SIGNS = te.GUNINTHAM_SIGNS.slice(1);           // ా ి ీ … ః  (the bare consonant is where you start)
+// Short/long partner of each sign: the most instructive wrong answer (కి vs కీ, కు vs కూ…).
+const PARTNER = { "ా": "", "ి": "ీ", "ీ": "ి", "ు": "ూ", "ూ": "ు", "ృ": "ౄ", "ౄ": "ృ", "ె": "ే", "ే": "ె", "ై": "ె", "ొ": "ో", "ో": "ొ", "ౌ": "ొ", "ం": "ః", "ః": "ం" };
+const CONSONANT_CHOICES = te.CONSONANTS.filter(c => !["ఙ", "ఞ", "ఱ"].includes(c));
+const PALETTES = [
+  { top: "#3d8bff", horizon: "#bfe7ff", hemiSky: "#ffffff", hemiGround: "#6b8f4a", hemi: 1.4, sun: "#fff1d6", sunI: 1.4, night: 0, disc: "#fff6c9" },
+  { top: "#4b2a86", horizon: "#ff9e6b", hemiSky: "#ffd0b0", hemiGround: "#5a3a4a", hemi: 1.1, sun: "#ffb380", sunI: 1.1, night: 0.3, disc: "#ffb070" },
+  { top: "#070b22", horizon: "#2b2d66", hemiSky: "#8c96ff", hemiGround: "#1d2238", hemi: 0.7, sun: "#a9b8ff", sunI: 0.5, night: 1, disc: "#e8ecff" },
+  { top: "#5aa0ff", horizon: "#ffd9a0", hemiSky: "#ffffff", hemiGround: "#6b7f4a", hemi: 1.3, sun: "#ffe0b0", sunI: 1.3, night: 0, disc: "#fff0b0" },
+];
+
+/* ============================== app shell ============================== */
+const SETTINGS = [
+  { key: "mode", label: "ఆట రకం", type: "segmented", default: "learn", restart: true,
+    options: [{ value: "learn", label: "గుణింతం నేర్చుకో" }, { value: "free", label: "సరదా (పాత ఆట)" }],
+    help: "గుణింతం: పైన చూపిన అక్షరం ఉన్న బుడగ గుండా ఎగరండి. సరదా: ఏ బుడగైనా పట్టుకోవచ్చు." },
+  { key: "consonant", label: "హల్లు", type: "segmented", default: "క", restart: true,
+    options: [{ value: "mix", label: "మారుతూ" }, ...CONSONANT_CHOICES.map(c => ({ value: c, label: c }))] },
+  { key: "order", label: "గుణింతం క్రమం", type: "segmented", default: "seq", restart: true,
+    options: [{ value: "seq", label: "వరుసగా (కా, కి, కీ…)" }, { value: "random", label: "యాదృచ్ఛికం" }] },
+  { key: "difficulty", label: "కష్టం", type: "segmented", default: "normal", restart: true,
+    options: [{ value: "easy", label: "సులభం" }, { value: "normal", label: "మామూలు" }, { value: "hard", label: "కష్టం" }] },
+  { key: "ceiling", label: "పైకప్పు తగిలితే ఆట ముగుస్తుంది", type: "toggle", default: false, restart: true },
+  { key: "speak", label: "అక్షరాన్ని పలుకు", type: "toggle", default: true, help: "సరైన బుడగ పట్టుకున్నప్పుడు వినిపిస్తుంది (పరికరంలో తెలుగు స్వరం ఉంటేనే)" },
+];
+const helpNode = () => el("div", { class: "intro" },
+  el("p", { text: "• తెరను తాకితే (లేదా స్పేస్ నొక్కితే) అక్షరం పైకి ఎగురుతుంది. ఆలయ స్తంభాలకు, నేలకు తగలకుండా దూసుకుపోండి." }),
+  el("p", { text: "• గుణింతం ఆట: పైన చూపిన అక్షరం (ఉదా: కి) ఉన్న బుడగ గుండా ఎగరండి — మీ 'క' 'కి' గా మారుతుంది!" }),
+  el("p", { text: "• ప్రతి స్తంభం +5. సరైన బుడగ +20 (వరుసగా పడితే ×2, ×3…)." }),
+  el("p", { class: "ctl", text: "ఆపడానికి P లేదా పై బటన్." }),
+);
+const app = createApp({ id: "flappyka", title: "ఫ్లాపీ 'క'", accent: "chili", game: true, settings: SETTINGS, help: helpNode });
+app.addAction("pause", "ఆపు", () => togglePause());
+
+/* ---------- HUD ---------- */
+const scoreEl = el("div", { class: "score", text: "0", attrs: { "aria-live": "polite" } });
+const targetEl = el("div", { class: "target", hidden: true, attrs: { role: "status", "aria-live": "polite" } });
+const rowEl = el("div", { class: "row" });
+const hud = el("div", { class: "hud", hidden: true }, scoreEl, targetEl, rowEl);
+const readyEl = el("div", { class: "ready", hidden: true }, el("span", { class: "tt-pill", text: isTouch() ? "👆 తాకి ఎగరండి!" : "స్పేస్ నొక్కి ఎగరండి!" }));
+app.stage.append(hud, readyEl);
+
+/* ============================== 3D scene ============================== */
+await fontsReady();
+const renderer = createRenderer({ container: app.stage, tier, exposure: 1.0 });
+if (!renderer) throw new Error("WebGL unavailable");
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 900);
+scene.fog = new THREE.Fog(0xbfe7ff, 60, 220);
+const sky = skyDome({ radius: 700, top: PALETTES[0].top, horizon: PALETTES[0].horizon, bottom: PALETTES[0].horizon });
+const hemi = new THREE.HemisphereLight(0xffffff, 0x6b8f4a, 1.4);
+const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(-20, 40, 30);
+scene.add(sky, hemi, sun);
+const discMat = new THREE.SpriteMaterial({ map: dotTexture(), color: 0xfff6c9, transparent: true, depthWrite: false, fog: false });
+const disc = new THREE.Sprite(discMat); disc.scale.setScalar(60); scene.add(disc);
+// threshold above the daytime sky's brightness so only bubbles, sparks and the sun glow
+const { composer, bloomPass } = createComposer(renderer, scene, camera, { bloom: { strength: 0.6, radius: 0.4, threshold: 0.93 } });
+
+/* ---------- textures ---------- */
+function pixelTex(w, h, draw) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+const stoneTex = pixelTex(32, 32, (g, w, h) => {
+  const r = te.rng(5);
+  g.fillStyle = "#cfa86e"; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 160; i++) { g.fillStyle = r() < 0.5 ? "#c19a60" : "#dbb57c"; g.fillRect(r() * w | 0, r() * h | 0, 1, 1); }
+  g.fillStyle = "#9c7a48"; g.fillRect(0, 0, w, 2); g.fillRect(0, 15, w, 1);
+  g.fillStyle = "#e3c08a"; g.fillRect(0, 2, w, 1);
+  g.fillStyle = "#8a6a3e"; for (const x of [4, 13, 22]) { g.fillRect(x, 5, 6, 7); }       // carved niches
+  g.fillStyle = "#b08852"; for (const x of [5, 14, 23]) { g.fillRect(x, 6, 4, 5); }
+  g.fillStyle = "#9c7a48"; for (let x = 1; x < w; x += 4) g.fillRect(x, 20, 2, 8);        // flutes
+});
+const grassTex = pixelTex(32, 32, (g, w, h) => {
+  const r = te.rng(6);
+  g.fillStyle = "#5aa83f"; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 220; i++) { g.fillStyle = r() < 0.5 ? "#4c9a35" : "#6bbd4c"; g.fillRect(r() * w | 0, r() * h | 0, 1, 2); }
+});
+const earthTex = pixelTex(32, 32, (g, w, h) => {
+  const r = te.rng(7);
+  g.fillStyle = "#9b6a3d"; g.fillRect(0, 0, w, h);
+  g.fillStyle = "#4c9a35"; g.fillRect(0, 0, w, 3); g.fillStyle = "#3d8a2c"; for (let x = 0; x < w; x += 3) g.fillRect(x, 3, 1, 2);
+  for (let i = 0; i < 90; i++) { g.fillStyle = r() < 0.5 ? "#8a5c32" : "#b07c4a"; g.fillRect(r() * w | 0, 6 + (r() * (h - 6) | 0), 2, 1); }
+  g.fillStyle = "#7a522c"; g.fillRect(0, 18, w, 1);
+});
+
+/* ---------- ground: front face + grass top, textures scroll ---------- */
+const GROUND_W = 900, GROUND_Z_FRONT = 2.2, GROUND_DEPTH = 320;   // deep enough to sit under the far boulders
+earthTex.repeat.set(GROUND_W / 2, 20 / 2);
+grassTex.repeat.set(GROUND_W / 2, GROUND_DEPTH / 2);
+const groundFront = new THREE.Mesh(new THREE.PlaneGeometry(GROUND_W, 20), new THREE.MeshLambertMaterial({ map: earthTex }));
+groundFront.position.set(0, -10, GROUND_Z_FRONT);
+earthTex.offset.y = 0.0;
+const groundTop = new THREE.Mesh(new THREE.PlaneGeometry(GROUND_W, GROUND_DEPTH).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ map: grassTex }));
+groundTop.position.set(0, 0, GROUND_Z_FRONT - GROUND_DEPTH / 2);
+scene.add(groundFront, groundTop);
+
+/* ---------- parallax background (true depth: farther layers drift slower on screen) ---------- */
+const layers = [];   // { group, items[], z, span }
+function makeLayer(z, count, factory, seed) {
+  const g = new THREE.Group(); scene.add(g);
+  const rr = te.rng(seed), items = [];
+  for (let i = 0; i < count; i++) { const m = factory(rr); g.add(m); items.push(m); }
+  const L = { group: g, items, z, span: 50, rr };
+  layers.push(L); return L;
+}
+const lam = c => new THREE.MeshLambertMaterial({ color: c, flatShading: true });
+const boulderGeo = new THREE.IcosahedronGeometry(1, 0);
+const rockMats = ["#a08f9e", "#8f7f8e", "#b5a3ac"].map(lam);
+function boulderPile(rr) {   // Deccan granite boulders
+  const g = new THREE.Group();
+  const n = 3 + Math.floor(rr() * 4);
+  let y = 0;
+  for (let i = 0; i < n; i++) {
+    const m = new THREE.Mesh(boulderGeo, rockMats[i % 3]);
+    const s = 2.5 + rr() * 4.5 - i * 0.4;
+    m.scale.set(s * (1 + rr() * 0.4), s * 0.75, s);
+    m.position.set((rr() - 0.5) * 6, y + s * 0.55, (rr() - 0.5) * 4);
+    m.rotation.set(rr() * 3, rr() * 3, rr() * 3);
+    y += s * (0.6 + rr() * 0.4) * (rr() < 0.6 ? 1 : 0.2);
+    g.add(m);
+  }
+  return g;
+}
+const trunkMat = lam("#7a4d24"), frondMats = ["#2f8a3c", "#3fa34d"].map(lam);
+const frondGeo = new THREE.BoxGeometry(2.6, 0.18, 0.6);
+function palm(rr) {
+  const g = new THREE.Group(), h = 6 + rr() * 5;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, h, 6), trunkMat);
+  trunk.position.y = h / 2; trunk.rotation.z = (rr() - 0.5) * 0.25; g.add(trunk);
+  const top = new THREE.Vector3(-Math.sin(trunk.rotation.z) * h, h, 0);
+  for (let i = 0; i < 7; i++) {
+    const f = new THREE.Mesh(frondGeo, frondMats[i % 2]);
+    f.position.copy(top); f.rotation.set(0, (i / 7) * Math.PI * 2, -0.45);
+    f.translateX(1.1); g.add(f);
+  }
+  return g;
+}
+const gopuramMats = ["#d9a066", "#c98a4f"].map(lam);
+function gopuram(rr) {
+  const g = new THREE.Group();
+  for (let t = 0; t < 7; t++) {
+    const w = 7 - t * 0.85, m = new THREE.Mesh(new THREE.BoxGeometry(w, 1.4, w * 0.6), gopuramMats[t % 2]);
+    m.position.y = 0.7 + t * 1.4; g.add(m);
+  }
+  const k = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 6), lam("#ffd34d")); k.position.y = 7 * 1.4 + 0.5; g.add(k);
+  g.scale.setScalar(1 + rr() * 0.4);
+  return g;
+}
+const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x666666, flatShading: true, transparent: true, opacity: 0.92 });
+const puffGeo = new THREE.BoxGeometry(1, 1, 1);
+function cloud(rr) {
+  const g = new THREE.Group();
+  for (let i = 0; i < 5 + Math.floor(rr() * 4); i++) {
+    const m = new THREE.Mesh(puffGeo, cloudMat);
+    m.scale.set(2 + rr() * 3, 1 + rr() * 1.4, 1.5 + rr() * 1.5);
+    m.position.set((rr() - 0.5) * 6, rr() * 1.2, (rr() - 0.5) * 2); g.add(m);
+  }
+  g.userData.drift = 0.3 + rr() * 0.5;
+  return g;
+}
+const dens = tier === "low" ? 0.6 : 1;
+makeLayer(-120, Math.round(9 * dens), boulderPile, 1);
+makeLayer(-55, Math.round(12 * dens), rr => (rr() < 0.18 ? gopuram(rr) : palm(rr)), 2);
+makeLayer(-26, Math.round(10 * dens), palm, 3);
+const cloudLayer = makeLayer(-70, Math.round(8 * dens), cloud, 4);
+cloudLayer.cloud = true;
+
+/* ---------- stars ---------- */
+const stars = (() => {
+  const n = 380, pos = new Float32Array(n * 3), g = te.rng(21);
+  for (let i = 0; i < n; i++) pos.set([(g() - 0.5) * 900, 20 + g() * 300, -400 - g() * 100], i * 3);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const p = new THREE.Points(geo, new THREE.PointsMaterial({ size: 2, sizeAttenuation: false, color: 0xffffff, transparent: true, opacity: 0, fog: false, depthWrite: false }));
+  scene.add(p); return p;
+})();
+
+/* ---------- pillars (pooled) ---------- */
+const pillarGeo = new THREE.BoxGeometry(PILLAR_HW * 2, 1, 1.4).translate(0, 0.5, 0);   // origin at the bottom
+const capGeo = new THREE.BoxGeometry(PILLAR_HW * 2 + 0.5, 0.32, 1.8);
+const goldMat = new THREE.MeshLambertMaterial({ color: 0xffc845, emissive: 0x6b4a00, emissiveIntensity: 0.6 });
+const baseMat = new THREE.MeshLambertMaterial({ color: 0x8a6a3e });
+const bellGeo = new THREE.ConeGeometry(0.22, 0.36, 10, 1, true);
+const pillars = [];
+for (let i = 0; i < 9; i++) {
+  const g = new THREE.Group();
+  const mk = () => { const tex = stoneTex.clone(); tex.needsUpdate = true; return new THREE.Mesh(pillarGeo, new THREE.MeshLambertMaterial({ map: tex })); };
+  const low = mk(), high = mk();
+  const capLow = new THREE.Mesh(capGeo, goldMat), capHigh = new THREE.Mesh(capGeo, goldMat);
+  const base = new THREE.Mesh(capGeo, baseMat); base.scale.y = 1.6; base.position.y = 0.25;
+  const bell = new THREE.Mesh(bellGeo, goldMat); const clap = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 4), goldMat);
+  bell.add(clap); clap.position.y = -0.2;
+  g.add(low, high, capLow, capHigh, base, bell);
+  g.visible = false; scene.add(g);
+  pillars.push({ g, low, high, capLow, capHigh, bell, x: 0, gapY: 5, gap: 3.7, active: false, passed: false });
+}
+function setPillar(p, x, gapY, gap) {
+  Object.assign(p, { x, gapY, gap, active: true, passed: false });
+  const lowH = gapY - gap / 2, highY = gapY + gap / 2, highH = 40;
+  p.low.scale.y = lowH; p.low.material.map.repeat.set(1, lowH / 1.4);
+  p.high.position.y = highY; p.high.scale.y = highH; p.high.material.map.repeat.set(1, highH / 1.4);
+  p.capLow.position.y = lowH - 0.16; p.capHigh.position.y = highY + 0.16;
+  p.bell.position.y = highY - 0.22;
+  p.g.position.x = x; p.g.visible = true;
+}
+
+/* ---------- orbs (pooled glyph bubbles) ---------- */
+const orbs = [];
+for (let i = 0; i < 8; i++) {
+  const g = new THREE.Group();
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: 0xffd34d, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+  halo.scale.setScalar(2.2);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }));
+  face.position.z = 0.05;
+  g.add(halo, face); g.visible = false; scene.add(g);
+  orbs.push({ g, halo, face, x: 0, y: 0, syl: "", sign: "", active: false, phase: rand() * 6 });
+}
+function labelOrb(o, syl) {
+  const tex = glyphTexture(syl, { height: 128, weight: 800, color: "#3a0a00", bg: "#fff1c9", padding: 0.2, radius: 0.5 });
+  o.face.material.map = tex; o.face.material.needsUpdate = true;
+  const h = ORB_R * 2.1; o.face.scale.set(h * Math.max(1, tex.userData.aspect), h, 1);
+  o.syl = syl;
+}
+/** role: "ok" (shows the current target), "no" (a near-miss) or a vowel sign (free mode). */
+function placeOrb(x, y, syl, role) {
+  const o = orbs.find(q => !q.active); if (!o) return;
+  labelOrb(o, syl);
+  Object.assign(o, { x, y, role, active: true });
+  o.g.position.set(x, y, 0.3); o.g.visible = true; o.g.scale.setScalar(1);
+}
+/** When the target changes, bubbles still ahead of the player are relabelled to match it. */
+function refreshOrbs() {
+  for (const o of orbs) {
+    if (!o.active || o.x < 0.8) continue;
+    if (o.role === "ok") labelOrb(o, state.target);
+    else if (o.role === "no") labelOrb(o, state.consonant + distractorFor(SIGNS[state.targetIdx]));
+  }
+}
+
+/* ---------- player: the letter itself, on a glowing badge, with a little wing ---------- */
+const player = new THREE.Group();
+const playerHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: 0xff6a4f, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+playerHalo.scale.setScalar(2.4);
+playerHalo.material.opacity = 0.45;   // a soft glow; stronger washes the letter out against a bright sky
+const wing = new THREE.Mesh(new THREE.CircleGeometry(0.3, 14), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 }));
+wing.scale.set(1.5, 0.7, 1); wing.position.set(-0.55, 0.12, -0.05);
+const glyphMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }));
+glyphMesh.position.z = 0.05;
+player.add(playerHalo, wing, glyphMesh);
+player.position.z = 0.4;
+scene.add(player);
+function setGlyph(text) {
+  const tex = glyphTexture(text, { height: 192, weight: 800, color: "#ffffff", stroke: "#6a1200", strokeWidth: 14, padding: 0.1 });
+  glyphMesh.material.map = tex; glyphMesh.material.needsUpdate = true;
+  const h = 1.35; glyphMesh.scale.set(h * tex.userData.aspect, h, 1);
+}
+const burst = new Burst({ max: 1400, size: 0.32 });
+scene.add(burst);
+
+/* ============================== state ============================== */
+const state = {
+  mode: "menu",      // menu | ready | playing | dead | over | paused
+  cfg: null, preset: PRESETS.normal, consonant: "క", y: 5, vy: 0, t: 0, score: 0, pillarsPassed: 0,
+  speed: 4.2, sinceSpawn: 0, lastGap: 5, combo: 1, learned: 0, targetIdx: 0, target: "", current: "క",
+  freeTimer: 0, squash: 0, shake: 0, pausedFrom: null, dayT: 0, deadT: 0, consonantCount: 0,
+};
+const view = { w: 10, h: 10, camX: 0, left: 0, right: 0 };
+
+/* ---------- learning targets ---------- */
+function nextTarget(first = false) {
+  const c = state.consonant;
+  if (state.cfg.order === "seq") state.targetIdx = first ? 0 : (state.targetIdx + 1) % SIGNS.length;
+  else { let i; do { i = Math.floor(rand() * SIGNS.length); } while (SIGNS.length > 1 && i === state.targetIdx && !first); state.targetIdx = i; }
+  state.target = c + SIGNS[state.targetIdx];
+  renderTarget();
+  refreshOrbs();
+}
+function renderTarget() {
+  if (state.cfg.mode !== "learn") { targetEl.hidden = true; rowEl.replaceChildren(); return; }
+  targetEl.hidden = false;
+  setChildren(targetEl, el("small", { text: "పట్టుకోండి" }), el("b", { text: state.target }),
+    el("span", { class: "arrow", text: "·" }), el("small", { text: "ఇప్పుడు" }), el("span", { class: "now", text: state.current }));
+  if (state.cfg.order === "seq") setChildren(rowEl, te.gunintham(state.consonant).slice(1).map((s, i) =>
+    el("span", { class: i < state.targetIdx ? "done" : i === state.targetIdx ? "cur" : "", text: s })));
+  else rowEl.replaceChildren();
+}
+function distractorFor(sign) {
+  const p = PARTNER[sign];
+  if (p !== undefined && rand() < 0.7) return p;
+  let s; do { s = rand.pick([...SIGNS, ""]); } while (s === sign);
+  return s;
+}
+
+/* ---------- spawning ---------- */
+function spawnPillar(x) {
+  const p = pillars.find(q => !q.active); if (!p) return;
+  const gap = state.preset.gap;
+  const lo = gap / 2 + 1.0, hi = PLAY_H - gap / 2 - 0.6;
+  const gapY = Math.min(hi, Math.max(lo, state.lastGap + (rand() - 0.5) * 6));
+  state.lastGap = gapY;
+  setPillar(p, x, gapY, gap);
+  if (state.mode === "menu") return;
+  if (state.cfg.mode === "learn") {
+    // two bubbles in the gap: the target and a near-miss — the player must choose
+    const wrong = state.consonant + distractorFor(SIGNS[state.targetIdx]);
+    const up = rand() < 0.5, d = Math.min(0.95, gap / 2 - ORB_R * 0.6);
+    placeOrb(x, gapY + (up ? d : -d), state.target, "ok");
+    placeOrb(x, gapY + (up ? -d : d), wrong, "no");
+  } else if (rand() < 0.35) {              // original: random vowel-sign pickups
+    const sign = rand.pick(SIGNS);
+    placeOrb(x, gapY + (rand() - 0.5) * (gap - 1.4), state.consonant + sign, sign);
+  }
+}
+function clearWorld() {
+  pillars.forEach(p => { p.active = false; p.g.visible = false; });
+  orbs.forEach(o => { o.active = false; o.g.visible = false; });
+}
+function prefill() {   // pillars from just ahead of the player to the right edge
+  clearWorld();
+  state.lastGap = 5;
+  let x = Math.max(7, view.right * 0.55);
+  while (x < view.right + 2) { spawnPillar(x); x += SPACING; }
+  state.sinceSpawn = SPACING - (x - (view.right + 2));
+}
+
+/* ---------- events ---------- */
+function flap() {
+  if (state.mode === "ready") { state.mode = "playing"; readyEl.hidden = true; }
+  if (state.mode !== "playing") return;
+  state.vy = state.preset.flap;
+  state.squash = 1;
+  sfx.play("jump"); haptic(8);
+  burst.emit(new THREE.Vector3(-0.4, state.y - 0.3, 0.4), { count: 8, color: 0xffffff, speed: 2.2, gravity: -3, life: 0.35 });
+}
+function addScore(n) { state.score += n; scoreEl.textContent = state.score; scoreEl.classList.remove("pop"); void scoreEl.offsetWidth; scoreEl.classList.add("pop"); }
+function grab(o) {
+  o.active = false; o.g.visible = false;
+  const at = new THREE.Vector3(o.x, o.y, 0.5);
+  if (state.cfg.mode === "free") {
+    state.current = o.syl; state.freeTimer = 5;            // original: transform for 5 s, +10
+    setGlyph(state.current); state.squash = 1.4;
+    addScore(10); sfx.play("good"); haptic(12);
+    burst.emit(at, { count: 50, color: 0xffd34d, speed: 5 });
+    app.toast(`గుర్తు పట్టుకున్నాం! ఇప్పుడు ${state.current}`, { ms: 1400 });
+    return;
+  }
+  if (te.sameText(o.syl, state.target)) {
+    state.current = o.syl; setGlyph(state.current); state.squash = 1.5;
+    addScore(20 * state.combo); state.combo = Math.min(5, state.combo + 1); state.learned++;
+    sfx.play("good"); haptic(15);
+    burst.emit(at, { count: 80, color: 0xffd34d, speed: 6 });
+    if (app.settings.speak) speak(o.syl);
+    const wrapped = state.cfg.order === "seq" && state.targetIdx === SIGNS.length - 1;
+    if (wrapped) {
+      sfx.play("win"); burst.emit(new THREE.Vector3(0, state.y, 0.5), { count: 200, color: 0xff6a4f, speed: 9 });
+      app.toast(`${state.consonant} గుణింతం పూర్తి! 🎉`, { tone: "good", ms: 2400 });
+    }
+    state.consonantCount++;
+    if (state.cfg.consonant === "mix" && (wrapped || (state.cfg.order === "random" && state.consonantCount % 5 === 0))) switchConsonant();
+    else nextTarget();
+  } else {
+    sfx.play("bad"); haptic([20, 30, 20]); state.combo = 1; state.shake = 0.25;
+    burst.emit(at, { count: 30, color: 0x9aa0b0, speed: 3 });
+    app.toast(`అది ${o.syl}! కావాల్సింది ${state.target}`, { tone: "bad", ms: 1500 });
+    renderTarget();
+  }
+}
+function switchConsonant() {
+  let c; do { c = rand.pick(CONSONANT_CHOICES); } while (c === state.consonant);
+  state.consonant = c; state.current = c; setGlyph(c);
+  app.toast(`ఇప్పుడు ${c} గుణింతం!`, { ms: 1800 });
+  nextTarget(true);
+}
+function die() {
+  if (state.mode !== "playing") return;
+  state.mode = "dead"; state.deadT = 0; state.shake = 0.6; state.vy = Math.max(state.vy, 4);
+  sfx.play("crash"); haptic([50, 40, 80]);
+  burst.emit(new THREE.Vector3(0, state.y, 0.5), { count: 90, color: 0xff6a4f, speed: 7 });
+}
+function gameOver() {
+  state.mode = "over";
+  const key = `${state.cfg.mode}-${state.cfg.difficulty}`;
+  const { best, isNew } = app.best(key).submit(state.score);
+  const stats = [{ label: "స్కోరు", value: state.score }, { label: "ఉత్తమం", value: best }];
+  if (state.cfg.mode === "learn") stats.push({ label: "నేర్చినవి", value: state.learned });
+  else stats.push({ label: "స్తంభాలు", value: state.pillarsPassed });
+  app.overlay({ title: "ఆట ముగిసింది!", body: isNew ? "కొత్త రికార్డు! 🎉" : null, stats,
+    actions: [{ label: "మళ్ళీ ఆడు", onClick: resetGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }] });
+}
+
+/* ---------- flow ---------- */
+function resetGame() {
+  state.cfg = { ...app.settings };
+  state.preset = PRESETS[state.cfg.difficulty];
+  state.consonant = state.cfg.consonant === "mix" ? rand.pick(CONSONANT_CHOICES) : state.cfg.consonant;
+  Object.assign(state, { y: 5, vy: 0, score: 0, pillarsPassed: 0, combo: 1, learned: 0, freeTimer: 0, consonantCount: 0, speed: state.preset.speed });
+  state.current = state.consonant; setGlyph(state.current);
+  scoreEl.textContent = "0";
+  if (state.cfg.mode === "learn") nextTarget(true); else renderTarget();
+  state.mode = "ready";
+  prefill();
+  app.hideOverlay(); hud.hidden = false; readyEl.hidden = false;
+  loop.start();
+}
+function togglePause() {
+  if (state.mode === "paused") return resume();
+  if (!["playing", "ready"].includes(state.mode)) return;
+  state.pausedFrom = state.mode; state.mode = "paused";
+  app.overlay({ title: "ఆట ఆగింది", actions: [
+    { label: "కొనసాగించు", onClick: resume },
+    { label: "మళ్ళీ మొదలు", ghost: true, onClick: resetGame },
+    { label: "అమరికలు", ghost: true, onClick: app.openSettings },
+  ] });
+}
+function resume() { if (state.mode !== "paused") return; state.mode = state.pausedFrom; app.hideOverlay(); loop.start(); }
+function showMenu() {
+  state.mode = "menu"; hud.hidden = true; readyEl.hidden = true;
+  state.cfg = { ...app.settings }; state.preset = PRESETS[state.cfg.difficulty];
+  setGlyph(state.cfg.consonant === "mix" ? "క" : state.cfg.consonant);
+  prefill();
+  const mode = SETTINGS[0].options.find(o => o.value === app.settings.mode)?.label;
+  app.overlay({
+    title: "తెలుగు తునకలు - ఫ్లాపి(క)",
+    body: el("div", { class: "intro" },
+      el("p", { text: "ఆలయ స్తంభాల మధ్య నుండి 'క' ను ఎగిరించండి!" }),
+      el("p", { text: app.settings.mode === "learn" ? "పైన చూపిన అక్షరం ఉన్న బుడగ గుండా వెళ్తే మీ 'క' ఆ అక్షరంగా మారుతుంది — గుణింతం మొత్తం పూర్తి చేయండి!" : "బుడగలు పట్టుకుంటే 'క' కొంతసేపు ఆ అక్షరంగా మారుతుంది." }),
+      el("p", { class: "ctl", text: isTouch() ? "తెరను తాకితే పైకి ఎగురుతుంది" : "స్పేస్ / ↑ / క్లిక్ = ఎగరడం" }),
+      el("small", { text: `${mode} · ${SETTINGS[3].options.find(o => o.value === app.settings.difficulty)?.label}` })),
+    actions: [{ label: "ఎగరండి →", onClick: resetGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+  });
+}
+
+/* ============================== camera + resize ============================== */
+function fitCamera(w, h) {
+  const a = w / h;
+  view.h = Math.max(PLAY_H + 1.6, 6.6 / a);       // portrait: fit ~6.6 units of width; landscape: the 10-unit playfield
+  view.w = view.h * a;
+  const left = Math.min(4.5, Math.max(1.9, view.w * 0.28));
+  view.camX = view.w / 2 - left;
+  view.left = -left; view.right = view.w - left;
+  const dist = (view.h / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  camera.position.set(view.camX, PLAY_H / 2 + 0.2, dist);
+  camera.lookAt(view.camX, PLAY_H / 2 + 0.2, 0);
+  scene.fog.near = dist + 40; scene.fog.far = dist + 180;
+  disc.position.set(view.camX + view.w * 0.25 * ((dist + 150) / dist), PLAY_H * 0.9 + 25, -150);
+  for (const L of layers) {   // spread each layer across its visible width at its depth
+    const wz = view.w * (dist - L.z) / dist + 30;
+    L.span = wz;
+    L.items.forEach((m, i) => { m.position.set(view.camX - wz / 2 + (i + L.rr() * 0.7) * (wz / L.items.length), L.cloud ? 18 + L.rr() * 22 : (L.z < -100 ? -1 : 0), L.z + (L.rr() - 0.5) * 6); });
+  }
+  if (state.mode === "menu") prefill();
+}
+autoResize({ renderer, camera, composer, bloomPass, container: app.stage, onResize: fitCamera });
+
+/* ============================== palette ============================== */
+const pal = { top: new THREE.Color(PALETTES[0].top), horizon: new THREE.Color(PALETTES[0].horizon), hemiSky: new THREE.Color("#fff"), hemiGround: new THREE.Color("#6b8f4a"), sun: new THREE.Color("#fff"), disc: new THREE.Color(PALETTES[0].disc), hemi: 1.4, sunI: 1.4, night: 0 };
+const tmpC = new THREE.Color();
+function stepPalette(dt) {
+  state.dayT += dt;
+  const target = PALETTES[Math.floor(state.dayT / 40) % PALETTES.length];
+  const k = 1 - Math.exp(-dt * 0.5);
+  for (const c of ["top", "horizon", "hemiSky", "hemiGround", "sun", "disc"]) pal[c].lerp(tmpC.set(target[c]), k);
+  for (const n of ["hemi", "sunI", "night"]) pal[n] += (target[n] - pal[n]) * k;
+  sky.material.uniforms.top.value.copy(pal.top); sky.material.uniforms.horizon.value.copy(pal.horizon); sky.material.uniforms.bottom.value.copy(pal.horizon);
+  scene.fog.color.copy(pal.horizon);
+  hemi.color.copy(pal.hemiSky); hemi.groundColor.copy(pal.hemiGround); hemi.intensity = pal.hemi;
+  sun.color.copy(pal.sun); sun.intensity = pal.sunI;
+  discMat.color.copy(pal.disc);
+  stars.material.opacity = pal.night;
+  cloudMat.opacity = 0.92 - pal.night * 0.6;
+}
+
+/* ============================== simulation ============================== */
+function circleHitsRect(cx, cy, r, x0, x1, y0, y1) {
+  const nx = Math.max(x0, Math.min(cx, x1)), ny = Math.max(y0, Math.min(cy, y1));
+  return (cx - nx) ** 2 + (cy - ny) ** 2 < r * r;
+}
+function update(dt) {
+  if (state.mode === "paused") return;
+  state.t += dt;
+  const P = state.preset;
+  const playing = state.mode === "playing";
+  const dx = (playing ? state.speed : ["menu", "ready"].includes(state.mode) ? P.speed * 0.5 : 0) * dt;   // scenery drift
+  const wdx = playing ? dx : 0;   // pillars & bubbles only move while actually playing
+
+  // player
+  if (state.mode === "ready" || state.mode === "menu") { state.y = 5 + Math.sin(state.t * 3) * 0.35; state.vy = 0; }
+  else if (state.mode === "playing" || state.mode === "dead") {
+    state.vy = Math.max(-14, state.vy - P.g * dt);
+    state.y += state.vy * dt;
+    if (state.mode === "playing") {
+      if (state.y - R < 0) { state.y = R; die(); }
+      if (state.y + R > PLAY_H) {
+        if (state.cfg.ceiling) die(); else { state.y = PLAY_H - R; state.vy = Math.min(0, state.vy); }
+      }
+    }
+  }
+  if (state.mode === "dead") { state.deadT += dt; if (state.y < -1) { state.y = -1; state.vy = 0; } if (state.deadT > 0.9) gameOver(); }
+  player.position.y = state.y;
+  const tilt = state.mode === "dead" ? -1.4 : THREE.MathUtils.clamp(state.vy * 0.07, -1.0, 0.45);
+  player.rotation.z += (tilt - player.rotation.z) * Math.min(1, dt * 10);
+  state.squash = Math.max(0, state.squash - dt * 4);
+  const sq = Math.sin(state.squash * Math.PI) * 0.22;
+  player.scale.set(1 + sq, 1 - sq * 0.8, 1);
+  wing.rotation.z = Math.sin(state.t * (state.mode === "playing" ? 18 : 8)) * 0.6 + (state.squash > 0 ? 0.6 : 0);
+
+  // free mode: transformation wears off (original: 5 s)
+  if (state.cfg?.mode === "free" && state.freeTimer > 0 && state.mode === "playing") {
+    state.freeTimer -= dt;
+    if (state.freeTimer <= 0) { state.current = state.consonant; setGlyph(state.current); app.toast(`ఎఫక్ట్ పోయింది! మళ్ళి ${state.consonant}`, { ms: 1400 }); }
+  }
+
+  // pillars
+  if (playing) {
+    state.sinceSpawn += wdx;
+    if (state.sinceSpawn >= SPACING) { state.sinceSpawn -= SPACING; spawnPillar(view.right + 2); }
+  }
+  for (const p of pillars) {
+    if (!p.active) continue;
+    p.x -= wdx; p.g.position.x = p.x;
+    p.bell.rotation.z = Math.sin(state.t * 3 + p.x) * 0.25;
+    if (state.mode === "playing") {
+      const y0 = p.gapY - p.gap / 2, y1 = p.gapY + p.gap / 2;
+      if (circleHitsRect(0, state.y, R, p.x - PILLAR_HW, p.x + PILLAR_HW, -99, y0) || circleHitsRect(0, state.y, R, p.x - PILLAR_HW, p.x + PILLAR_HW, y1, 99)) die();
+      if (!p.passed && p.x + PILLAR_HW < -R) {
+        p.passed = true; state.pillarsPassed++; addScore(5); sfx.play("tick");
+        state.speed = P.speed * (1 + Math.min(0.4, state.pillarsPassed * 0.012));
+      }
+    }
+    if (p.x < view.left - 3) { p.active = false; p.g.visible = false; }
+  }
+  // orbs
+  for (const o of orbs) {
+    if (!o.active) continue;
+    o.x -= wdx;
+    o.g.position.set(o.x, o.y + Math.sin(state.t * 3 + o.phase) * 0.08, 0.3);
+    o.halo.material.opacity = 0.55 + Math.sin(state.t * 5 + o.phase) * 0.25;
+    if (state.mode === "playing" && (o.x - 0) ** 2 + (o.y - state.y) ** 2 < (ORB_R + R) ** 2) grab(o);
+    if (o.x < view.left - 3) { o.active = false; o.g.visible = false; }
+  }
+  // parallax layers: everything moves at world speed; perspective makes far layers slower
+  for (const L of layers) {
+    for (const m of L.items) {
+      m.position.x -= dx + (L.cloud ? m.userData.drift * dt : 0);
+      if (m.position.x < view.camX - L.span / 2) m.position.x += L.span;
+    }
+  }
+  earthTex.offset.x = (earthTex.offset.x + dx / 2) % 1;
+  grassTex.offset.x = (grassTex.offset.x + dx / 2) % 1;
+
+  // trail
+  if (state.mode === "playing" && Math.floor(state.t * 60) % 2 === 0)
+    burst.emit(new THREE.Vector3(-0.5, state.y, 0.35), { count: 1, color: 0xff7a4f, speed: 0.8, gravity: 0, life: 0.45, dir: new THREE.Vector3(-0.6, 0, 0) });
+  burst.update(dt);
+  stepPalette(dt);
+
+  // camera shake
+  state.shake = Math.max(0, state.shake - dt * 1.5);
+  const s = state.shake * state.shake * 0.6;
+  camera.position.x = view.camX + (rand() - 0.5) * s;
+  camera.position.y = PLAY_H / 2 + 0.2 + (rand() - 0.5) * s;
+}
+
+const loop = createLoop({ update, render: () => composer.render(), onHidden: () => { if (["playing", "ready"].includes(state.mode)) togglePause(); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && state.mode !== "paused") loop.start(); });
+
+/* ============================== input ============================== */
+pointerControls(app.stage, { onDragStart: () => flap() });          // flap on press, not release
+keyControls({ " ": flap, ArrowUp: flap, KeyW: flap, KeyP: togglePause, Escape: togglePause });
+
+/* ============================== boot ============================== */
+showMenu();
+loop.start();
+if (DEBUG) window.__game = { state, flap, resetGame, pillars, orbs, grabTarget: () => { const o = orbs.find(q => q.active && q.syl === state.target); if (o) grab(o); return !!o; } };
+</script>
+</body>
+</html>
