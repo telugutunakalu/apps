@@ -1,440 +1,866 @@
-<!DOCTYPE html>
-<html lang="te">
+<!doctype html>
+<html lang="te" data-theme="auto" data-accent="turmeric">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>తడపేరాట</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&family=Baloo+2:wght@500;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Baloo 2', 'Noto Sans Telugu', sans-serif;
-            touch-action: none; /* Prevents default touch behaviors like scrolling/zooming */
-            overscroll-behavior: none;
-            overflow: hidden; /* Prevent scrolling on the body */
-        }
-        .telugu-text {
-            font-family: 'Noto Sans Telugu', sans-serif;
-        }
-        @keyframes correct-pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
-        }
-        .correct-pop-animation {
-            animation: correct-pop 0.5s ease-in-out;
-        }
-        @keyframes incorrect-shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-        .incorrect-shake-animation {
-            animation: incorrect-shake 0.4s ease-in-out;
-        }
-        .letter-tile {
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .answer-slot {
-            min-height: 5rem; /* Adjusted for potentially smaller screens */
-            cursor: pointer;
-        }
-        /* Style for the selected tile */
-        .selected-tile {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
-            border: 3px solid #3B82F6; /* blue-500 */
-        }
-        /* Style for the modal overlay */
-        .modal-overlay {
-            transition: opacity 0.3s ease-in-out;
-        }
-        /* Hide scrollbars */
-        ::-webkit-scrollbar {
-            display: none;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0c16">
+<title>తడపేరాట — తెలుగు తునకలు</title>
+<meta name="description" content="తడపేరాట: బొమ్మను చూసి, కలగలిసిన అక్షరాలను సరైన క్రమంలో పేర్చి తెలుగు పదాన్ని కట్టండి.">
+<meta property="og:title" content="తడపేరాట — తెలుగు తునకలు">
+<meta property="og:description" content="తెలుగు పదాలు మీకు ఎంత బాగా వొచ్చూనో ??!!!">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffc233'/%3E%3Crect x='7' y='9' width='22' height='22' rx='5' fill='%23261a00'/%3E%3Crect x='35' y='9' width='22' height='22' rx='5' fill='none' stroke='%23261a00' stroke-width='3' stroke-dasharray='5 3'/%3E%3Crect x='21' y='36' width='22' height='22' rx='5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./lib/v1/tt.css">
+<style>
+  :root {
+    --ok-ink: var(--tt-good); --bad-ink: var(--tt-bad); --warn-ink: var(--tt-warn);
+    --tile-top: #ffdb70; --tile-bot: #ffc233; --tile-edge: #c58c00; --tile-ink: #261a00;
+    --slot-line: rgba(255, 255, 255, .3); --slot-bg: rgba(255, 255, 255, .05); --home-line: rgba(255, 255, 255, .12);
+    --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif;
+    --accent-text: var(--tt-accent);
+  }
+  :root[data-theme="light"] {
+    --ok-ink: #12884a; --bad-ink: #d42a3c; --warn-ink: #9a5a00; --accent-text: #9a6b00;
+    --slot-line: rgba(29, 22, 38, .3); --slot-bg: rgba(29, 22, 38, .04); --home-line: rgba(29, 22, 38, .12);
+  }
+  @media (prefers-color-scheme: light) {
+    :root[data-theme="auto"] {
+      --ok-ink: #12884a; --bad-ink: #d42a3c; --warn-ink: #9a5a00; --accent-text: #9a6b00;
+      --slot-line: rgba(29, 22, 38, .3); --slot-bg: rgba(29, 22, 38, .04); --home-line: rgba(29, 22, 38, .12);
+    }
+  }
+
+  /* one fixed screen: top bar + game, never scrolls during play */
+  .tt-app { position: relative; z-index: 1; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+  .tt-topbar { z-index: 35; }                 /* back / sound / help / settings stay usable above the cards */
+  .tt-stage { display: flex; min-height: 0; }
+
+  .game { flex: 1 1 auto; min-height: 0; min-width: 0; width: 100%; max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px;
+          padding: 2px calc(12px + var(--tt-safe-r)) calc(12px + var(--tt-safe-b)) calc(12px + var(--tt-safe-l)); }
+  .game.idle { opacity: 0; }                  /* + the inert attribute (not visibility: tt.css's reduced-motion rule would transition it) */
+  .game.blur .side, .game.blur .play { filter: blur(12px); }
+  .side { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+  .play { flex: 0 0 auto; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+  /* ---------- HUD ---------- */
+  .hud { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .hud .tt-pill { font-size: 15px; white-space: nowrap; }
+  .hud .tt-pill small { font-size: 13px; }
+  .hud__r { display: flex; align-items: center; gap: 8px; }
+  .score.bump { animation: bump .35s var(--tt-ease); }
+  @keyframes bump { 45% { scale: 1.15; } }
+  .seg { flex: 0 0 auto; display: flex; gap: 4px; height: 6px; }
+  .seg i { flex: 1 1 0; border-radius: 3px; background: var(--tt-line); }
+  .seg i.ok { background: var(--tt-good); }
+  .seg i.miss { background: var(--tt-bad); }
+  .seg i.cur { background: color-mix(in srgb, var(--tt-accent) 55%, transparent); }
+
+  /* ---------- picture + ring timer ---------- */
+  .pic-wrap { flex: 1 1 0; min-height: 0; display: grid; place-items: center; }
+  .pic { position: relative; width: var(--pic, 200px); height: var(--pic, 200px); display: grid; place-items: center; }
+  .ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+  .ring circle { fill: none; stroke-width: 5.5; }
+  .ring .track { stroke: var(--tt-line); }
+  .ring .bar { stroke: var(--tt-accent); stroke-linecap: round; stroke-dasharray: 100 100; transition: stroke .3s; }
+  .pic.low .ring .bar { stroke: var(--tt-bad); }
+  .pic.practice .ring .bar { stroke: color-mix(in srgb, var(--tt-accent) 35%, transparent); }
+  .disc { position: absolute; inset: 9%; border-radius: 50%; border: 1px solid var(--tt-line);
+          background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--tt-accent) 20%, var(--tt-surface)), var(--tt-surface) 72%);
+          box-shadow: var(--tt-shadow); }
+  .pic.won .disc { background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--tt-good) 35%, var(--tt-surface)), var(--tt-surface) 72%); }
+  .emoji { position: relative; font-family: var(--emoji); font-size: calc(var(--pic, 200px) * .44); line-height: 1; user-select: none; -webkit-user-select: none; }
+  .emoji.in { animation: emoji-in .45s var(--tt-ease); }
+  @keyframes emoji-in { from { scale: .4; opacity: 0; } }
+  .secs { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); display: flex; align-items: baseline; gap: 3px; padding: 2px 12px;
+          border-radius: var(--tt-pill); background: var(--tt-surface-2); border: 1px solid var(--tt-line); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .secs b { font-size: 22px; line-height: 1.2; }
+  .secs small { font-size: 13px; color: var(--tt-muted); }
+  .pic.low .secs { background: var(--tt-bad); border-color: transparent; color: #2a0006; animation: beat 1s ease-in-out infinite; }
+  .pic.low .secs small { color: inherit; }
+  @keyframes beat { 15% { scale: 1.12; } 35% { scale: 1; } }
+  .badge { position: absolute; top: 2%; display: inline-flex; align-items: center; gap: 2px; min-height: 30px; padding: 2px 10px; border-radius: var(--tt-pill);
+           font-weight: 800; font-size: 15px; white-space: nowrap; }
+  .badge[hidden] { display: none; }
+  .combo { right: -2%; background: var(--tt-accent); color: var(--tt-accent-ink); }
+  .combo.pop { animation: bump .4s var(--tt-ease); }
+  .misses { left: -2%; background: var(--tt-surface-2); border: 1px solid var(--tt-line); color: var(--bad-ink); letter-spacing: 1px; }
+
+  /* ---------- feedback ---------- */
+  .feedback { flex: 0 0 auto; height: 30px; max-width: 100%; text-align: center; font-weight: 800; font-size: clamp(15px, 4.6vw, 19px); line-height: 30px;
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .feedback.good { color: var(--ok-ink); } .feedback.bad { color: var(--bad-ink); } .feedback.warn { color: var(--warn-ink); }
+  .feedback.info { color: var(--tt-muted); font-weight: 700; font-size: 16px; }
+
+  /* ---------- slots, tray, tiles ---------- */
+  .row { display: flex; justify-content: center; gap: var(--gap, 8px); }
+  .slot, .home { position: relative; flex: 0 0 auto; width: var(--tile, 56px); height: var(--tile, 56px); border-radius: calc(var(--tile, 56px) * .24); }
+  .slot { border: 2px dashed var(--slot-line); background: var(--slot-bg); transition: border-color .2s, background .2s; }
+  .game.picking .slot:not(.filled) { border-color: var(--tt-accent); background: color-mix(in srgb, var(--tt-accent) 14%, transparent); animation: glow 1.1s ease-in-out infinite; }
+  .slot.over { border-color: var(--tt-accent); border-style: solid; background: color-mix(in srgb, var(--tt-accent) 24%, transparent); }
+  @keyframes glow { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--tt-accent) 28%, transparent); } }
+  .slots.shake { animation: shake .45s ease-in-out; }
+  @keyframes shake { 20%, 60% { translate: -10px 0; } 40%, 80% { translate: 10px 0; } }
+  .home { border: 2px dashed var(--home-line); }
+  .tray { padding: var(--tray-pad, 8px); border-radius: calc(var(--tile, 56px) * .24 + var(--tray-pad, 8px)); border: 1px solid var(--tt-line);
+          background: color-mix(in srgb, var(--tt-ink) 4%, transparent); }
+  .tray.flat { padding: 0; border-color: transparent; background: none; }
+  .kbd { display: none; position: absolute; z-index: 3; top: -8px; left: -8px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px;
+         background: var(--tt-surface-2); border: 1px solid var(--tt-line); color: var(--tt-muted); font: 700 11px/16px var(--tt-font); text-align: center; pointer-events: none; }
+  .game.kb .kbd { display: block; }
+
+  .tile { position: absolute; inset: -2px; z-index: 2; display: grid; place-items: center; margin: 0; padding: 0; border: 0; border-radius: inherit;
+          background: linear-gradient(180deg, var(--tile-top), var(--tile-bot)); color: var(--tile-ink);
+          box-shadow: inset 0 -4px 0 var(--tile-edge), 0 6px 14px rgba(0, 0, 0, .22);
+          font-family: var(--tt-font); font-weight: 800; font-size: var(--fs, calc(var(--tile, 56px) * .44));
+          cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+          transition: translate .16s var(--tt-ease), scale .16s var(--tt-ease), box-shadow .2s, background .2s, opacity .2s; }
+  .tile .tx { display: inline-block; line-height: 1.3; padding-bottom: .1em; white-space: nowrap; pointer-events: none; }
+  .tile:focus-visible { outline: 3px solid var(--tt-ink); outline-offset: 3px; }
+  @media (hover: hover) { .tile:not(.locked):hover { filter: brightness(1.06); } }
+  .tile.sel { translate: 0 -7px; scale: 1.06; box-shadow: inset 0 -4px 0 var(--tile-edge), 0 0 0 3px var(--tt-ink), 0 12px 22px rgba(0, 0, 0, .3); }
+  .tile.dragging { z-index: 50; cursor: grabbing; transition: none; box-shadow: inset 0 -4px 0 var(--tile-edge), 0 18px 30px rgba(0, 0, 0, .38); }
+  .tile.locked { cursor: default; background: linear-gradient(180deg, #8ff0b8, #34d17e); box-shadow: inset 0 -4px 0 #17955a, 0 6px 14px rgba(0, 0, 0, .2); color: #00210f; }
+  .tile.bad { background: linear-gradient(180deg, #ff9aa4, #ff5a6a); box-shadow: inset 0 -4px 0 #c22a3b, 0 6px 14px rgba(0, 0, 0, .2); color: #2a0006; }
+  .tile.ok { background: linear-gradient(180deg, #8ff0b8, #34d17e); box-shadow: inset 0 -4px 0 #17955a, 0 6px 14px rgba(0, 0, 0, .2); color: #00210f;
+             animation: tile-pop .5s var(--tt-ease) both; animation-delay: var(--d, 0ms); }
+  @keyframes tile-pop { 40% { scale: 1.2; } }
+  .tile.reveal:not(.locked) { background: linear-gradient(180deg, #ffe2b0, #ffb24d); box-shadow: inset 0 -4px 0 #c27a10, 0 6px 14px rgba(0, 0, 0, .2); }
+
+  .actions { display: flex; justify-content: center; gap: 8px; flex-wrap: nowrap; }
+  .actions .tt-btn { min-height: 44px; padding: 8px 16px; font-size: 15px; white-space: nowrap; }
+
+  /* ---------- effects layer ---------- */
+  .fx { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+  .cf { position: absolute; width: 8px; height: 12px; margin: -6px 0 0 -4px; border-radius: 2px; }
+  .cf.round { border-radius: 50%; width: 9px; height: 9px; }
+  .float { position: absolute; transform: translate(-50%, -50%); font-weight: 800; font-size: 22px; color: var(--ok-ink); text-shadow: 0 2px 8px rgba(0, 0, 0, .25); white-space: nowrap; }
+
+  /* ---------- cards ---------- */
+  .intro p { margin: 6px 0; }
+  .intro .ctl { color: var(--tt-ink); font-weight: 700; }
+  .intro small, .note { display: block; margin-top: 10px; color: var(--tt-faint); font-size: 13.5px; }
+  .demo { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 4px 0 10px; }
+  .demo .e { font-family: var(--emoji); font-size: 40px; line-height: 1; margin-right: 4px; }
+  .demo .arr { color: var(--tt-faint); font-size: 20px; margin: 0 4px; }
+  .demo .t { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; font-weight: 800; font-size: 19px; line-height: 1.3;
+             background: linear-gradient(180deg, var(--tile-top), var(--tile-bot)); color: var(--tile-ink); box-shadow: inset 0 -3px 0 var(--tile-edge); }
+  .best-line { color: var(--tt-muted); }
+  .best-line b, .tt-card__stat b { color: var(--accent-text); }
+  .rec { color: var(--accent-text) !important; font-weight: 800; }
+  .levels { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0 2px; }
+  .lvchip { padding: 3px 10px; border-radius: var(--tt-pill); background: var(--tt-surface-2); border: 1px solid var(--tt-line); font-size: 14px; font-weight: 700; }
+  .lvchip small { color: var(--tt-muted); font-weight: 500; }
+  .lvchip.new { border-color: var(--tt-accent); }
+  .rv-col { text-align: left; margin-top: 12px; max-height: min(36dvh, 340px); overflow: auto; overscroll-behavior: contain; }
+  .rv-col h3 { margin: 8px 0 6px; font-size: 15px; color: var(--tt-muted); }
+  .rv-list { display: grid; gap: 6px; }
+  .rv { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 10px; border-radius: 14px; background: color-mix(in srgb, var(--tt-ink) 6%, transparent); }
+  .rv__e { font-family: var(--emoji); font-size: 30px; line-height: 1; flex: 0 0 auto; }
+  .rv__w { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
+  .rv__w b { font-size: 19px; line-height: 1.4; }
+  .rv__s { display: flex; flex-wrap: wrap; gap: 3px; }
+  .rv__s i { font-style: normal; font-weight: 700; font-size: 14px; padding: 0 7px; border-radius: 7px; background: var(--tile-bot); color: var(--tile-ink); line-height: 1.6; }
+  .rv .tt-iconbtn { flex: 0 0 auto; }
+  .allgood { color: var(--ok-ink) !important; font-weight: 700; text-align: center; }
+  .help p { margin: 0 0 10px; }
+  .help .ctl { color: var(--tt-muted); font-size: 14px; }
+
+  /* ---------- short landscape phones: picture left, letters right ---------- */
+  @media (orientation: landscape) and (max-height: 600px) {
+    .game { flex-direction: row; max-width: 1100px; gap: 16px; padding-top: 0; }
+    .side { flex: 0 0 38%; }
+    .play { flex: 1 1 0; justify-content: center; gap: 8px; }
+    /* end card: score on the left; missed words + buttons on the right, buttons always visible */
+    .tt-card.final { width: min(820px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); grid-template-areas: "h r" "l r";
+                     grid-template-rows: auto 1fr; column-gap: 20px; align-items: start; }
+    .tt-card.final > h2 { grid-area: h; }
+    .tt-card.final .summary { display: contents; }
+    .tt-card.final .sum-l { grid-area: l; }
+    .tt-card.final .sum-r { grid-area: r; display: flex; flex-direction: column; max-height: calc(100dvh - 116px); }
+    .tt-card.final .rv-col { flex: 0 1 auto; min-height: 0; max-height: none; margin-top: 0; }
+    .tt-card.final .tt-card__actions { flex: 0 0 auto; margin-top: 12px; }
+    .tt-card.final .tt-card__stat b { font-size: 26px; }
+  }
+  @media (max-height: 560px) { .tt-card h2 { font-size: 26px; } .tt-card { padding: 18px 18px 16px; } }
+  /* very short landscape (e.g. 568×320): other cards put their buttons on the right so nothing hides below the fold */
+  @media (orientation: landscape) and (max-height: 420px) {
+    .game { gap: 12px; }
+    .side { flex-basis: 34%; }                  /* more width for six tiles of ≥ 44 px */
+    .tt-overlay { padding-top: 62px; padding-bottom: calc(8px + var(--tt-safe-b)); }
+    .tt-card.split { width: min(700px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "h a" "b a";
+                     column-gap: 20px; align-items: center; }
+    .tt-card.split > h2 { grid-area: h; }
+    .tt-card.split > :not(h2):not(.tt-card__actions) { grid-area: b; }
+    .tt-card.split > .tt-card__actions { grid-area: a; flex-direction: column; flex-wrap: nowrap; margin-top: 0; }
+    .demo { display: none; }
+  }
+</style>
+<script type="importmap">{ "imports": { "three": "./lib/v1/vendor/three/three.module.min.js", "three/addons/": "./lib/v1/vendor/three/addons/", "tt/": "./lib/v1/" } }</script>
 </head>
-<body class="bg-sky-100">
+<body>
+<noscript>తడపేరాట ఆడటానికి JavaScript అవసరం.</noscript>
+<script type="module">
+import { createApp, createLoop, keyControls, haptic, isTouch, params, prefersReducedMotion } from "tt/shell.js";
+import { el, setChildren, icon } from "tt/safe.js";
+import { sfx, speak, canSpeakTelugu } from "tt/sfx.js";
+import * as te from "tt/telugu.js";
+import { loadWords } from "tt/words.js";
+import { createBackdrop } from "tt/three-kit.js";
 
-    <div id="game-container" class="flex flex-col h-screen w-screen p-2 sm:p-4 text-center select-none">
-        
-        <!-- Header: Score, Level, and Timer -->
-        <header class="flex justify-between items-center w-full max-w-2xl mx-auto mb-4">
-            <div class="bg-white/70 rounded-xl px-3 py-2 shadow-md">
-                <h2 class="text-lg font-bold text-blue-600">స్కోరు</h2>
-                <p id="score" class="text-2xl font-bold text-blue-800">0</p>
-            </div>
-            <div class="text-center">
-                 <h1 class="text-3xl font-bold text-indigo-700">తడపేరాట</h1>
-                 <p id="level-display" class="text-xl font-bold text-indigo-500"></p>
-            </div>
-            <div class="bg-white/70 rounded-xl px-3 py-2 shadow-md">
-                <h2 class="text-lg font-bold text-red-600">సమయం</h2>
-                <p id="timer" class="text-2xl font-bold text-red-800">10</p>
-            </div>
-        </header>
+/* ============================== tuning ============================== */
+const DEBUG = params().has("debug");
+const rand = te.rng(params().has("seed") ? +params().get("seed") : Date.now() >>> 0);
+const MAX_LEVEL = 4;                       // levels by syllable count: 2, 3, 4, 5–6 (the original's four levels)
+const LEVEL_SYL = { 1: "2", 2: "3", 3: "4", 4: "5–6" };
+const HINT_COST = 5;                       // points taken off the word for each revealed syllable
+const COMBO_STEP = 2, COMBO_MAX = 5;       // streak bonus: +2 per word in a row, up to +10
+/** Seconds for a word. "normal" is the original fixed 10 s; "scaled" adds 4 s per syllable beyond 2. */
+const secondsFor = (mode, n) => (mode === "normal" ? 10 : 10 + Math.max(0, n - 2) * 4);
+const LANDSCAPE = matchMedia("(orientation: landscape) and (max-height: 600px)");
+const FINE = matchMedia("(pointer: fine)");
 
-        <!-- Main Game Area -->
-        <main id="main-game-area" class="flex-grow flex flex-col items-center justify-center w-full max-w-2xl mx-auto">
-            <div id="emoji-container" class="text-8xl md:text-9xl mb-6"></div>
-            <div id="answer-slots" class="flex justify-center flex-wrap items-center gap-2 md:gap-4 mb-8 w-full min-h-[5rem]"></div>
-            <div id="feedback-message" class="text-3xl font-bold h-10 mb-4 transition-all duration-300"></div>
-            <div id="letter-tiles-container" class="bg-white/50 rounded-2xl p-4 w-full">
-                 <div id="letter-tiles" class="flex justify-center flex-wrap items-center gap-2 md:gap-4 min-h-[5rem]"></div>
-            </div>
-        </main>
-        
-        <!-- Start/Next Button -->
-        <footer id="start-footer" class="flex-grow flex items-center justify-center">
-            <button id="start-button" class="w-full max-w-xs mx-auto bg-green-500 hover:bg-green-600 text-white text-3xl font-bold py-4 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-                ఆట మొదలుపెట్టు
-            </button>
-        </footer>
-    </div>
+/* ============================== app shell ============================== */
+const SETTINGS = [
+  { key: "timer", label: "సమయం", type: "segmented", default: "scaled", restart: true,
+    options: [{ value: "normal", label: "10 సెకన్లు" }, { value: "scaled", label: "పదం పొడవును బట్టి" }, { value: "practice", label: "అభ్యాసం (టైమర్ లేదు)" }],
+    help: "పొడవును బట్టి: 2 అక్షరాల పదానికి 10 సెకన్లు, ఒక్కో అదనపు అక్షరానికి +4. అభ్యాసంలో సమయ పరిమితి, ఉత్తమ స్కోర్లు ఉండవు." },
+  { key: "start", label: "మొదటి స్థాయి", type: "segmented", default: 1, restart: true,
+    options: [1, 2, 3, 4].map(n => ({ value: n, label: `${n} (${LEVEL_SYL[n]} అక్షరాలు)` })) },
+  { key: "perLevel", label: "ఒక్కో స్థాయిలో పదాలు", type: "segmented", default: 5, restart: true,
+    options: [3, 5, 8, 10].map(n => ({ value: n, label: String(n) })) },
+  { key: "tap", label: "అక్షరాన్ని తాకితే", type: "segmented", default: "select",
+    options: [{ value: "select", label: "ఎంచుకో, తర్వాత గడిని తాకు" }, { value: "auto", label: "తర్వాతి ఖాళీ గడికి వెళ్ళు" }],
+    help: "అక్షరాన్ని లాగి (డ్రాగ్ చేసి) గడిలో వదలడం ఎప్పుడూ పనిచేస్తుంది." },
+  { key: "speak", label: "పదాన్ని పలుకు", type: "toggle", default: true,
+    help: "జవాబు తర్వాత పదం వినిపిస్తుంది (పరికరంలో తెలుగు స్వరం ఉంటేనే)." },
+];
+const helpNode = () => el("div", { class: "help" },
+  el("p", { text: "• బొమ్మను చూసి ఆ పదం ఏమిటో ఊహించండి. కింద కలగలిసిన అక్షరాలను సరైన క్రమంలో పై గడుల్లో పెట్టండి." }),
+  el("p", { text: "• అక్షరాన్ని లాగి గడిలో వదలండి — లేదా అక్షరాన్ని తాకి, ఆపై గడిని తాకండి. గడిలో ఉన్న అక్షరాన్ని తాకితే అది వెనక్కి వస్తుంది." }),
+  el("p", { text: "• తప్పైతే అక్షరాలు వెనక్కి వస్తాయి — మళ్ళీ ప్రయత్నించండి, ఎన్నిసార్లైనా." }),
+  el("p", { text: `• పాయింట్లు = స్థాయి × 5 + మిగిలిన సెకన్లు. వరుసగా సరైన జవాబులకు బోనస్; ప్రతి సూచనకు −${HINT_COST}.` }),
+  el("p", { text: "• సమయం ముగిస్తే ఆ పదం దాటిపోతుంది. వరుసగా 3 పదాలు కోల్పోతే ఆట ముగుస్తుంది. 4వ స్థాయి పూర్తి చేస్తే గెలుపు!" }),
+  el("p", { text: "• స్థాయిలు: 1 = 2 అక్షరాలు, 2 = 3, 3 = 4, 4 = 5–6 అక్షరాల పదాలు." }),
+  el("p", { class: "ctl", text: "కీబోర్డ్: 1–6 = అక్షరం పెట్టు · Backspace = వెనక్కి · Enter = ఎంచుకున్నది పెట్టు · H = సూచన · P / Esc = ఆపు" }));
 
-    <!-- Modals -->
-    <div id="modal-container">
-        <!-- Level Transition Modal -->
-        <div id="level-modal" class="hidden modal-overlay fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-md w-full">
-                <h2 id="level-modal-title" class="text-5xl font-bold text-indigo-700 mb-6"></h2>
-                <button id="start-level-button" class="w-full bg-green-500 hover:bg-green-600 text-white text-3xl font-bold py-4 px-8 rounded-full shadow-lg">మొదలు</button>
-            </div>
-        </div>
+const app = createApp({ id: "tadaperata", title: "తడపేరాట", accent: "turmeric", theme: "auto", settings: SETTINGS, help: helpNode,
+  onSettings: (v, key) => { if (key === "tap" || key === null) deselect(); if (state.phase === "menu") showMenu(); } });
 
-        <!-- Game Over Modal -->
-        <div id="game-over-modal" class="hidden modal-overlay fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-md w-full">
-                <h2 id="game-over-title" class="text-5xl font-bold text-indigo-700 mb-4">ఆట ముగిసింది!</h2>
-                <p id="game-over-message" class="text-xl text-slate-600 mb-4"></p>
-                <p class="text-2xl text-slate-600 mb-2">మీ తుది స్కోరు:</p>
-                <p id="final-score" class="text-7xl font-bold text-amber-500 mb-8">0</p>
-                <button id="play-again-button" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-3xl font-bold py-4 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-                    మళ్ళీ ఆడు
-                </button>
-            </div>
-        </div>
-    </div>
+/* ============================== DOM ============================== */
+const SVGNS = "http://www.w3.org/2000/svg";
+const svg = (tag, attrs = {}) => { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
+const levelPill = el("span", { class: "tt-pill" });
+const scorePill = el("span", { class: "tt-pill score" });
+const pauseBtn = el("button", { type: "button", class: "tt-iconbtn", title: "ఆపు (P)", attrs: { "aria-label": "ఆపు" }, on: { click: () => togglePause() } }, icon("pause"));
+const hud = el("div", { class: "hud" }, levelPill, el("div", { class: "hud__r" }, scorePill, pauseBtn));
+const segEl = el("div", { class: "seg", attrs: { "aria-hidden": "true" } });
 
-        // --- GAME DATA (Corrected and Rebalanced) ---
-        const wordLevels = {
-            1: [ // Level 1: 2-Syllable words
-                { emoji: '🍎', te: 'పండు', letters: ['పం', 'డు'] }, { emoji: '👀', te: 'కళ్ళు', letters: ['క', 'ళ్ళు'] }, { emoji: '🏠', te: 'ఇల్లు', letters: ['ఇ', 'ల్లు'] }, { emoji: '🐶', te: 'కుక్క', letters: ['కు', 'క్క'] }, { emoji: '🐱', te: 'పిల్లి', letters: ['పి', 'ల్లి'] }, { emoji: '⚽', te: 'బంతి', letters: ['బం', 'తి'] }, { emoji: '🚗', te: 'కారు', letters: ['కా', 'రు'] }, { emoji: '💧', te: 'నీరు', letters: ['నీ', 'రు'] }, { emoji: '🧱', te: 'గోడ', letters: ['గో', 'డ'] }, { emoji: '🏰', te: 'మేడ', letters: ['మే', 'డ'] }, { emoji: '🐦', te: 'కాకి', letters: ['కా', 'కి'] }, { emoji: '🏞️', te: 'నది', letters: ['న', 'ది'] }, { emoji: '🕊️', te: 'పక్షి', letters: ['ప', 'క్షి'] }, { emoji: '🪨', te: 'రాయి', letters: ['రా', 'యి'] }, { emoji: '💨', te: 'గాలి', letters: ['గా', 'లి'] }, { emoji: '☁️', te: 'మేఘం', letters: ['మే', 'ఘం'] }, { emoji: '🍇', te: 'ద్రాక్ష', letters: ['ద్రా', 'క్ష'] }, { emoji: '🦊', te: 'నక్క', letters: ['న', 'క్క'] }, { emoji: '💡', te: 'దీపం', letters: ['దీ', 'పం'] }, { emoji: '🦷', te: 'దంతం', letters: ['దం', 'తం'] }
-            ],
-            2: [ // Level 2: 3-Syllable words
-                { emoji: '🐘', te: 'ఏనుగు', letters: ['ఏ', 'ను', 'గు'] }, { emoji: '🥭', te: 'మామిడి', letters: ['మా', 'మి', 'డి'] }, { emoji: '🍌', te: 'అరటి', letters: ['అ', 'ర', 'టి'] }, { emoji: '🏺', te: 'కడవ', letters: ['క', 'డ', 'వ'] }, { emoji: '🐿️', te: 'ఉడుత', letters: ['ఉ', 'డు', 'త'] }, { emoji: '💍', te: 'ఉంగరం', letters: ['ఉం', 'గ', 'రం'] }, { emoji: '⛵', te: 'పడవ', letters: ['ప', 'డ', 'వ'] }, { emoji: '🌺', te: 'కమలం', letters: ['క', 'మ', 'లం'] }, { emoji: '🌌', te: 'ఆకాశం', letters: ['ఆ', 'కా', 'శం'] }, { emoji: '🖼️', te: 'కిటికీ', letters: ['కి', 'టి', 'కీ'] }, { emoji: '🪁', te: 'పతంగి', letters: ['ప', 'తం', 'గి'] }, { emoji: '🏞️', te: 'అడవి', letters: ['అ', 'డ', 'వి'] }, { emoji: '✍️', te: 'పలక', letters: ['ప', 'ల', 'క'] }, { emoji: '🚪', te: 'గడప', letters: ['గ', 'డ', 'ప'] }, { emoji: '🍅', te: 'టమోటా', letters: ['ట', 'మో', 'టా'] }, { emoji: '📖', te: 'పుస్తకం', letters: ['పు', 'స్త', 'కం'] }, { emoji: '☀️', te: 'సూర్యుడు', letters: ['సూ', 'ర్యు', 'డు'] }, { emoji: '🌙', te: 'చంద్రుడు', letters: ['చం', 'ద్రు', 'డు'] }, { emoji: '👂', te: 'చెవులు', letters: ['చె', 'వు', 'లు'] }, { emoji: '👧', te: 'జడలు', letters: ['జ', 'డ', 'లు'] }, { emoji: '✈️', te: 'విమానం', letters: ['వి', 'మా', 'నం'] }
-            ],
-            3: [ // Level 3: 4-Syllable words
-                { emoji: '🏫', te: 'పాఠశాల', letters: ['పా', 'ఠ', 'శా', 'ల'] }, { emoji: '🦟', te: 'దోమతెర', letters: ['దో', 'మ', 'తె', 'ర'] }, { emoji: '🧅', te: 'ఉల్లిపాయ', letters: ['ఉ', 'ల్లి', 'పా', 'య'] }, { emoji: '�', te: 'తలగడ', letters: ['త', 'ల', 'గ', 'డ'] }, { emoji: '🕰️', te: 'గడియారం', letters: ['గ', 'డి', 'యా', 'రం'] }, { emoji: '🔥', te: 'అగ్గిపెట్టె', letters: ['అ', 'గ్గి', 'పె', 'ట్టె'] }, { emoji: '🔔', te: 'బడిగంట', letters: ['బ', 'డి', 'గం', 'ట'] }, { emoji: '🦁', te: 'జంతుశాల', letters: ['జం', 'తు', 'శా', 'ల'] }, { emoji: '🚂', te: 'రైలుబండి', letters: ['రై', 'లు', 'బం', 'డి'] }, { emoji: '🐐', te: 'మేకపిల్ల', letters: ['మే', 'క', 'పి', 'ల్ల'] }, { emoji: '🚀', te: 'అంతరిక్షం', letters: ['అం', 'త', 'రి', 'క్షం'] }, { emoji: '💻', te: 'కంప్యూటరు', letters: ['కం', 'ప్యూ', 'ట', 'రు'] }, { emoji: '📞', te: 'దూరవాణి', letters: ['దూ', 'ర', 'వా', 'ణి'] }, { emoji: '🌡️', te: 'ఉష్ణోగ్రత', letters: ['ఉ', 'ష్ణో', 'గ్ర', 'త'] }, { emoji: '⚡', te: 'విద్యుచ్ఛక్తి', letters: ['వి', 'ద్యు', 'చ్ఛ', 'క్తి'] }, { emoji: '🌌', te: 'నక్షత్రాలు', letters: ['న', 'క్ష', 'త్రా', 'లు'] }, { emoji: '🔑', te: 'తాళంచెవి', letters: ['తా', 'ళం', 'చె', 'వి'] }, { emoji: '🍉', te: 'పుచ్చకాయ', letters: ['పు', 'చ్చ', 'కా', 'య'] }, { emoji: '🧼', te: 'సబ్బుబిళ్ళ', letters: ['స', 'బ్బు', 'బి', 'ళ్ళ'] }, { emoji: '📚', te: 'గ్రంథాలయం', letters: ['గ్రం', 'థా', 'ల', 'యం'] }, { emoji: '🏭', te: 'కర్మాగారం', letters: ['క', 'ర్మా', 'గా', 'రం'] }, { emoji: '🏥', te: 'ఆసుపత్రి', letters: ['ఆ', 'సు', 'ప', 'త్రి'] }
-            ],
-            4: [ // Level 4: 5+ Syllable words
-                { emoji: '🦜', te: 'రామచిలుక', letters: ['రా', 'మ', 'చి', 'లు', 'క'] }, { emoji: '🧸', te: 'ఆటబొమ్మలు', letters: ['ఆ', 'ట', 'బొ', 'మ్మ', 'లు'] }, { emoji: '🧺', te: 'విహారయాత్ర', letters: ['వి', 'హా', 'ర', 'యా', 'త్ర'] }, { emoji: '🍽️', te: 'భోజనశాల', letters: ['భో', 'జ', 'న', 'శా', 'ల'] }, { emoji: '🛒', te: 'అంగడివీధి', letters: ['అం', 'గ', 'డి', 'వీ', 'ధి'] }, { emoji: '🎨', te: 'చిత్రలేఖనం', letters: ['చి', 'త్ర', 'లే', 'ఖ', 'నం'] }, { emoji: '🔭', te: 'దూరదర్శిని', letters: ['దూ', 'ర', 'ద', 'ర్శి', 'ని'] }, { emoji: '🎬', te: 'చలనచిత్రం', letters: ['చ', 'ల', 'న', 'చి', 'త్రం'] }, { emoji: '🧪', te: 'ప్రయోగశాల', letters: ['ప్ర', 'యో', 'గ', 'శా', 'ల'] }, { emoji: '🛰️', te: 'ఉపగ్రహము', letters: ['ఉ', 'ప', 'గ్ర', 'హ', 'ము'] }, { emoji: '🥒', te: 'కాకరకాయ', letters: ['కా', 'క', 'ర', 'కా', 'య'] }, { emoji: '🏞️', te: 'ఉద్యానవనం', letters: ['ఉ', 'ద్యా', 'న', 'వ', 'నం'] }, { emoji: ' handkerchief ', te: 'చేతిరుమాలు', letters: ['చే', 'తి', 'రు', 'మా', 'లు'] }, { emoji: '📺', te: 'టెలివిజను', letters: ['టె', 'లి', 'వి', 'జ', 'ను'] }, { emoji: '🌦️', te: 'వాతావరణం', letters: ['వా', 'తా', 'వ', 'ర', 'ణం'] }, { emoji: '🔬', te: 'విజ్ఞానశాస్త్రం', letters: ['వి', 'జ్ఞా', 'న', 'శా', 'స్త్రం'] }, { emoji: '🏙️', te: 'ఆకాశహర్మ్యం', letters: ['ఆ', 'కా', 'శ', 'హ', 'ర్మ్యం'] }, { emoji: '🧲', te: 'అయస్కాంతము', letters: ['అ', 'య', 'స్కాం', 'త', 'ము'] }, { emoji: '📝', te: 'పరీక్షపత్రం', letters: ['ప', 'రీ', 'క్ష', 'ప', 'త్రం'] }, { emoji: '🌊', te: 'జలపాతము', letters: ['జ', 'ల', 'పా', 'త', 'ము'] }, { emoji: '🧈', te: 'నవనీతము', letters: ['న', 'వ', 'నీ', 'త', 'ము'] }, { emoji: '🔢', te: 'గణితశాస్త్రం', letters: ['గ', 'ణి', 'త', 'శా', 'స్త్రం'] }, { emoji: '🏋️', te: 'వ్యాయామశాల', letters: ['వ్యా', 'యా', 'మ', 'శా', 'ల'] }, { emoji: '✈️', te: 'విమానాశ్రయం', letters: ['వి', 'మా', 'నా', 'శ్ర', 'యం'] }, { emoji: '🏖️', te: 'సముద్రతీరం', letters: ['స', 'ము', 'ద్ర', 'తీ', 'రం'] }, { emoji: '📰', te: 'సమాచారము', letters: ['స', 'మా', 'చా', 'ర', 'ము'] }, { emoji: '🥞', te: 'అల్పాహారము', letters: ['అ', 'ల్పా', 'హా', 'ర', 'ము'] }, { emoji: '🥔', te: 'బంగాళాదుంప', letters: ['బం', 'గా', 'ళా', 'దుం', 'ప'] }, { emoji: '🌍', te: 'పర్యావరణము', letters: ['ప', 'ర్యా', 'వ', 'ర', 'ణ', 'ము'] }, { emoji: '🚒', te: 'అగ్నిమాపకము', letters: ['అ', 'గ్ని', 'మా', 'ప', 'క', 'ము'] }, { emoji: '🔭', te: 'విశ్వవిద్యాలయం', letters: ['వి', 'శ్వ', 'వి', 'ద్యా', 'ల', 'యం'] }, { emoji: '🚲', te: 'ద్విచక్రవాహనం', letters: ['ద్వి', 'చ', 'క్ర', 'వా', 'హ', 'నం'] }, { emoji: '🌕', te: 'చంద్రమండలం', letters: ['చం', 'ద్ర', 'మం', 'డ', 'లం'] }, { emoji: '🗺️', te: 'భూగోళశాస్త్రం', letters: ['భూ', 'గో', 'ళ', 'శా', 'స్త్రం'] }, { emoji: '🚂', te: 'ఆవిరియంత్రము', letters: ['ఆ', 'వి', 'రి', 'యం', 'త్ర', 'ము'] }, { emoji: '🪁', te: 'గాలిపటము', letters: ['గా', 'లి', 'ప', 'ట', 'ము'] }, { emoji: '🚀', te: 'రోదసీనౌక', letters: ['రో', 'ద', 'సీ', 'నౌ', 'క'] }
-            ]
-        };
-        const MAX_LEVEL = Object.keys(wordLevels).length;
-        const WORDS_PER_LEVEL = 5;
+const ringBar = svg("circle", { class: "bar", cx: 50, cy: 50, r: 46, pathLength: 100 });
+const ring = svg("svg", { class: "ring", viewBox: "0 0 100 100", "aria-hidden": "true" });
+ring.append(svg("circle", { class: "track", cx: 50, cy: 50, r: 46 }), ringBar);
+const emojiEl = el("div", { class: "emoji", attrs: { role: "img", "aria-label": "చిత్రం" } });
+const secsEl = el("div", { class: "secs", attrs: { role: "timer", "aria-label": "మిగిలిన సమయం" } });
+const comboEl = el("div", { class: "badge combo", hidden: true, title: "వరుసగా సరైన జవాబులు" });
+const missEl = el("div", { class: "badge misses", hidden: true, title: "వరుసగా కోల్పోయిన పదాలు (3 అయితే ఆట ముగుస్తుంది)" });
+const pic = el("div", { class: "pic" }, ring, el("div", { class: "disc" }), emojiEl, secsEl, comboEl, missEl);
+const picWrap = el("div", { class: "pic-wrap" }, pic);
 
-        // --- DOM ELEMENTS ---
-        const scoreEl = document.getElementById('score');
-        const timerEl = document.getElementById('timer');
-        const levelDisplayEl = document.getElementById('level-display');
-        const emojiContainer = document.getElementById('emoji-container');
-        const answerSlotsContainer = document.getElementById('answer-slots');
-        const letterTilesContainer = document.getElementById('letter-tiles');
-        const feedbackMessageEl = document.getElementById('feedback-message');
-        const mainGameArea = document.getElementById('main-game-area');
-        const startFooter = document.getElementById('start-footer');
-        
-        // Buttons
-        const startButton = document.getElementById('start-button');
-        const playAgainButton = document.getElementById('play-again-button');
-        const startLevelButton = document.getElementById('start-level-button');
+const feedbackEl = el("div", { class: "feedback", attrs: { role: "status", "aria-live": "polite" } });
+const slotsEl = el("div", { class: "row slots", attrs: { role: "list", "aria-label": "గడులు" } });
+const trayRow = el("div", { class: "row", attrs: { role: "group", "aria-label": "అక్షరాలు" } });
+const trayEl = el("div", { class: "tray" }, trayRow);
+const hintBtn = el("button", { type: "button", class: "tt-btn tt-btn--ghost", title: "సూచన (H)", on: { click: () => useHint() } });
+const clearBtn = el("button", { type: "button", class: "tt-btn tt-btn--ghost", text: "↺ ఖాళీ చేయి", title: "గడులను ఖాళీ చేయి", on: { click: () => clearSlots() } });
+const actionsEl = el("div", { class: "actions" }, hintBtn, clearBtn);
 
-        // Modals
-        const levelModal = document.getElementById('level-modal');
-        const levelModalTitle = document.getElementById('level-modal-title');
-        const gameOverModal = document.getElementById('game-over-modal');
-        const gameOverTitle = document.getElementById('game-over-title');
-        const gameOverMessage = document.getElementById('game-over-message');
-        const finalScoreEl = document.getElementById('final-score');
-        
-        // --- GAME STATE ---
-        let score = 0;
-        let timeLeft = 10;
-        let timerInterval;
-        let currentLevel = 1;
-        let wordOrderInLevel = [];
-        let wordIndexInLevel = 0;
-        let currentWord = null;
-        let selectedTile = null; 
-        let consecutiveMisses = 0;
-        
-        // --- EVENT LISTENERS ---
-        startButton.addEventListener('click', () => {
-             startFooter.classList.add('hidden');
-             mainGameArea.classList.remove('hidden');
-             prepareLevel(currentLevel);
-        });
-        playAgainButton.addEventListener('click', resetAndStartGame);
-        startLevelButton.addEventListener('click', () => {
-            levelModal.classList.add('hidden');
-            startLevel();
-        });
-        
-        // --- GAME FLOW FUNCTIONS ---
+const side = el("div", { class: "side" }, hud, segEl, picWrap);
+const play = el("div", { class: "play" }, feedbackEl, slotsEl, trayEl, actionsEl);
+const game = el("div", { class: "game idle", inert: true }, side, play);
+/** Hide the board behind cards: inert keeps old tiles out of reach of taps, Tab and screen readers. */
+function setIdle(on) { game.classList.toggle("idle", on); game.inert = on; }
+const fx = el("div", { class: "fx", attrs: { "aria-hidden": "true" } });
+app.stage.append(game);
+document.body.append(fx);
 
-        function resetAndStartGame() {
-            score = 0;
-            updateScore(0);
-            currentLevel = 1;
-            consecutiveMisses = 0;
-            gameOverModal.classList.add('hidden');
-            prepareLevel(currentLevel);
-        }
+const backdropHost = el("div", { attrs: { "aria-hidden": "true" }, style: { position: "fixed", inset: "0", zIndex: "0", pointerEvents: "none" } });
+document.body.prepend(backdropHost);
+createBackdrop(backdropHost, { letters: ["త", "డ", "పే", "రా", "ట", "అ", "క్ష", "మా", "గు", "లు", "ఏ", "ను"], count: 16, opacity: 0.12 }).catch(() => null);
 
-        function prepareLevel(level) {
-            currentLevel = level;
-            levelModalTitle.textContent = `స్థాయి ${level}`;
-            levelModal.classList.remove('hidden');
-        }
+/* ============================== words ============================== */
+// The original's 100 words live in the shared bank (sources: "tadaperata", level 1–4). Words whose emoji
+// was broken in the original data (తలగడ, చేతిరుమాలు) are skipped: there is no picture to guess from.
+const bank = { 1: [], 2: [], 3: [], 4: [] };
+for (const w of await loadWords()) {
+  if (!w.sources?.includes("tadaperata") || !w.emoji || w.emojiBroken) continue;
+  const syl = te.aksharalu(w.te);
+  if (syl.length < 2 || syl.some(s => te.isVowelSign([...s][0]))) continue;     // never a bare sign on a tile
+  const level = bank[w.level] ? w.level : Math.min(4, Math.max(1, syl.length - 1));
+  bank[level].push({ te: w.te, syl, emoji: w.emoji, level });
+}
 
-        function startLevel() {
-            levelDisplayEl.textContent = `స్థాయి ${currentLevel}`;
-            wordIndexInLevel = 0;
-            const wordsForLevel = wordLevels[currentLevel];
-            const allWordIndices = [...Array(wordsForLevel.length).keys()];
-            wordOrderInLevel = shuffleArray(allWordIndices).slice(0, WORDS_PER_LEVEL);
-            loadNextWord();
-        }
-        
-        function loadNextWord() {
-            if (wordIndexInLevel >= wordOrderInLevel.length) {
-                handleLevelComplete();
-                return;
-            }
-            
-            const wordIdx = wordOrderInLevel[wordIndexInLevel];
-            currentWord = wordLevels[currentLevel][wordIdx];
-            
-            if (selectedTile) {
-                selectedTile.classList.remove('selected-tile');
-                selectedTile = null;
-            }
+/* ============================== state ============================== */
+const state = {
+  phase: "menu",     // menu | intro | play | checking | shake | solved | timeout | paused | over
+  cfg: { ...app.settings }, level: 1, words: [], idx: 0, word: null, levelRes: [],
+  score: 0, levelScore: 0, combo: 0, missRow: 0, time: 0, total: 0, hints: 0, wrong: 0, lastSec: null,
+  results: [], levelLog: [], pausedFrom: null, gen: 0,
+};
+let tiles = [], slots = [], homes = [], placed = [], selected = null, undo = [], tileSize = 56;
+const flights = new WeakMap();
+const timed = () => state.cfg.timer !== "practice";
+const bestKey = lvl => `${state.cfg.timer}-${state.cfg.perLevel}:L${lvl}`;
+const totalKey = () => `${state.cfg.timer}-${state.cfg.perLevel}:from${state.cfg.start}`;
 
-            feedbackMessageEl.textContent = '';
-            feedbackMessageEl.className = 'text-3xl font-bold h-10 mb-4 transition-all duration-300';
-            answerSlotsContainer.innerHTML = '';
-            
-            emojiContainer.textContent = currentWord.emoji;
-            
-            currentWord.letters.forEach((_, index) => {
-                const slot = document.createElement('div');
-                slot.className = 'answer-slot bg-white/80 border-4 border-dashed border-slate-400 rounded-2xl w-16 h-16 sm:w-20 sm:h-20 flex justify-center items-center';
-                slot.dataset.index = index;
-                answerSlotsContainer.appendChild(slot);
-            });
-            
-            const shuffledLetters = shuffleArray([...currentWord.letters]);
-            displayLetterTiles(shuffledLetters);
-            
-            addClickListeners();
-            
-            resetTimer();
-            startTimer();
-        }
+/* ---------- a tiny scheduler on game time: pausing freezes it, a new game cancels it ---------- */
+const timers = [];
+function after(sec, fn) { const gen = state.gen; timers.push({ t: sec, fn: () => { if (gen === state.gen) fn(); } }); }
+function runTimers(dt) {
+  if (!timers.length) return;
+  const due = [];
+  for (const t of timers) { t.t -= dt; if (t.t <= 0) due.push(t); }
+  for (const d of due) timers.splice(timers.indexOf(d), 1);
+  for (const d of due) d.fn();
+}
 
-        function displayLetterTiles(letters) {
-            letterTilesContainer.innerHTML = '';
-            letters.forEach((letter, index) => {
-                const tile = document.createElement('div');
-                tile.id = `tile-${index}`;
-                tile.className = 'letter-tile telugu-text bg-amber-300 hover:bg-amber-400 text-amber-800 text-2xl sm:text-4xl font-bold w-16 h-16 sm:w-20 sm:h-20 flex justify-center items-center rounded-2xl shadow-lg';
-                tile.textContent = letter;
-                letterTilesContainer.appendChild(tile);
-            });
-        }
-        
-        function checkAnswer() {
-            const slots = answerSlotsContainer.children;
-            const placedTiles = Array.from(slots).map(slot => slot.firstChild);
+/* ============================== layout ============================== */
+function layout() {
+  const n = Math.max(2, tiles.length || 4);
+  const W = play.clientWidth;
+  if (!W) return;
+  const gap = W < 360 ? 6 : 8;
+  let pad = 8;
+  let t = Math.floor((W - 2 * (pad + 1) - gap * (n - 1)) / n);
+  if (t < 50) { pad = 0; t = Math.floor((W - gap * (n - 1)) / n); }       // narrow phones: flat tray, bigger tiles
+  if (LANDSCAPE.matches) t = Math.min(t, Math.floor((play.clientHeight - 30 - 44 - 3 * 8 - 2 * (pad + 1)) / 2));
+  t = Math.max(40, Math.min(innerWidth >= 700 ? 84 : 72, t));
+  tileSize = t;
+  game.style.setProperty("--tile", t + "px");
+  game.style.setProperty("--gap", gap + "px");
+  game.style.setProperty("--tray-pad", pad + "px");
+  trayEl.classList.toggle("flat", pad === 0);
+  const p = Math.floor(Math.max(72, Math.min(picWrap.clientWidth - 16, picWrap.clientHeight - 16, 330)));
+  game.style.setProperty("--pic", p + "px");
+  game.classList.toggle("kb", FINE.matches);
+  fitTexts();
+}
+/** Shrink a syllable's font only when it would not fit its tile (e.g. స్త్రం, ర్మ్యం). */
+function fitTexts() {
+  for (const t of tiles) {
+    const tx = t.el.firstChild;
+    t.el.style.removeProperty("--fs");
+    const w = tx.offsetWidth, h = tx.offsetHeight;
+    if (!w || !h) continue;
+    const k = Math.min(1, (tileSize * 0.8) / w, (tileSize * 0.95) / h);
+    if (k < 1) t.el.style.setProperty("--fs", (tileSize * 0.44 * k).toFixed(1) + "px");
+  }
+}
+new ResizeObserver(() => layout()).observe(app.stage);
+addEventListener("resize", layout);
+document.fonts?.ready?.then(() => layout());
 
-            if (placedTiles.some(tile => !tile)) return;
+/* ============================== rendering ============================== */
+function renderHud() {
+  setChildren(levelPill, el("small", { text: "స్థాయి" }), ` ${state.level}`,
+    state.words.length ? el("small", { text: ` · ${Math.min(state.idx + 1, state.words.length)}/${state.words.length}` }) : null);
+  setChildren(scorePill, el("small", { text: "స్కోరు" }), ` ${state.score}`);
+  setChildren(segEl, state.words.map((_, i) => {
+    const r = state.levelRes[i];
+    return el("i", { class: r === true ? "ok" : r === false ? "miss" : i === state.idx ? "cur" : "" });
+  }));
+  comboEl.hidden = state.combo < 2;
+  if (state.combo >= 2) setChildren(comboEl, `🔥 ${state.combo}`);
+  missEl.hidden = state.missRow < 1;
+  if (state.missRow) setChildren(missEl, "✕".repeat(state.missRow) + "○".repeat(Math.max(0, 3 - state.missRow)));
+  renderHint();
+}
+function renderSecs() {
+  pic.classList.toggle("practice", !timed());
+  if (!timed()) { setChildren(secsEl, el("small", { text: "అభ్యాసం" })); pic.classList.remove("low"); return; }
+  const s = Math.ceil(state.time);
+  setChildren(secsEl, el("b", { text: String(s) }), el("small", { text: "సె." }));
+  pic.classList.toggle("low", s <= 3 && state.phase === "play");
+}
+let lastRing = -1;
+function renderRing() {
+  const frac = timed() && state.total ? Math.max(0, Math.min(1, state.time / state.total)) : 1;
+  const off = Math.round((1 - frac) * 1000) / 10;
+  if (off !== lastRing) { lastRing = off; ringBar.style.strokeDashoffset = String(off); ringBar.style.opacity = off >= 99.5 ? "0" : "1"; }   // no round-cap dot at 0
+}
+function renderHint() {
+  const n = state.word?.syl.length ?? 0;
+  const can = state.phase === "play" && hintIndex() < n - 1;
+  setChildren(hintBtn, `💡 సూచన −${HINT_COST}`);
+  hintBtn.disabled = !can;
+  clearBtn.disabled = state.phase !== "play" || !placed.some(t => t && !t.locked);
+}
+let feedbackTimer = 0;
+function say(text, tone = "info", ms = 0) {
+  clearTimeout(feedbackTimer);
+  feedbackEl.className = "feedback " + tone;
+  feedbackEl.textContent = text;
+  if (ms) feedbackTimer = setTimeout(() => { if (feedbackEl.textContent === text) { feedbackEl.textContent = ""; } }, ms);
+}
+function labelSlots() {
+  slots.forEach((s, i) => s.setAttribute("aria-label", `గడి ${i + 1}: ${placed[i] ? placed[i].text : "ఖాళీ"}`));
+  renderHint();
+}
 
-            const userAnswer = placedTiles.map(tile => tile.textContent).join('');
+/* ============================== board ============================== */
+function scramble(syl) {
+  for (let k = 0; k < 30; k++) { const s = rand.shuffle(syl); if (s.join("|") !== syl.join("|")) return s; }
+  return [...syl].reverse();
+}
+function buildBoard() {
+  const w = state.word, order = scramble(w.syl);
+  slots = w.syl.map((_, i) => el("div", { class: "slot", dataset: { i }, attrs: { role: "listitem" } }));
+  homes = order.map((_, i) => el("div", { class: "home", dataset: { i } }, el("span", { class: "kbd", text: String(i + 1) })));
+  tiles = order.map((text, i) => {
+    const node = el("button", { type: "button", class: "tile", dataset: { t: i }, attrs: { "aria-label": `అక్షరం ${text}` } }, el("span", { class: "tx", text }));
+    homes[i].append(node);
+    return { el: node, text, home: i, slot: null, locked: false };
+  });
+  placed = new Array(w.syl.length).fill(null); selected = null; undo = [];
+  setChildren(slotsEl, slots); setChildren(trayRow, homes);
+  slotsEl.classList.remove("shake");
+  labelSlots();
+  layout();
+}
+const tileOf = node => tiles[+node.dataset.t];
+const firstEmpty = () => { const i = placed.findIndex(p => !p); return i < 0 ? null : i; };
 
-            if (userAnswer === currentWord.te) {
-                handleCorrectAnswer();
-            } else {
-                handleIncorrectAnswer();
-            }
-        }
-        
-        function handleCorrectAnswer() {
-            clearInterval(timerInterval);
-            consecutiveMisses = 0;
-            const pointsGained = (currentLevel * 5) + timeLeft;
-            updateScore(score + pointsGained);
-            
-            feedbackMessageEl.textContent = 'చాలా బాగుంది!';
-            feedbackMessageEl.classList.add('text-green-600');
-            answerSlotsContainer.classList.add('correct-pop-animation');
-            
-            wordIndexInLevel++;
-            setTimeout(() => {
-                 answerSlotsContainer.classList.remove('correct-pop-animation');
-                 loadNextWord();
-            }, 1500);
-        }
+/** Move a tile into slot s (or back to its tray home when s is null) and fly it there from where it is now. */
+function moveTo(t, s, { animate = true } = {}) {
+  const first = t.el.getBoundingClientRect();
+  flights.get(t.el)?.cancel();
+  const hadFocus = document.activeElement === t.el;
+  t.el.classList.remove("dragging", "sel", "bad");
+  t.el.style.transform = "";
+  if (t.slot !== null && placed[t.slot] === t) { placed[t.slot] = null; slots[t.slot].classList.remove("filled"); }   // (a swap may already have refilled it)
+  t.slot = s;
+  if (s !== null) { placed[s] = t; slots[s].append(t.el); slots[s].classList.add("filled"); }
+  else homes[t.home].append(t.el);
+  if (selected === t) deselect();
+  if (hadFocus) t.el.focus({ preventScroll: true });
+  if (animate && !prefersReducedMotion()) {
+    const last = t.el.getBoundingClientRect();
+    const dx = first.left + first.width / 2 - (last.left + last.width / 2), dy = first.top + first.height / 2 - (last.top + last.height / 2);
+    const k = last.width ? first.width / last.width : 1;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || Math.abs(k - 1) > 0.02)
+      flights.set(t.el, t.el.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${k})` }, { transform: "none" }], { duration: 260, easing: "cubic-bezier(.2,.8,.2,1)" }));
+  }
+  labelSlots();
+}
+function select(t) { deselect(); selected = t; t.el.classList.add("sel"); game.classList.add("picking"); sfx.play("tap"); }
+function deselect() { selected?.el.classList.remove("sel"); selected = null; game.classList.remove("picking"); }
 
-        function handleIncorrectAnswer() {
-            feedbackMessageEl.textContent = 'మళ్ళీ ప్రయత్నించు';
-            feedbackMessageEl.classList.add('text-red-600');
-            answerSlotsContainer.classList.add('incorrect-shake-animation');
+/** Player put tile t into slot s (an occupant goes back to the tray). */
+function place(t, s) {
+  const occ = placed[s];
+  if (occ === t || occ?.locked) return;
+  if (occ) moveTo(occ, null);
+  moveTo(t, s);
+  undo.push(t);
+  sfx.play("pop"); haptic(8);
+  if (placed.every(Boolean)) check();
+}
+function unplace(t) { if (t.locked || t.slot === null) return; moveTo(t, null); sfx.play("tap"); }
+function clearSlots() {
+  if (state.phase !== "play") return;
+  deselect();
+  let any = false;
+  for (const t of tiles) if (!t.locked && t.slot !== null) { moveTo(t, null); any = true; }
+  if (any) sfx.play("whoosh");
+}
+function undoLast() {
+  if (state.phase !== "play") return;
+  while (undo.length) { const t = undo.pop(); if (t.slot !== null && !t.locked) return unplace(t); }
+  const t = [...placed].reverse().find(p => p && !p.locked);
+  if (t) unplace(t);
+}
+/** Keyboard / auto mode: tile → first empty slot (focus follows to the next tray tile). */
+function autoPlace(t, keyboard) {
+  const s = firstEmpty();
+  if (s === null) return;
+  place(t, s);
+  if (keyboard && state.phase === "play") tiles.find(x => x.slot === null)?.el.focus({ preventScroll: true });
+}
 
-            setTimeout(() => {
-                const slots = Array.from(answerSlotsContainer.children);
-                slots.forEach(slot => {
-                    if (slot.firstChild) {
-                        letterTilesContainer.appendChild(slot.firstChild);
-                    }
-                });
-                feedbackMessageEl.textContent = '';
-                answerSlotsContainer.classList.remove('incorrect-shake-animation');
-            }, 1000);
-        }
+/* ---------- taps ---------- */
+function tapTile(t, keyboard = false) {
+  if (state.phase !== "play" || t.locked) return;
+  if (t.slot !== null) {                                   // a placed tile
+    if (selected && !keyboard) { const s = t.slot; place(selected, s); return; }
+    return unplace(t);                                     // original: tap a placed tile to return it
+  }
+  if (keyboard || app.settings.tap === "auto") return autoPlace(t, keyboard);
+  if (selected === t) return deselect();
+  select(t);
+}
+function tapCell(cell) {
+  if (state.phase !== "play") return;
+  if (!cell.classList.contains("slot")) return deselect();
+  const s = +cell.dataset.i;
+  if (selected) return place(selected, s);
+  say("ముందు ఒక అక్షరాన్ని ఎంచుకోండి", "info", 1600);
+}
 
-        function handleTimeOut() {
-            clearInterval(timerInterval);
-            consecutiveMisses++;
-            feedbackMessageEl.textContent = 'సమయం ముగిసింది!';
-            feedbackMessageEl.classList.add('text-orange-600');
-            
-            if (consecutiveMisses >= 3) {
-                setTimeout(() => endGame(false), 1500);
-            } else {
-                wordIndexInLevel++;
-                setTimeout(loadNextWord, 1500);
-            }
-        }
+/* ---------- drag & drop (pointer events: one stream for mouse, touch and pen) ---------- */
+let drag = null, press = null;
+function slotAt(x, y) {
+  let best = null, bd = Infinity;
+  slots.forEach((s, i) => { const r = s.getBoundingClientRect(); const d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)); if (d < bd) { bd = d; best = i; } });
+  return bd <= tileSize * 0.85 ? best : null;
+}
+function clearOver() { slots.forEach(s => s.classList.remove("over")); }
+function cancelDrag() {
+  if (drag?.moved) { drag.t.el.classList.remove("dragging"); drag.t.el.style.transform = ""; }
+  drag = null; press = null; clearOver();
+}
+game.addEventListener("pointerdown", e => {
+  if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0) || state.phase !== "play") return;
+  const tileEl = e.target.closest(".tile");
+  if (tileEl) {
+    const t = tileOf(tileEl);
+    if (!t || t.locked) return;
+    e.preventDefault();
+    try { tileEl.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+    drag = { t, id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false };
+    return;
+  }
+  const cell = e.target.closest(".slot, .home");
+  press = cell ? { cell, id: e.pointerId, x0: e.clientX, y0: e.clientY } : null;
+});
+game.addEventListener("pointermove", e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+  if (!drag.moved) {
+    if (Math.hypot(dx, dy) < 8) return;
+    drag.moved = true;
+    if (selected && selected !== drag.t) deselect();
+    if (selected === drag.t) deselect();
+    flights.get(drag.t.el)?.cancel();
+    drag.t.el.classList.add("dragging");
+  }
+  drag.t.el.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+  const s = slotAt(e.clientX, e.clientY);
+  slots.forEach((el2, i) => el2.classList.toggle("over", i === s));
+});
+game.addEventListener("pointerup", e => {
+  if (drag && e.pointerId === drag.id) {
+    const d = drag; drag = null; clearOver();
+    if (state.phase !== "play") return;
+    if (!d.moved) return tapTile(d.t);
+    const s = slotAt(e.clientX, e.clientY);
+    if (s === null || placed[s]?.locked) { moveTo(d.t, null); sfx.play("tap"); return; }   // dropped off the slots: back to the tray
+    if (placed[s] === d.t) { moveTo(d.t, s); return; }
+    const occ = placed[s], from = d.t.slot;
+    if (occ && from !== null) { moveTo(occ, from); }        // swap two placed tiles
+    place(d.t, s);
+    return;
+  }
+  if (press && e.pointerId === press.id) {
+    const p = press; press = null;
+    if (Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 12) tapCell(p.cell);
+  }
+});
+game.addEventListener("pointercancel", () => { if (drag?.moved) { const t = drag.t; cancelDrag(); moveTo(t, t.slot); } else cancelDrag(); });
+// Keyboard activation (Tab to a tile, Enter/Space) arrives as a click with detail 0; pointer taps are handled above.
+game.addEventListener("click", e => {
+  if (e.detail !== 0) return;
+  const tileEl = e.target.closest(".tile");
+  if (tileEl) tapTile(tileOf(tileEl), true);
+});
 
-        function handleLevelComplete() {
-            if (currentLevel < MAX_LEVEL) {
-                currentLevel++;
-                prepareLevel(currentLevel);
-            } else {
-                endGame(true);
-            }
-        }
-        
-        function endGame(isVictory) {
-            clearInterval(timerInterval);
-            finalScoreEl.textContent = score;
-            if(isVictory) {
-                gameOverTitle.textContent = 'అభినందనలు!';
-                gameOverMessage.textContent = 'మీరు అన్ని స్థాయిలను పూర్తి చేసారు!';
-            } else {
-                gameOverTitle.textContent = 'ఆట ముగిసింది!';
-                gameOverMessage.textContent = 'మీరు వరుసగా 3 పదాలను కోల్పోయారు.';
-            }
-            gameOverModal.classList.remove('hidden');
-        }
+/* ============================== rules ============================== */
+function check() {
+  state.phase = "checking"; deselect(); renderHint();
+  const ok = state.word.syl.every((s, i) => placed[i]?.text === s);
+  after(0.28, ok ? solved : wrongAnswer);
+}
+function record(ok, pts = 0) {
+  state.levelRes[state.idx] = ok;
+  state.results.push({ w: state.word, ok, pts, hints: state.hints, wrong: state.wrong, level: state.level });
+}
+function solved() {
+  state.phase = "solved";
+  const secs = timed() ? Math.ceil(state.time) : 0;
+  state.combo++; state.missRow = 0;
+  const bonus = Math.min(state.combo - 1, COMBO_MAX) * COMBO_STEP;
+  const pts = Math.max(0, state.level * 5 + secs + bonus - HINT_COST * state.hints);    // original: level×5 + seconds left
+  state.score += pts; state.levelScore += pts;
+  record(true, pts);
+  tiles.forEach(t => { t.el.classList.add("ok"); t.el.style.setProperty("--d", `${(t.slot ?? 0) * 70}ms`); });
+  pic.classList.add("won"); pic.classList.remove("low");
+  say(state.combo >= 2 ? `చాలా బాగుంది! 🔥 ${state.combo}` : "చాలా బాగుంది!", "good");
+  renderHud();
+  scorePill.classList.remove("bump"); void scorePill.offsetWidth; scorePill.classList.add("bump");
+  if (state.combo >= 2) { comboEl.classList.remove("pop"); void comboEl.offsetWidth; comboEl.classList.add("pop"); }
+  const r = slotsEl.getBoundingClientRect();
+  confetti(r.left + r.width / 2, r.top + r.height / 2, 30);
+  floatText(`+${pts}`, scorePill);
+  sfx.play("good"); if (bonus) setTimeout(() => sfx.play("coin"), 180);
+  haptic([12, 40, 12]);
+  if (state.cfg.speak) setTimeout(() => speak(state.word.te), 250);
+  after(1.5, nextWord);
+}
+function wrongAnswer() {
+  state.phase = "shake";                     // the clock is frozen while the slots shake (original kept ticking)
+  state.combo = 0; state.wrong++;
+  say("మళ్ళీ ప్రయత్నించు", "bad");
+  tiles.forEach(t => { if (t.slot !== null && !t.locked) t.el.classList.add("bad"); });
+  slotsEl.classList.remove("shake"); void slotsEl.offsetWidth; slotsEl.classList.add("shake");
+  sfx.play("bad"); haptic([20, 30, 20]);
+  renderHud();
+  after(0.75, () => {
+    slotsEl.classList.remove("shake");
+    for (const t of tiles) if (t.slot !== null && !t.locked) moveTo(t, null);
+    undo = [];
+    state.phase = "play";
+    say("మళ్ళీ ప్రయత్నించు", "bad", 900);
+    renderHint();
+  });
+}
+function timeout() {
+  state.phase = "timeout"; cancelDrag(); deselect();       // input is locked from this instant: no late taps
+  state.combo = 0; state.missRow++;
+  record(false);
+  const syl = state.word.syl;
+  for (const t of tiles) if (!t.locked && t.slot !== null && t.text !== syl[t.slot]) moveTo(t, null);
+  syl.forEach((s, i) => { if (!placed[i]) { const t = tiles.find(x => x.slot === null && x.text === s); if (t) moveTo(t, i); } });
+  tiles.forEach(t => t.el.classList.add("reveal"));
+  say(`సమయం ముగిసింది! — ${state.word.te}`, "warn");
+  sfx.play("bad"); haptic([30, 40, 30]);
+  renderHud(); renderSecs();
+  if (state.cfg.speak) setTimeout(() => speak(state.word.te), 250);
+  if (state.missRow === 2) app.toast("జాగ్రత్త! ఇంకొక పదం కోల్పోతే ఆట ముగుస్తుంది", { tone: "bad", ms: 2200 });
+  after(2.2, () => (state.missRow >= 3 ? endGame(false) : nextWord()));
+}
+function hintIndex() { let i = 0; while (i < placed.length && placed[i]?.locked) i++; return i; }
+function useHint() {
+  if (state.phase !== "play") return;
+  const n = state.word.syl.length, i = hintIndex();
+  if (i >= n - 1) return;                                  // never reveal the whole word
+  cancelDrag(); deselect();
+  const want = state.word.syl[i];
+  let t = placed[i]?.text === want ? placed[i] : null;
+  if (!t) {
+    if (placed[i]) moveTo(placed[i], null);
+    t = tiles.find(x => !x.locked && x.text === want && x.slot === null) ?? tiles.find(x => !x.locked && x.text === want);
+    if (!t) return;
+    moveTo(t, i);
+  }
+  t.locked = true; t.el.classList.add("locked"); t.el.setAttribute("aria-disabled", "true");
+  state.hints++;
+  sfx.play("coin"); haptic(10);
+  say(`సూచన: ${i === 0 ? "మొదటి" : `${i + 1}వ`} అక్షరం ${want} (−${HINT_COST})`, "info", 2200);
+  renderHint();
+  if (placed.every(Boolean)) check();
+}
 
-        // --- UTILITY & HELPER FUNCTIONS ---
-        
-        function updateScore(newScore) {
-            score = newScore;
-            scoreEl.textContent = score;
-        }
-        
-        function startTimer() {
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                timerEl.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                   handleTimeOut();
-                }
-            }, 1000);
-        }
-        
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timeLeft = 10;
-            timerEl.textContent = timeLeft;
-        }
+/* ============================== flow ============================== */
+/** app.overlay + a class on the card (short landscape screens lay "split" / "final" cards out in two columns). */
+function showCard(opts, cls) {
+  app.overlay(opts);
+  const card = app.stage.querySelector(".tt-overlay .tt-card");
+  card?.classList.add(cls);
+  return card;
+}
+function startGame() {
+  state.gen++; timers.length = 0;
+  cancelDrag();
+  state.cfg = { ...app.settings };
+  Object.assign(state, { score: 0, combo: 0, missRow: 0, results: [], levelLog: [], pausedFrom: null });
+  game.classList.remove("blur");
+  levelIntro(state.cfg.start, null);
+}
+function levelIntro(n, prev) {
+  state.phase = "intro"; state.level = n; state.idx = 0; state.levelScore = 0; state.levelRes = [];
+  state.words = rand.shuffle(bank[n]).slice(0, state.cfg.perLevel);
+  state.word = null;
+  setIdle(true);
+  renderHud();
+  const best = timed() ? app.best(bestKey(n)).get() : 0;
+  showCard({
+    title: `స్థాయి ${n}`,
+    body: el("div", { class: "intro" },
+      prev ? el("p", { class: prev.isNew ? "rec" : "", text: `స్థాయి ${prev.level} పూర్తి: ${prev.score} పాయింట్లు${prev.isNew ? " — కొత్త రికార్డు! 🎉" : ""}` }) : null,
+      el("p", { text: `${LEVEL_SYL[n]} అక్షరాల పదాలు · ${state.words.length} పదాలు` }),
+      el("p", { class: "ctl", text: timeLine(n) }),
+      best ? el("p", { class: "best-line" }, "ఈ స్థాయిలో ఉత్తమం: ", el("b", { text: String(best) })) : null),
+    actions: [{ label: "మొదలు", onClick: () => { app.hideOverlay(); loadWord(); } }],
+  }, "split");
+}
+function timeLine(n) {
+  if (!timed()) return "అభ్యాసం: సమయ పరిమితి లేదు";
+  const secs = [...new Set(bank[n].map(w => secondsFor(state.cfg.timer, w.syl.length)))].sort((a, b) => a - b);
+  return `ఒక్కో పదానికి ${secs.length > 1 ? `${secs[0]}–${secs[secs.length - 1]}` : secs[0]} సెకన్లు`;
+}
+function loadWord() {
+  state.word = state.words[state.idx];
+  const n = state.word.syl.length;
+  state.total = state.time = secondsFor(state.cfg.timer, n);
+  state.hints = 0; state.wrong = 0; state.lastSec = null;
+  pic.classList.remove("won", "low");
+  emojiEl.textContent = state.word.emoji;
+  emojiEl.classList.remove("in"); void emojiEl.offsetWidth; emojiEl.classList.add("in");
+  buildBoard();
+  setIdle(false); game.classList.remove("blur");
+  state.phase = "play";
+  say("");
+  renderHud(); renderSecs(); renderRing();
+  if (state.idx === 0 && state.level === state.cfg.start) say(isTouch() ? "అక్షరాన్ని లాగి గడిలో వదలండి" : "అక్షరాన్ని లాగండి లేదా 1–" + n + " నొక్కండి", "info", 2400);
+}
+function nextWord() {
+  state.idx++;
+  if (state.idx < state.words.length) return loadWord();
+  // level complete
+  const lvl = state.level;
+  const res = timed() ? app.best(bestKey(lvl)).submit(state.levelScore) : null;
+  const entry = { level: lvl, score: state.levelScore, best: res?.best ?? null, isNew: !!res?.isNew, done: true };
+  state.levelLog.push(entry);
+  if (lvl >= MAX_LEVEL) return endGame(true);
+  sfx.play("level");
+  levelIntro(lvl + 1, entry);
+}
+function endGame(win) {
+  state.phase = "over"; cancelDrag(); deselect();
+  if (!win && !state.levelLog.some(l => l.level === state.level))
+    state.levelLog.push({ level: state.level, score: state.levelScore, best: null, isNew: false, done: false });
+  const tot = timed() ? app.best(totalKey()).submit(state.score) : null;
+  const solvedN = state.results.filter(r => r.ok).length;
+  const missed = state.results.filter(r => !r.ok), hinted = state.results.filter(r => r.ok && r.hints > 0);
+  setIdle(true);
+  sfx.play(win ? "win" : "bad");
+  if (win) { confetti(innerWidth / 2, innerHeight * 0.45, 80, 1.6); setTimeout(() => confetti(innerWidth * 0.3, innerHeight * 0.4, 40), 350); }
+  const voice = canSpeakTelugu();
+  const row = r => el("div", { class: "rv" },
+    el("span", { class: "rv__e", text: r.w.emoji, attrs: { role: "img", "aria-label": "చిత్రం" } }),
+    el("div", { class: "rv__w" }, el("b", { text: r.w.te }), el("span", { class: "rv__s" }, r.w.syl.map(s => el("i", { text: s })))),
+    voice ? el("button", { type: "button", class: "tt-iconbtn", attrs: { "aria-label": `${r.w.te} — వినండి` }, on: { click: () => speak(r.w.te) } }, icon("sound")) : null);
+  const reviewCol = el("div", { class: "rv-col" },
+    missed.length ? [el("h3", { text: `నేర్చుకోవలసిన పదాలు (${missed.length})` }), el("div", { class: "rv-list" }, missed.map(row))]
+      : el("p", { class: "allgood", text: "ఒక్క పదం కూడా తప్పిపోలేదు! 👏" }),
+    hinted.length ? [el("h3", { text: `సూచనతో చేసినవి (${hinted.length})` }), el("div", { class: "rv-list" }, hinted.map(row))] : null);
+  const stats = [{ label: "మీ తుది స్కోరు", value: state.score }, ...(tot ? [{ label: "ఉత్తమం", value: tot.best }] : []), { label: "పదాలు", value: `${solvedN}/${state.results.length}` }];
+  const card = showCard({
+    title: win ? "అభినందనలు!" : "ఆట ముగిసింది!",
+    body: el("div", { class: "summary" },
+      el("div", { class: "sum-l" },
+        el("p", { text: win ? "మీరు అన్ని స్థాయిలను పూర్తి చేసారు!" : "మీరు వరుసగా 3 పదాలను కోల్పోయారు." }),
+        el("div", { class: "tt-card__stat" }, stats.map(st => el("div", {}, el("b", { text: String(st.value) }), el("span", { text: st.label })))),
+        tot?.isNew ? el("p", { class: "rec", text: "కొత్త రికార్డు! 🎉" }) : null,
+        !timed() ? el("p", { class: "note", text: "అభ్యాస ఆట — ఉత్తమ స్కోర్లు నమోదు కావు." }) : null,
+        state.levelLog.length ? el("div", { class: "levels" }, state.levelLog.map(l => el("span", { class: "lvchip" + (l.isNew ? " new" : "") },
+          `స్థాయి ${l.level}: ${l.score}`, el("small", { text: l.done ? (l.best != null ? ` · ఉత్తమం ${l.best}${l.isNew ? " ★" : ""}` : "") : " · అసంపూర్తి" })))) : null),
+      el("div", { class: "sum-r" }, reviewCol)),
+    actions: [{ label: "మళ్ళీ ఆడు", onClick: startGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+  }, "final");
+  card?.querySelector(".sum-r")?.append(card.querySelector(".tt-card__actions"));   // buttons sit under the word list
+}
+function togglePause() {
+  if (state.phase === "paused") return resume();
+  if (!["play", "checking", "shake", "solved", "timeout"].includes(state.phase)) return;
+  if (drag?.moved) { const t = drag.t; cancelDrag(); moveTo(t, t.slot, { animate: false }); } else cancelDrag();
+  deselect();
+  state.pausedFrom = state.phase; state.phase = "paused";
+  game.classList.add("blur");                               // no peeking at the tiles while the clock is stopped
+  app.overlay({ title: "ఆట ఆగింది", actions: [
+    { label: "కొనసాగించు", onClick: resume },
+    { label: "మళ్ళీ మొదలు", ghost: true, onClick: startGame },
+    { label: "అమరికలు", ghost: true, onClick: app.openSettings },
+  ] });
+}
+function resume() {
+  if (state.phase !== "paused") return;
+  state.phase = state.pausedFrom; game.classList.remove("blur"); app.hideOverlay(); renderHint();
+}
+function showMenu() {
+  state.phase = "menu"; setIdle(true);
+  const s = app.settings;
+  const timerLabel = SETTINGS[0].options.find(o => o.value === s.timer)?.label;
+  const best = s.timer !== "practice" ? app.best(`${s.timer}-${s.perLevel}:from${s.start}`).get() : 0;
+  showCard({
+    title: "తడపేరాట",
+    body: el("div", { class: "intro" },
+      el("div", { class: "demo", attrs: { "aria-hidden": "true" } }, el("span", { class: "e", text: "🐘" }), el("span", { class: "arr", text: "→" }),
+        ["ఏ", "ను", "గు"].map(x => el("span", { class: "t", text: x }))),
+      el("p", { text: "బొమ్మను చూసి, అక్షరాలను సరైన క్రమంలో పేర్చి పదాన్ని కట్టండి!" }),
+      el("p", { class: "ctl", text: isTouch() ? "అక్షరాన్ని లాగి గడిలో వదలండి — లేదా తాకి, ఆపై గడిని తాకండి" : "అక్షరాన్ని లాగి వదలండి · లేదా 1–6, Backspace" }),
+      best ? el("p", { class: "best-line" }, "ఉత్తమ స్కోరు: ", el("b", { text: String(best) })) : null,
+      el("small", { text: `${timerLabel} · స్థాయి ${s.start} నుండి · ఒక్కో స్థాయిలో ${s.perLevel} పదాలు` })),
+    actions: [{ label: "ఆట మొదలుపెట్టు", onClick: startGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+  }, "split");
+}
 
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
+/* ============================== effects ============================== */
+const CONF = ["#ffc233", "#ff8a3d", "#34d17e", "#22c3d6", "#ff5c93", "#8f80ff", "#ffffff"];
+function confetti(x, y, count = 30, power = 1) {
+  if (prefersReducedMotion()) return;
+  for (let i = 0; i < count; i++) {
+    const p = el("i", { class: "cf" + (i % 3 === 0 ? " round" : ""), style: { left: x + "px", top: y + "px", background: CONF[i % CONF.length] } });
+    fx.append(p);
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.3;
+    const v = (130 + Math.random() * 230) * power;
+    const dx = Math.cos(a) * v, dy = Math.sin(a) * v, rot = (Math.random() - 0.5) * 1000;
+    const anim = p.animate([
+      { transform: "translate(0, 0) rotate(0deg)", opacity: 1 },
+      { transform: `translate(${dx * 0.75}px, ${dy * 0.75}px) rotate(${rot * 0.5}deg)`, opacity: 1, offset: 0.35 },
+      { transform: `translate(${dx}px, ${dy + 340}px) rotate(${rot}deg)`, opacity: 0 },
+    ], { duration: 1100 + Math.random() * 600, easing: "cubic-bezier(.2,.65,.4,1)" });
+    anim.onfinish = () => p.remove();
+  }
+}
+function floatText(text, anchor) {
+  const r = anchor.getBoundingClientRect();
+  const f = el("div", { class: "float", text, style: { left: r.left + r.width / 2 + "px", top: r.bottom + 14 + "px" } });
+  fx.append(f);
+  if (prefersReducedMotion()) { setTimeout(() => f.remove(), 900); return; }
+  f.animate([{ transform: "translate(-50%, -50%) translateY(10px)", opacity: 0 }, { transform: "translate(-50%, -50%)", opacity: 1, offset: 0.2 }, { transform: "translate(-50%, -50%) translateY(-26px)", opacity: 0 }],
+    { duration: 1100, easing: "ease-out" }).onfinish = () => f.remove();
+}
 
-        // --- CLICK-BASED INTERACTION LOGIC ---
-        function addClickListeners() {
-            const tiles = document.querySelectorAll('.letter-tile');
-            const slots = document.querySelectorAll('.answer-slot');
+/* ============================== loop ============================== */
+function update(dt) {
+  if (state.phase === "paused") return;
+  if (document.querySelector("dialog[open]")) return;      // help / settings open: the clock and transitions wait
+  runTimers(dt);
+  if (state.phase === "play" && timed()) {
+    state.time = Math.max(0, state.time - dt);
+    const s = Math.ceil(state.time);
+    if (s !== state.lastSec) { state.lastSec = s; renderSecs(); if (s > 0 && s <= 3) sfx.play("tick"); }
+    if (state.time <= 0) timeout();
+  }
+}
+const loop = createLoop({ update, render: renderRing, onHidden: () => { if (state.phase !== "paused") togglePause(); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) loop.start(); });
 
-            tiles.forEach(tile => {
-                tile.addEventListener('click', handleTileClick);
-            });
+/* ============================== keyboard ============================== */
+const keys = { Backspace: undoLast, Delete: undoLast, KeyH: useHint, h: useHint, KeyP: togglePause, Escape: togglePause,
+  Enter: () => {
+    if (state.phase === "play") { if (selected) autoPlace(selected, true); return; }
+    if (app.overlayOpen) app.stage.querySelector(".tt-overlay .tt-card__actions button")?.click();   // start / continue even before the card's button has focus
+  } };
+for (let k = 1; k <= 9; k++) {
+  const pick = () => {
+    if (state.phase !== "play") return;
+    const t = tiles.find(x => x.home === k - 1);
+    if (!t || t.locked) return;
+    if (t.slot !== null) unplace(t); else autoPlace(t, false);
+  };
+  keys[String(k)] = pick; keys[te.DIGITS[k]] = pick;
+}
+keyControls(keys);
 
-            slots.forEach(slot => {
-                slot.addEventListener('click', handleSlotClick);
-            });
-        }
-
-        function handleTileClick(event) {
-            const clickedTile = event.currentTarget;
-
-            if (clickedTile.parentNode.classList.contains('answer-slot')) {
-                letterTilesContainer.appendChild(clickedTile);
-                if(selectedTile === clickedTile) {
-                    selectedTile.classList.remove('selected-tile');
-                    selectedTile = null;
-                }
-                return;
-            }
-
-            if (selectedTile === clickedTile) {
-                selectedTile.classList.remove('selected-tile');
-                selectedTile = null;
-            } else {
-                if (selectedTile) {
-                    selectedTile.classList.remove('selected-tile');
-                }
-                selectedTile = clickedTile;
-                selectedTile.classList.add('selected-tile');
-            }
-        }
-
-        function handleSlotClick(event) {
-            const clickedSlot = event.currentTarget;
-            
-            if (selectedTile && !clickedSlot.firstChild) {
-                clickedSlot.appendChild(selectedTile);
-                selectedTile.classList.remove('selected-tile');
-                selectedTile = null; 
-                checkAnswer();
-            }
-        }
-
-        // --- Initial UI State ---
-        function setInitialUI() {
-            mainGameArea.classList.add('hidden');
-            startFooter.classList.remove('hidden');
-        }
-
-        setInitialUI();
-    });
-    </script>
+/* ============================== boot ============================== */
+showMenu();
+loop.start();
+layout();
+if (DEBUG) window.__game = {
+  state, bank, startGame, useHint, togglePause,
+  get answer() { return state.word?.syl ?? null; },
+  get tiles() { return tiles.map(t => ({ text: t.text, home: t.home, slot: t.slot, locked: t.locked })); },
+  setTime(s) { state.time = s; },
+};
+</script>
 </body>
 </html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>తెలుగు పదాల వేట (Carushikaru Racer)</title>
+    <style>
+        :root {
+            --primary-text-color: #eef0f1;
+            --highlight-color: #f1c40f; /* Gold */
+            --accent-color: #3498db; /* Blue */
+            --danger-color: #e74c3c; /* Red */
+            --success-color: #2ecc71; /* Green */
+            --bg-dark: #232931;
+            --bg-medium: #393e46;
+            --bg-light: #4a5568;
+            --road-color: #5d6d7e; /* Slightly bluer grey for road */
+            --player-car-color: #3498db;
+            --player-car-accent: #2980b9;
+            --player-car-wheel: #333333;
+            --player-windshield: #aed6f1;
+            --player-headlight: #f1c40f;
+            --player-taillight: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Noto Sans Telugu', Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--primary-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; 
+            height: 100dvh; 
+            overflow: hidden;
+        }
+
+        #appWrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            max-width: 500px; 
+            margin: 0 auto; 
+            background-color: var(--bg-dark);
+            overflow: hidden; 
+        }
+
+        #uiContainer {
+            width: 100%;
+            padding: clamp(8px, 2vh, 12px) 0;
+            background: linear-gradient(to bottom, rgba(44, 62, 80, 0.95), rgba(52, 73, 94, 0.9));
+            text-align: center;
+            z-index: 10;
+            border-bottom: 2px solid #2c3e50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0; 
+        }
+
+        #wordDisplay {
+            font-size: clamp(20px, 5vw, 30px); 
+            margin-bottom: clamp(4px, 1vh, 8px);
+            letter-spacing: 2px;
+            color: var(--highlight-color);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            padding: 0 10px;
+            word-break: break-all;
+        }
+        .highlight {
+            color: var(--success-color);
+            font-weight: bold;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+        }
+        #statsDisplay {
+            font-size: clamp(14px, 3.5vw, 18px);
+            color: #bdc3c7;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+        }
+        #statsDisplay span {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        #gameContainer {
+            flex-grow: 1; 
+            width: 100%;
+            position: relative; 
+            overflow: hidden; 
+            background-color: var(--bg-medium);
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            border-radius: 0;
+        }
+        canvas {
+            display: block;
+            background-color: var(--road-color); 
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border: 1px solid var(--bg-light); /* Added border for definition */
+        }
+
+        .messageOverlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(30, 30, 40, 0.92); /* Slightly more opaque */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 20;
+            color: white;
+            padding: clamp(15px, 4vw, 20px);
+        }
+        .messageOverlay h1 {
+            font-size: clamp(28px, 7vw, 40px); /* Increased max size */
+            color: var(--highlight-color);
+            margin-bottom: clamp(10px, 2vh, 15px);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6); /* Stronger shadow */
+            letter-spacing: 1px; /* Added letter spacing */
+        }
+         .messageOverlay h2 { /* For Game Over */
+            font-size: clamp(26px, 6.5vw, 36px); /* Increased max size */
+            color: var(--danger-color);
+            margin-bottom: clamp(10px, 2vh, 15px);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6); /* Stronger shadow */
+        }
+        .messageOverlay p {
+            font-size: clamp(14px, 3.5vw, 18px);
+            line-height: 1.5;
+            margin-bottom: clamp(8px, 1.5vh, 10px);
+        }
+        .messageOverlay button {
+            padding: clamp(10px, 3vh, 14px) clamp(20px, 5vw, 30px);
+            font-size: clamp(16px, 4vw, 20px);
+            margin-top: clamp(15px, 3vh, 25px);
+            cursor: pointer;
+            background: linear-gradient(to bottom, var(--accent-color), #2980b9);
+            border: 1px solid #2980b9;
+            color: white;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            touch-action: manipulation; 
+        }
+        .messageOverlay button:hover {
+            background: linear-gradient(to bottom, #2980b9, var(--accent-color));
+            box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+        .messageOverlay button:active {
+            transform: translateY(0px);
+            box-shadow: 0 2px 3px rgba(0,0,0,0.2);
+        }
+        .hidden { display: none !important; }
+
+        #warningMessage {
+            position: absolute;
+            top: 10%; 
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(231, 76, 60, 0.9);
+            color: white;
+            padding: clamp(8px, 2vw, 12px) clamp(15px, 4vw, 20px);
+            border-radius: 8px;
+            font-size: clamp(13px, 3vw, 17px);
+            font-weight: bold;
+            z-index: 15;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+            pointer-events: none; 
+        }
+        #warningMessage.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #controlsContainer {
+            width: 100%;
+            padding: clamp(8px, 2vh, 12px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: rgba(44, 62, 80, 0.85); 
+            border-top: 2px solid #2c3e50;
+            flex-shrink: 0; 
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+        #controlsContainer button {
+            font-size: clamp(22px, 6vw, 32px); 
+            padding: clamp(8px, 2vh, 12px) clamp(25px, 7vw, 40px); 
+            min-width: clamp(70px, 20vw, 100px); 
+            background-color: var(--accent-color);
+            color: white;
+            border: 1px solid #2980b9;
+            border-radius: 8px;
+            cursor: pointer;
+            touch-action: manipulation; 
+            font-weight: bold;
+        }
+        #controlsContainer button:active {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div id="appWrapper">
+        <div id="uiContainer">
+            <div id="wordDisplay"></div>
+            <div id="statsDisplay">
+                Level: <span id="level">1</span> | Lives: <span id="lives">3</span>
+            </div>
+        </div>
+
+        <div id="gameContainer">
+            <canvas id="gameCanvas"></canvas>
+            <div id="warningMessage">తప్పు అక్షరం లేదా అడ్డంకిని తాకారు, జాగ్రత్త!</div>
+            <div id="startScreen" class="messageOverlay">
+                <h1>తెలుగు పదాల వేట</h1>
+                <p>రోడ్డుపై సరైన తెలుగు అక్షరాలను సేకరించి పదాన్ని పూర్తి చేయండి.</p>
+                <p>అడ్డంకులను మరియు తప్పు అక్షరాలను తాకొద్దు!</p>
+                <p id="controlInstructionsP">Use ARROW KEYS or A/D to move.</p>
+                <button id="startButton">Start Game</button>
+            </div>
+            <div id="gameOverScreen" class="messageOverlay hidden">
+                <h2 id="gameOverMessage">Game Over!</h2>
+                <p>ఆట ముగిసింది!</p>
+                <button id="restartButton">Play Again</button>
+            </div>
+        </div>
+
+        <div id="controlsContainer">
+            <button id="btnLeft" aria-label="Move Left">◀</button>
+            <button id="btnRight" aria-label="Move Right">▶</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const wordDisplay = document.getElementById('wordDisplay');
+        const livesDisplay = document.getElementById('lives');
+        const levelDisplay = document.getElementById('level');
+        const warningMessageElement = document.getElementById('warningMessage');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const controlInstructionsP = document.getElementById('controlInstructionsP');
+
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+
+        const GAME_WIDTH = 400; 
+        const GAME_HEIGHT = 600;
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+
+        const TELUGU_WORDS = [ // List has 10 words, ensuring 10 levels
+            { word: "పలక", meaning: "Slate" }, { word: "నగ", meaning: "Jewel" },
+            { word: "గడప", meaning: "Threshold" }, { word: "అరక", meaning: "Plough" },
+            { word: "వంద", meaning: "Hundred" }, { word: "పడవ", meaning: "Boat" },
+            { word: "సహజం", meaning: "Natural" }, { word: "ఆలయం", meaning: "Temple" },
+            { word: "విజయం", meaning: "Victory" }, { word: "ప్రపంచం", meaning: "World" },
+            { word: "పునరావృతం", meaning: "resume" }
+        ];
+        const ALL_TELUGU_CHARS = [
+            'అ', 'ఆ', 'ఇ', 'ఈ', 'ఉ', 'ఊ', 'ఋ', 'ఎ', 'ఏ', 'ఐ', 'ఒ', 'ఓ', 'ఔ', 'క', 'ఖ', 'గ', 'ఘ', 'ఙ',
+            'చ', 'ఛ', 'జ', 'ఝ', 'ఞ', 'ట', 'ఠ', 'డ', 'ఢ', 'ణ', 'త', 'థ', 'ద', 'ధ', 'న',
+            'ప', 'ఫ', 'బ', 'భ', 'మ', 'య', 'ర', 'ల', 'వ', 'శ', 'ష', 'స', 'హ', 'ళ', 'క్ష', 'ఱ',
+            'ం', 'ః', 'ా', 'ి', 'ీ', 'ు', 'ూ', 'ృ', 'ె', 'ే', 'ై', 'ొ', 'ో', 'ౌ', '్'
+        ];
+
+        let player, road, obstacles, letters, currentWordData;
+        let lives, currentLevel, baseSpeed;
+        let gameRunning = false;
+        let animationFrameId;
+        let warningTimeoutId = null;
+
+        const PLAYER_WIDTH = 40;
+        const PLAYER_HEIGHT = 55;
+        
+        const LETTER_COLOR = '#f1c40f';
+        const LETTER_SHADOW_COLOR = 'rgba(0,0,0,0.4)';
+
+        const OBSTACLE_COLORS = ['#c0392b', '#e74c3c', '#d35400', '#2c3e50', '#8e44ad', '#7f8c8d'];
+
+        class Player {
+            constructor() {
+                this.width = PLAYER_WIDTH; this.height = PLAYER_HEIGHT;
+                this.x = GAME_WIDTH / 2 - this.width / 2; this.y = GAME_HEIGHT - this.height - 20;
+                this.speed = 6; 
+                this.color = getComputedStyle(document.documentElement).getPropertyValue('--player-car-color').trim() || '#3498db';
+                this.accentColor = getComputedStyle(document.documentElement).getPropertyValue('--player-car-accent').trim() || '#2980b9';
+                this.windshieldColor = getComputedStyle(document.documentElement).getPropertyValue('--player-windshield').trim() || '#aed6f1';
+                this.wheelColor = getComputedStyle(document.documentElement).getPropertyValue('--player-car-wheel').trim() || '#333333';
+                this.headlightColor = getComputedStyle(document.documentElement).getPropertyValue('--player-headlight').trim() || '#f1c40f';
+                this.taillightColor = getComputedStyle(document.documentElement).getPropertyValue('--player-taillight').trim() || '#e74c3c';
+            }
+            
+            drawRoundedRect(x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            draw() {
+                const x = this.x; const y = this.y; const w = this.width; const h = this.height;
+
+                const wheelH = h * 0.22; const wheelW = w * 0.18;
+                ctx.fillStyle = this.wheelColor;
+                const wheelInsetX = 2; 
+                this.drawRoundedRect(x + wheelInsetX, y + h * 0.05, wheelW, wheelH, 3);
+                this.drawRoundedRect(x + w - wheelW - wheelInsetX, y + h * 0.05, wheelW, wheelH, 3);
+                this.drawRoundedRect(x + wheelInsetX, y + h * 0.95 - wheelH, wheelW, wheelH, 3);
+                this.drawRoundedRect(x + w - wheelW - wheelInsetX, y + h * 0.95 - wheelH, wheelW, wheelH, 3);
+                
+                ctx.fillStyle = this.color;
+                this.drawRoundedRect(x, y + h * 0.1, w, h * 0.8, w * 0.15);
+
+                ctx.fillStyle = this.accentColor;
+                const cabinH = h * 0.40; const cabinW = w * 0.75;
+                const cabinY = y + h * 0.05;
+                this.drawRoundedRect(x + (w - cabinW) / 2, cabinY, cabinW, cabinH, w * 0.1);
+
+                ctx.fillStyle = this.windshieldColor;
+                const wsH = cabinH * 0.6; const wsW = cabinW * 0.8;
+                const wsY = cabinY + cabinH * 0.1;
+                this.drawRoundedRect(x + (w - wsW) / 2, wsY, wsW, wsH, w * 0.05);
+                
+                ctx.fillStyle = this.windshieldColor; 
+                const rearWsH = h * 0.15; const rearWsW = w * 0.5;
+                this.drawRoundedRect(
+                    x + (w-rearWsW)/2, 
+                    y + h*0.1 + h*0.8 - rearWsH - h*0.08, 
+                    rearWsW, rearWsH, w*0.05);
+
+                ctx.fillStyle = this.headlightColor;
+                const lightSize = w * 0.12;
+                ctx.fillRect(x + w * 0.18, y + h - lightSize*1.2 - h*0.02, lightSize, lightSize);
+                ctx.fillRect(x + w * 0.82 - lightSize, y + h - lightSize*1.2 - h*0.02, lightSize, lightSize);
+
+                ctx.fillStyle = this.taillightColor;
+                ctx.fillRect(x + w * 0.18, y + h * 0.1 + h*0.02, lightSize*0.9, lightSize*0.7);
+                ctx.fillRect(x + w * 0.82 - lightSize*0.9, y + h * 0.1 + h*0.02, lightSize*0.9, lightSize*0.7);
+            }
+            move(direction) {
+                if (direction === 'left') this.x -= this.speed;
+                else if (direction === 'right') this.x += this.speed;
+                if (this.x < 5) this.x = 5;
+                if (this.x + this.width > GAME_WIDTH - 5) this.x = GAME_WIDTH - this.width - 5;
+            }
+        }
+        class Road {
+            constructor() {
+                this.stripeHeight = 55; this.stripeGap = 35; this.stripeWidth = 10;
+                this.stripeColor = 'rgba(255, 255, 255, 0.65)';
+                this.stripes = []; this.offset = 0;
+                for (let i = 0; i < Math.ceil(GAME_HEIGHT / (this.stripeHeight + this.stripeGap)) + 2; i++) {
+                    this.stripes.push(i * (this.stripeHeight + this.stripeGap));
+                }
+                this.sideLineColor = 'rgba(220, 220, 220, 0.55)'; 
+                this.sideLineWidth = 5;
+                this.shoulderPadding = 12; 
+            }
+            update(speed) { this.offset = (this.offset + speed * 1.3) % (this.stripeHeight + this.stripeGap); } 
+            draw() {
+                for (let i = 0; i < this.stripes.length; i++) {
+                    const yPos = this.stripes[i] - this.offset;
+                    ctx.fillStyle = this.stripeColor;
+                    ctx.fillRect(GAME_WIDTH / 2 - this.stripeWidth / 2, yPos, this.stripeWidth, this.stripeHeight);
+                }
+                ctx.fillStyle = this.sideLineColor;
+                ctx.fillRect(this.shoulderPadding, 0, this.sideLineWidth, GAME_HEIGHT);
+                ctx.fillRect(GAME_WIDTH - this.shoulderPadding - this.sideLineWidth, 0, this.sideLineWidth, GAME_HEIGHT);
+            }
+        }
+        class Obstacle {
+            constructor(x, y, width, height) {
+                this.x = x; this.y = y; this.width = width; this.height = height;
+                this.baseColor = OBSTACLE_COLORS[Math.floor(Math.random() * OBSTACLE_COLORS.length)];
+                this.roofColor = this.darkenColor(this.baseColor, 0.75); 
+                this.wheelColor = '#2c3e50'; 
+                this.headlightColor = '#f0f0f0'; 
+            }
+            darkenColor(hex, factor) {
+                if (!hex || hex.length < 7) return '#000000'; 
+                let r = parseInt(hex.slice(1, 3), 16);
+                let g = parseInt(hex.slice(3, 5), 16);
+                let b = parseInt(hex.slice(5, 7), 16);
+                r = Math.max(0, Math.floor(r * factor));
+                g = Math.max(0, Math.floor(g * factor));
+                b = Math.max(0, Math.floor(b * factor));
+                return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+            }
+            drawRoundedRect(x, y, width, height, radius) { 
+                ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height); ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath(); ctx.fill();
+            }
+            draw() {
+                const x = this.x; const y = this.y; const w = this.width; const h = this.height;
+
+                const wheelHR = 0.25; const wheelWR = 0.15;
+                const wheelH = h * wheelHR; const wheelW = w * wheelWR;
+                ctx.fillStyle = this.wheelColor;
+                this.drawRoundedRect(x, y + h*0.05, wheelW, wheelH, 2);
+                this.drawRoundedRect(x + w - wheelW, y + h*0.05, wheelW, wheelH, 2);
+                this.drawRoundedRect(x, y + h*(1-wheelHR) - h*0.05, wheelW, wheelH, 2);
+                this.drawRoundedRect(x + w - wheelW, y + h*(1-wheelHR) - h*0.05, wheelW, wheelH, 2);
+
+                ctx.fillStyle = this.baseColor;
+                this.drawRoundedRect(x, y + h * 0.1, w, h * 0.8, w*0.1);
+
+                ctx.fillStyle = this.roofColor;
+                const cabinH = h * 0.4; const cabinW = w * 0.65;
+                this.drawRoundedRect(x + (w - cabinW) / 2, y + (h - cabinH) / 2, cabinW, cabinH, w*0.08);
+                
+                ctx.fillStyle = this.headlightColor;
+                const lightSize = Math.min(w * 0.1, h*0.1);
+                ctx.fillRect(x + w*0.25, y + h*0.1 + lightSize*0.2, lightSize, lightSize*0.8);
+                ctx.fillRect(x + w*0.75 - lightSize, y + h*0.1 + lightSize*0.2, lightSize, lightSize*0.8);
+            }
+            update(speed) { this.y += speed; }
+        }
+        class Letter {
+            constructor(char, x, y, isTarget) {
+                this.char = char; this.x = x; this.y = y; this.size = 30;
+                this.width = 32; this.height = 32; 
+                this.color = LETTER_COLOR; this.isTarget = isTarget;
+                this.bgColor = 'rgba(40, 40, 50, 0.5)'; 
+                this.borderColor = 'rgba(255, 255, 255, 0.3)';
+            }
+            draw() {
+                ctx.fillStyle = this.bgColor;
+                ctx.strokeStyle = this.borderColor;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2 * 1.1, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = `bold ${this.size}px 'Noto Sans Telugu'`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = LETTER_SHADOW_COLOR; ctx.shadowBlur = 4; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+                ctx.fillStyle = this.color; 
+                ctx.fillText(this.char, this.x + this.width / 2, this.y + this.height / 2 + 2);
+                ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+            }
+            update(speed) { this.y += speed; }
+        }
+
+        function initGame() {
+            player = new Player(); road = new Road(); obstacles = []; letters = [];
+            lives = 3; currentLevel = 0; baseSpeed = 3; 
+            startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden');
+            warningMessageElement.classList.remove('visible');
+            if(warningTimeoutId) clearTimeout(warningTimeoutId);
+            startNextLevel();
+            if (!gameRunning) { gameRunning = true; mainGameLoop(); }
+        }
+        function startNextLevel() {
+            currentLevel++;
+            if (currentLevel > TELUGU_WORDS.length) { 
+                winGame(); return; 
+            }
+            const wordInfo = TELUGU_WORDS[currentLevel - 1];
+            currentWordData = {
+                word: wordInfo.word, meaning: wordInfo.meaning,
+                lettersToCollect: wordInfo.word.split(''),
+                collectedStatus: Array(wordInfo.word.length).fill(false)
+            };
+            baseSpeed = 2.5 + (currentLevel - 1) * 0.7; 
+            obstacles = []; letters = []; updateUIDisplay();
+        }
+        function winGame() {
+            gameRunning = false; cancelAnimationFrame(animationFrameId);
+            gameOverMessage.innerHTML = `Congratulations! <br>అభినందనలు! <br>You completed all ${TELUGU_WORDS.length} levels!`;
+            gameOverScreen.classList.remove('hidden');
+        }
+        function showWarningMessage() {
+            if (warningTimeoutId) clearTimeout(warningTimeoutId);
+            warningMessageElement.classList.add('visible');
+            warningTimeoutId = setTimeout(() => {
+                warningMessageElement.classList.remove('visible');
+                warningTimeoutId = null;
+            }, 1800);
+        }
+        function loseLife() { lives--; updateUIDisplay(); showWarningMessage(); if (lives <= 0) gameOver(); }
+        function gameOver() {
+            gameRunning = false; cancelAnimationFrame(animationFrameId);
+            gameOverMessage.innerHTML = `Game Over! <br> ఆట ముగిసింది! <br> Level Reached: ${currentLevel}`;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        let obstacleSpawnTimer = 0; const OBSTACLE_SPAWN_INTERVAL_BASE = 90; 
+        let letterSpawnTimer = 0; const LETTER_SPAWN_INTERVAL_BASE = 70; 
+
+        function spawnObstacle() {
+            const obstacleWidth = Math.random() * 20 + 35; 
+            const obstacleHeight = Math.random() * 20 + 25;
+            const laneWidth = GAME_WIDTH / 3; const lane = Math.floor(Math.random() * 3);
+            const x = (lane * laneWidth) + (laneWidth / 2) - (obstacleWidth / 2);
+            obstacles.push(new Obstacle(x, -obstacleHeight, obstacleWidth, obstacleHeight));
+        }
+        function spawnLetter() {
+            let char; let isTargetLetter = false; const uncollectedTargetLetters = [];
+            currentWordData.lettersToCollect.forEach((letterChar, index) => {
+                if (!currentWordData.collectedStatus[index]) uncollectedTargetLetters.push(letterChar);
+            });
+            const targetPriority = 0.7 + (0.2 * (1 - uncollectedTargetLetters.length / Math.max(1, currentWordData.lettersToCollect.length)));
+            if (uncollectedTargetLetters.length > 0 && Math.random() < targetPriority) {
+                char = uncollectedTargetLetters[Math.floor(Math.random() * uncollectedTargetLetters.length)];
+                isTargetLetter = true;
+            } else {
+                char = ALL_TELUGU_CHARS[Math.floor(Math.random() * ALL_TELUGU_CHARS.length)];
+                isTargetLetter = currentWordData.lettersToCollect.includes(char) && 
+                                 currentWordData.lettersToCollect.findIndex(
+                                     (targetChar, idx) => targetChar === char && !currentWordData.collectedStatus[idx]
+                                 ) !== -1;
+            }
+            const letterSize = 32; 
+            const x = Math.random() * (GAME_WIDTH - letterSize - 30) + 15; 
+            letters.push(new Letter(char, x, -letterSize, isTargetLetter));
+        }
+        function checkCollision(rect1, rect2) {
+            const padding = 2; 
+            return rect1.x < rect2.x + rect2.width - padding && 
+                   rect1.x + rect1.width > rect2.x + padding &&
+                   rect1.y < rect2.y + rect2.height - padding && 
+                   rect1.y + rect1.height > rect2.y + padding;
+        }
+        function updateUIDisplay() {
+            let displayString = "";
+            currentWordData.lettersToCollect.forEach((char, index) => {
+                displayString += `<span class="${currentWordData.collectedStatus[index] ? 'highlight' : ''}">${char}</span>`;
+            });
+            wordDisplay.innerHTML = displayString;
+            livesDisplay.textContent = lives; levelDisplay.textContent = currentLevel;
+        }
+        function mainGameLoop() {
+            if (!gameRunning) return;
+            handleInput(); ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            road.update(baseSpeed); road.draw(); player.draw();
+            
+            const speedFactor = Math.max(1, baseSpeed / 2.5); 
+            const currentObstacleSpawnInterval = OBSTACLE_SPAWN_INTERVAL_BASE / speedFactor;
+            const currentLetterSpawnInterval = LETTER_SPAWN_INTERVAL_BASE / speedFactor;
+
+            obstacleSpawnTimer++; if (obstacleSpawnTimer > currentObstacleSpawnInterval) { spawnObstacle(); obstacleSpawnTimer = 0; }
+            letterSpawnTimer++; if (letterSpawnTimer > currentLetterSpawnInterval) { spawnLetter(); letterSpawnTimer = 0; }
+            
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i]; obs.update(baseSpeed); obs.draw();
+                if (checkCollision(player, obs)) { obstacles.splice(i, 1); loseLife(); }
+                else if (obs.y > GAME_HEIGHT) obstacles.splice(i, 1);
+            }
+            for (let i = letters.length - 1; i >= 0; i--) {
+                const letterObj = letters[i]; letterObj.update(baseSpeed); letterObj.draw();
+                if (checkCollision(player, letterObj)) {
+                    let letterWasNeededAndCorrectlyCollected = false;
+                    if (letterObj.isTarget) { 
+                        const firstNeededIndex = currentWordData.lettersToCollect.findIndex(
+                            (targetChar, idx) => targetChar === letterObj.char && !currentWordData.collectedStatus[idx]
+                        );
+                        if (firstNeededIndex !== -1) {
+                            currentWordData.collectedStatus[firstNeededIndex] = true;
+                            letterWasNeededAndCorrectlyCollected = true; updateUIDisplay();
+                            if (currentWordData.collectedStatus.every(status => status === true)) {
+                                setTimeout(() => { if(gameRunning) startNextLevel(); }, 600);
+                            }
+                        }
+                    }
+                    if (!letterWasNeededAndCorrectlyCollected) loseLife();
+                    letters.splice(i, 1);
+                } else if (letterObj.y > GAME_HEIGHT) letters.splice(i, 1);
+            }
+            animationFrameId = requestAnimationFrame(mainGameLoop);
+        }
+
+        const keyState = {};
+        window.addEventListener('keydown', (e) => {
+            keyState[e.key.toLowerCase()] = true; 
+            if (gameRunning && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+                e.preventDefault();
+            }
+        });
+        window.addEventListener('keyup', (e) => { keyState[e.key.toLowerCase()] = false; });
+
+        function handleInput(){
+            if (!gameRunning) return;
+            if (keyState['arrowleft'] || keyState['a']) player.move('left');
+            if (keyState['arrowright'] || keyState['d']) player.move('right');
+        }
+
+        function handleTouch(event, key, isPressed) {
+            event.preventDefault();
+            keyState[key.toLowerCase()] = isPressed; 
+        }
+        btnLeft.addEventListener('touchstart', (e) => handleTouch(e, 'ArrowLeft', true));
+        btnLeft.addEventListener('touchend', (e) => handleTouch(e, 'ArrowLeft', false));
+        btnLeft.addEventListener('touchcancel', (e) => handleTouch(e, 'ArrowLeft', false));
+
+        btnRight.addEventListener('touchstart', (e) => handleTouch(e, 'ArrowRight', true));
+        btnRight.addEventListener('touchend', (e) => handleTouch(e, 'ArrowRight', false));
+        btnRight.addEventListener('touchcancel', (e) => handleTouch(e, 'ArrowRight', false));
+
+        startButton.addEventListener('click', initGame);
+        restartButton.addEventListener('click', initGame);
+
+        window.onload = () => {
+            startScreen.classList.remove('hidden');
+            warningMessageElement.classList.remove('visible');
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+            if (controlInstructionsP) {
+                controlInstructionsP.textContent = isTouchDevice ? "Use ON-SCREEN BUTTONS to move." : "Use ARROW KEYS or A/D to move.";
+            }
+            if (!isTouchDevice && document.getElementById('controlsContainer')) {
+                document.getElementById('controlsContainer').style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>తడపేరాట</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&family=Baloo+2:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Baloo 2', 'Noto Sans Telugu', sans-serif;
+            touch-action: none; /* Prevents default touch behaviors like scrolling/zooming */
+            overscroll-behavior: none;
+            overflow: hidden; /* Prevent scrolling on the body */
+        }
+        .telugu-text {
+            font-family: 'Noto Sans Telugu', sans-serif;
+        }
+        @keyframes correct-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        .correct-pop-animation {
+            animation: correct-pop 0.5s ease-in-out;
+        }
+        @keyframes incorrect-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .incorrect-shake-animation {
+            animation: incorrect-shake 0.4s ease-in-out;
+        }
+        .letter-tile {
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .answer-slot {
+            min-height: 5rem; /* Adjusted for potentially smaller screens */
+            cursor: pointer;
+        }
+        /* Style for the selected tile */
+        .selected-tile {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
+            border: 3px solid #3B82F6; /* blue-500 */
+        }
+        /* Style for the modal overlay */
+        .modal-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+        /* Hide scrollbars */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-sky-100">
+
+    <div id="game-container" class="flex flex-col h-screen w-screen p-2 sm:p-4 text-center select-none">
+        
+        <!-- Header: Score, Level, and Timer -->
+        <header class="flex justify-between items-center w-full max-w-2xl mx-auto mb-4">
+            <div class="bg-white/70 rounded-xl px-3 py-2 shadow-md">
+                <h2 class="text-lg font-bold text-blue-600">స్కోరు</h2>
+                <p id="score" class="text-2xl font-bold text-blue-800">0</p>
+            </div>
+            <div class="text-center">
+                 <h1 class="text-3xl font-bold text-indigo-700">తడపేరాట</h1>
+                 <p id="level-display" class="text-xl font-bold text-indigo-500"></p>
+            </div>
+            <div class="bg-white/70 rounded-xl px-3 py-2 shadow-md">
+                <h2 class="text-lg font-bold text-red-600">సమయం</h2>
+                <p id="timer" class="text-2xl font-bold text-red-800">10</p>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main id="main-game-area" class="flex-grow flex flex-col items-center justify-center w-full max-w-2xl mx-auto">
+            <div id="emoji-container" class="text-8xl md:text-9xl mb-6"></div>
+            <div id="answer-slots" class="flex justify-center flex-wrap items-center gap-2 md:gap-4 mb-8 w-full min-h-[5rem]"></div>
+            <div id="feedback-message" class="text-3xl font-bold h-10 mb-4 transition-all duration-300"></div>
+            <div id="letter-tiles-container" class="bg-white/50 rounded-2xl p-4 w-full">
+                 <div id="letter-tiles" class="flex justify-center flex-wrap items-center gap-2 md:gap-4 min-h-[5rem]"></div>
+            </div>
+        </main>
+        
+        <!-- Start/Next Button -->
+        <footer id="start-footer" class="flex-grow flex items-center justify-center">
+            <button id="start-button" class="w-full max-w-xs mx-auto bg-green-500 hover:bg-green-600 text-white text-3xl font-bold py-4 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                ఆట మొదలుపెట్టు
+            </button>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container">
+        <!-- Level Transition Modal -->
+        <div id="level-modal" class="hidden modal-overlay fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-md w-full">
+                <h2 id="level-modal-title" class="text-5xl font-bold text-indigo-700 mb-6"></h2>
+                <button id="start-level-button" class="w-full bg-green-500 hover:bg-green-600 text-white text-3xl font-bold py-4 px-8 rounded-full shadow-lg">మొదలు</button>
+            </div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="game-over-modal" class="hidden modal-overlay fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-md w-full">
+                <h2 id="game-over-title" class="text-5xl font-bold text-indigo-700 mb-4">ఆట ముగిసింది!</h2>
+                <p id="game-over-message" class="text-xl text-slate-600 mb-4"></p>
+                <p class="text-2xl text-slate-600 mb-2">మీ తుది స్కోరు:</p>
+                <p id="final-score" class="text-7xl font-bold text-amber-500 mb-8">0</p>
+                <button id="play-again-button" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-3xl font-bold py-4 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                    మళ్ళీ ఆడు
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- GAME DATA (Corrected and Rebalanced) ---
+        const wordLevels = {
+            1: [ // Level 1: 2-Syllable words
+                { emoji: '🍎', te: 'పండు', letters: ['పం', 'డు'] }, { emoji: '👀', te: 'కళ్ళు', letters: ['క', 'ళ్ళు'] }, { emoji: '🏠', te: 'ఇల్లు', letters: ['ఇ', 'ల్లు'] }, { emoji: '🐶', te: 'కుక్క', letters: ['కు', 'క్క'] }, { emoji: '🐱', te: 'పిల్లి', letters: ['పి', 'ల్లి'] }, { emoji: '⚽', te: 'బంతి', letters: ['బం', 'తి'] }, { emoji: '🚗', te: 'కారు', letters: ['కా', 'రు'] }, { emoji: '💧', te: 'నీరు', letters: ['నీ', 'రు'] }, { emoji: '🧱', te: 'గోడ', letters: ['గో', 'డ'] }, { emoji: '🏰', te: 'మేడ', letters: ['మే', 'డ'] }, { emoji: '🐦', te: 'కాకి', letters: ['కా', 'కి'] }, { emoji: '🏞️', te: 'నది', letters: ['న', 'ది'] }, { emoji: '🕊️', te: 'పక్షి', letters: ['ప', 'క్షి'] }, { emoji: '🪨', te: 'రాయి', letters: ['రా', 'యి'] }, { emoji: '💨', te: 'గాలి', letters: ['గా', 'లి'] }, { emoji: '☁️', te: 'మేఘం', letters: ['మే', 'ఘం'] }, { emoji: '🍇', te: 'ద్రాక్ష', letters: ['ద్రా', 'క్ష'] }, { emoji: '🦊', te: 'నక్క', letters: ['న', 'క్క'] }, { emoji: '💡', te: 'దీపం', letters: ['దీ', 'పం'] }, { emoji: '🦷', te: 'దంతం', letters: ['దం', 'తం'] }
+            ],
+            2: [ // Level 2: 3-Syllable words
+                { emoji: '🐘', te: 'ఏనుగు', letters: ['ఏ', 'ను', 'గు'] }, { emoji: '🥭', te: 'మామిడి', letters: ['మా', 'మి', 'డి'] }, { emoji: '🍌', te: 'అరటి', letters: ['అ', 'ర', 'టి'] }, { emoji: '🏺', te: 'కడవ', letters: ['క', 'డ', 'వ'] }, { emoji: '🐿️', te: 'ఉడుత', letters: ['ఉ', 'డు', 'త'] }, { emoji: '💍', te: 'ఉంగరం', letters: ['ఉం', 'గ', 'రం'] }, { emoji: '⛵', te: 'పడవ', letters: ['ప', 'డ', 'వ'] }, { emoji: '🌺', te: 'కమలం', letters: ['క', 'మ', 'లం'] }, { emoji: '🌌', te: 'ఆకాశం', letters: ['ఆ', 'కా', 'శం'] }, { emoji: '🖼️', te: 'కిటికీ', letters: ['కి', 'టి', 'కీ'] }, { emoji: '🪁', te: 'పతంగి', letters: ['ప', 'తం', 'గి'] }, { emoji: '🏞️', te: 'అడవి', letters: ['అ', 'డ', 'వి'] }, { emoji: '✍️', te: 'పలక', letters: ['ప', 'ల', 'క'] }, { emoji: '🚪', te: 'గడప', letters: ['గ', 'డ', 'ప'] }, { emoji: '🍅', te: 'టమోటా', letters: ['ట', 'మో', 'టా'] }, { emoji: '📖', te: 'పుస్తకం', letters: ['పు', 'స్త', 'కం'] }, { emoji: '☀️', te: 'సూర్యుడు', letters: ['సూ', 'ర్యు', 'డు'] }, { emoji: '🌙', te: 'చంద్రుడు', letters: ['చం', 'ద్రు', 'డు'] }, { emoji: '👂', te: 'చెవులు', letters: ['చె', 'వు', 'లు'] }, { emoji: '👧', te: 'జడలు', letters: ['జ', 'డ', 'లు'] }, { emoji: '✈️', te: 'విమానం', letters: ['వి', 'మా', 'నం'] }
+            ],
+            3: [ // Level 3: 4-Syllable words
+                { emoji: '🏫', te: 'పాఠశాల', letters: ['పా', 'ఠ', 'శా', 'ల'] }, { emoji: '🦟', te: 'దోమతెర', letters: ['దో', 'మ', 'తె', 'ర'] }, { emoji: '🧅', te: 'ఉల్లిపాయ', letters: ['ఉ', 'ల్లి', 'పా', 'య'] }, { emoji: '�', te: 'తలగడ', letters: ['త', 'ల', 'గ', 'డ'] }, { emoji: '🕰️', te: 'గడియారం', letters: ['గ', 'డి', 'యా', 'రం'] }, { emoji: '🔥', te: 'అగ్గిపెట్టె', letters: ['అ', 'గ్గి', 'పె', 'ట్టె'] }, { emoji: '🔔', te: 'బడిగంట', letters: ['బ', 'డి', 'గం', 'ట'] }, { emoji: '🦁', te: 'జంతుశాల', letters: ['జం', 'తు', 'శా', 'ల'] }, { emoji: '🚂', te: 'రైలుబండి', letters: ['రై', 'లు', 'బం', 'డి'] }, { emoji: '🐐', te: 'మేకపిల్ల', letters: ['మే', 'క', 'పి', 'ల్ల'] }, { emoji: '🚀', te: 'అంతరిక్షం', letters: ['అం', 'త', 'రి', 'క్షం'] }, { emoji: '💻', te: 'కంప్యూటరు', letters: ['కం', 'ప్యూ', 'ట', 'రు'] }, { emoji: '📞', te: 'దూరవాణి', letters: ['దూ', 'ర', 'వా', 'ణి'] }, { emoji: '🌡️', te: 'ఉష్ణోగ్రత', letters: ['ఉ', 'ష్ణో', 'గ్ర', 'త'] }, { emoji: '⚡', te: 'విద్యుచ్ఛక్తి', letters: ['వి', 'ద్యు', 'చ్ఛ', 'క్తి'] }, { emoji: '🌌', te: 'నక్షత్రాలు', letters: ['న', 'క్ష', 'త్రా', 'లు'] }, { emoji: '🔑', te: 'తాళంచెవి', letters: ['తా', 'ళం', 'చె', 'వి'] }, { emoji: '🍉', te: 'పుచ్చకాయ', letters: ['పు', 'చ్చ', 'కా', 'య'] }, { emoji: '🧼', te: 'సబ్బుబిళ్ళ', letters: ['స', 'బ్బు', 'బి', 'ళ్ళ'] }, { emoji: '📚', te: 'గ్రంథాలయం', letters: ['గ్రం', 'థా', 'ల', 'యం'] }, { emoji: '🏭', te: 'కర్మాగారం', letters: ['క', 'ర్మా', 'గా', 'రం'] }, { emoji: '🏥', te: 'ఆసుపత్రి', letters: ['ఆ', 'సు', 'ప', 'త్రి'] }
+            ],
+            4: [ // Level 4: 5+ Syllable words
+                { emoji: '🦜', te: 'రామచిలుక', letters: ['రా', 'మ', 'చి', 'లు', 'క'] }, { emoji: '🧸', te: 'ఆటబొమ్మలు', letters: ['ఆ', 'ట', 'బొ', 'మ్మ', 'లు'] }, { emoji: '🧺', te: 'విహారయాత్ర', letters: ['వి', 'హా', 'ర', 'యా', 'త్ర'] }, { emoji: '🍽️', te: 'భోజనశాల', letters: ['భో', 'జ', 'న', 'శా', 'ల'] }, { emoji: '🛒', te: 'అంగడివీధి', letters: ['అం', 'గ', 'డి', 'వీ', 'ధి'] }, { emoji: '🎨', te: 'చిత్రలేఖనం', letters: ['చి', 'త్ర', 'లే', 'ఖ', 'నం'] }, { emoji: '🔭', te: 'దూరదర్శిని', letters: ['దూ', 'ర', 'ద', 'ర్శి', 'ని'] }, { emoji: '🎬', te: 'చలనచిత్రం', letters: ['చ', 'ల', 'న', 'చి', 'త్రం'] }, { emoji: '🧪', te: 'ప్రయోగశాల', letters: ['ప్ర', 'యో', 'గ', 'శా', 'ల'] }, { emoji: '🛰️', te: 'ఉపగ్రహము', letters: ['ఉ', 'ప', 'గ్ర', 'హ', 'ము'] }, { emoji: '🥒', te: 'కాకరకాయ', letters: ['కా', 'క', 'ర', 'కా', 'య'] }, { emoji: '🏞️', te: 'ఉద్యానవనం', letters: ['ఉ', 'ద్యా', 'న', 'వ', 'నం'] }, { emoji: ' handkerchief ', te: 'చేతిరుమాలు', letters: ['చే', 'తి', 'రు', 'మా', 'లు'] }, { emoji: '📺', te: 'టెలివిజను', letters: ['టె', 'లి', 'వి', 'జ', 'ను'] }, { emoji: '🌦️', te: 'వాతావరణం', letters: ['వా', 'తా', 'వ', 'ర', 'ణం'] }, { emoji: '🔬', te: 'విజ్ఞానశాస్త్రం', letters: ['వి', 'జ్ఞా', 'న', 'శా', 'స్త్రం'] }, { emoji: '🏙️', te: 'ఆకాశహర్మ్యం', letters: ['ఆ', 'కా', 'శ', 'హ', 'ర్మ్యం'] }, { emoji: '🧲', te: 'అయస్కాంతము', letters: ['అ', 'య', 'స్కాం', 'త', 'ము'] }, { emoji: '📝', te: 'పరీక్షపత్రం', letters: ['ప', 'రీ', 'క్ష', 'ప', 'త్రం'] }, { emoji: '🌊', te: 'జలపాతము', letters: ['జ', 'ల', 'పా', 'త', 'ము'] }, { emoji: '🧈', te: 'నవనీతము', letters: ['న', 'వ', 'నీ', 'త', 'ము'] }, { emoji: '🔢', te: 'గణితశాస్త్రం', letters: ['గ', 'ణి', 'త', 'శా', 'స్త్రం'] }, { emoji: '🏋️', te: 'వ్యాయామశాల', letters: ['వ్యా', 'యా', 'మ', 'శా', 'ల'] }, { emoji: '✈️', te: 'విమానాశ్రయం', letters: ['వి', 'మా', 'నా', 'శ్ర', 'యం'] }, { emoji: '🏖️', te: 'సముద్రతీరం', letters: ['స', 'ము', 'ద్ర', 'తీ', 'రం'] }, { emoji: '📰', te: 'సమాచారము', letters: ['స', 'మా', 'చా', 'ర', 'ము'] }, { emoji: '🥞', te: 'అల్పాహారము', letters: ['అ', 'ల్పా', 'హా', 'ర', 'ము'] }, { emoji: '🥔', te: 'బంగాళాదుంప', letters: ['బం', 'గా', 'ళా', 'దుం', 'ప'] }, { emoji: '🌍', te: 'పర్యావరణము', letters: ['ప', 'ర్యా', 'వ', 'ర', 'ణ', 'ము'] }, { emoji: '🚒', te: 'అగ్నిమాపకము', letters: ['అ', 'గ్ని', 'మా', 'ప', 'క', 'ము'] }, { emoji: '🔭', te: 'విశ్వవిద్యాలయం', letters: ['వి', 'శ్వ', 'వి', 'ద్యా', 'ల', 'యం'] }, { emoji: '🚲', te: 'ద్విచక్రవాహనం', letters: ['ద్వి', 'చ', 'క్ర', 'వా', 'హ', 'నం'] }, { emoji: '🌕', te: 'చంద్రమండలం', letters: ['చం', 'ద్ర', 'మం', 'డ', 'లం'] }, { emoji: '🗺️', te: 'భూగోళశాస్త్రం', letters: ['భూ', 'గో', 'ళ', 'శా', 'స్త్రం'] }, { emoji: '🚂', te: 'ఆవిరియంత్రము', letters: ['ఆ', 'వి', 'రి', 'యం', 'త్ర', 'ము'] }, { emoji: '🪁', te: 'గాలిపటము', letters: ['గా', 'లి', 'ప', 'ట', 'ము'] }, { emoji: '🚀', te: 'రోదసీనౌక', letters: ['రో', 'ద', 'సీ', 'నౌ', 'క'] }
+            ]
+        };
+        const MAX_LEVEL = Object.keys(wordLevels).length;
+        const WORDS_PER_LEVEL = 5;
+
+        // --- DOM ELEMENTS ---
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+        const levelDisplayEl = document.getElementById('level-display');
+        const emojiContainer = document.getElementById('emoji-container');
+        const answerSlotsContainer = document.getElementById('answer-slots');
+        const letterTilesContainer = document.getElementById('letter-tiles');
+        const feedbackMessageEl = document.getElementById('feedback-message');
+        const mainGameArea = document.getElementById('main-game-area');
+        const startFooter = document.getElementById('start-footer');
+        
+        // Buttons
+        const startButton = document.getElementById('start-button');
+        const playAgainButton = document.getElementById('play-again-button');
+        const startLevelButton = document.getElementById('start-level-button');
+
+        // Modals
+        const levelModal = document.getElementById('level-modal');
+        const levelModalTitle = document.getElementById('level-modal-title');
+        const gameOverModal = document.getElementById('game-over-modal');
+        const gameOverTitle = document.getElementById('game-over-title');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const finalScoreEl = document.getElementById('final-score');
+        
+        // --- GAME STATE ---
+        let score = 0;
+        let timeLeft = 10;
+        let timerInterval;
+        let currentLevel = 1;
+        let wordOrderInLevel = [];
+        let wordIndexInLevel = 0;
+        let currentWord = null;
+        let selectedTile = null; 
+        let consecutiveMisses = 0;
+        
+        // --- EVENT LISTENERS ---
+        startButton.addEventListener('click', () => {
+             startFooter.classList.add('hidden');
+             mainGameArea.classList.remove('hidden');
+             prepareLevel(currentLevel);
+        });
+        playAgainButton.addEventListener('click', resetAndStartGame);
+        startLevelButton.addEventListener('click', () => {
+            levelModal.classList.add('hidden');
+            startLevel();
+        });
+        
+        // --- GAME FLOW FUNCTIONS ---
+
+        function resetAndStartGame() {
+            score = 0;
+            updateScore(0);
+            currentLevel = 1;
+            consecutiveMisses = 0;
+            gameOverModal.classList.add('hidden');
+            prepareLevel(currentLevel);
+        }
+
+        function prepareLevel(level) {
+            currentLevel = level;
+            levelModalTitle.textContent = `స్థాయి ${level}`;
+            levelModal.classList.remove('hidden');
+        }
+
+        function startLevel() {
+            levelDisplayEl.textContent = `స్థాయి ${currentLevel}`;
+            wordIndexInLevel = 0;
+            const wordsForLevel = wordLevels[currentLevel];
+            const allWordIndices = [...Array(wordsForLevel.length).keys()];
+            wordOrderInLevel = shuffleArray(allWordIndices).slice(0, WORDS_PER_LEVEL);
+            loadNextWord();
+        }
+        
+        function loadNextWord() {
+            if (wordIndexInLevel >= wordOrderInLevel.length) {
+                handleLevelComplete();
+                return;
+            }
+            
+            const wordIdx = wordOrderInLevel[wordIndexInLevel];
+            currentWord = wordLevels[currentLevel][wordIdx];
+            
+            if (selectedTile) {
+                selectedTile.classList.remove('selected-tile');
+                selectedTile = null;
+            }
+
+            feedbackMessageEl.textContent = '';
+            feedbackMessageEl.className = 'text-3xl font-bold h-10 mb-4 transition-all duration-300';
+            answerSlotsContainer.innerHTML = '';
+            
+            emojiContainer.textContent = currentWord.emoji;
+            
+            currentWord.letters.forEach((_, index) => {
+                const slot = document.createElement('div');
+                slot.className = 'answer-slot bg-white/80 border-4 border-dashed border-slate-400 rounded-2xl w-16 h-16 sm:w-20 sm:h-20 flex justify-center items-center';
+                slot.dataset.index = index;
+                answerSlotsContainer.appendChild(slot);
+            });
+            
+            const shuffledLetters = shuffleArray([...currentWord.letters]);
+            displayLetterTiles(shuffledLetters);
+            
+            addClickListeners();
+            
+            resetTimer();
+            startTimer();
+        }
+
+        function displayLetterTiles(letters) {
+            letterTilesContainer.innerHTML = '';
+            letters.forEach((letter, index) => {
+                const tile = document.createElement('div');
+                tile.id = `tile-${index}`;
+                tile.className = 'letter-tile telugu-text bg-amber-300 hover:bg-amber-400 text-amber-800 text-2xl sm:text-4xl font-bold w-16 h-16 sm:w-20 sm:h-20 flex justify-center items-center rounded-2xl shadow-lg';
+                tile.textContent = letter;
+                letterTilesContainer.appendChild(tile);
+            });
+        }
+        
+        function checkAnswer() {
+            const slots = answerSlotsContainer.children;
+            const placedTiles = Array.from(slots).map(slot => slot.firstChild);
+
+            if (placedTiles.some(tile => !tile)) return;
+
+            const userAnswer = placedTiles.map(tile => tile.textContent).join('');
+
+            if (userAnswer === currentWord.te) {
+                handleCorrectAnswer();
+            } else {
+                handleIncorrectAnswer();
+            }
+        }
+        
+        function handleCorrectAnswer() {
+            clearInterval(timerInterval);
+            consecutiveMisses = 0;
+            const pointsGained = (currentLevel * 5) + timeLeft;
+            updateScore(score + pointsGained);
+            
+            feedbackMessageEl.textContent = 'చాలా బాగుంది!';
+            feedbackMessageEl.classList.add('text-green-600');
+            answerSlotsContainer.classList.add('correct-pop-animation');
+            
+            wordIndexInLevel++;
+            setTimeout(() => {
+                 answerSlotsContainer.classList.remove('correct-pop-animation');
+                 loadNextWord();
+            }, 1500);
+        }
+
+        function handleIncorrectAnswer() {
+            feedbackMessageEl.textContent = 'మళ్ళీ ప్రయత్నించు';
+            feedbackMessageEl.classList.add('text-red-600');
+            answerSlotsContainer.classList.add('incorrect-shake-animation');
+
+            setTimeout(() => {
+                const slots = Array.from(answerSlotsContainer.children);
+                slots.forEach(slot => {
+                    if (slot.firstChild) {
+                        letterTilesContainer.appendChild(slot.firstChild);
+                    }
+                });
+                feedbackMessageEl.textContent = '';
+                answerSlotsContainer.classList.remove('incorrect-shake-animation');
+            }, 1000);
+        }
+
+        function handleTimeOut() {
+            clearInterval(timerInterval);
+            consecutiveMisses++;
+            feedbackMessageEl.textContent = 'సమయం ముగిసింది!';
+            feedbackMessageEl.classList.add('text-orange-600');
+            
+            if (consecutiveMisses >= 3) {
+                setTimeout(() => endGame(false), 1500);
+            } else {
+                wordIndexInLevel++;
+                setTimeout(loadNextWord, 1500);
+            }
+        }
+
+        function handleLevelComplete() {
+            if (currentLevel < MAX_LEVEL) {
+                currentLevel++;
+                prepareLevel(currentLevel);
+            } else {
+                endGame(true);
+            }
+        }
+        
+        function endGame(isVictory) {
+            clearInterval(timerInterval);
+            finalScoreEl.textContent = score;
+            if(isVictory) {
+                gameOverTitle.textContent = 'అభినందనలు!';
+                gameOverMessage.textContent = 'మీరు అన్ని స్థాయిలను పూర్తి చేసారు!';
+            } else {
+                gameOverTitle.textContent = 'ఆట ముగిసింది!';
+                gameOverMessage.textContent = 'మీరు వరుసగా 3 పదాలను కోల్పోయారు.';
+            }
+            gameOverModal.classList.remove('hidden');
+        }
+
+        // --- UTILITY & HELPER FUNCTIONS ---
+        
+        function updateScore(newScore) {
+            score = newScore;
+            scoreEl.textContent = score;
+        }
+        
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                   handleTimeOut();
+                }
+            }, 1000);
+        }
+        
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 10;
+            timerEl.textContent = timeLeft;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- CLICK-BASED INTERACTION LOGIC ---
+        function addClickListeners() {
+            const tiles = document.querySelectorAll('.letter-tile');
+            const slots = document.querySelectorAll('.answer-slot');
+
+            tiles.forEach(tile => {
+                tile.addEventListener('click', handleTileClick);
+            });
+
+            slots.forEach(slot => {
+                slot.addEventListener('click', handleSlotClick);
+            });
+        }
+
+        function handleTileClick(event) {
+            const clickedTile = event.currentTarget;
+
+            if (clickedTile.parentNode.classList.contains('answer-slot')) {
+                letterTilesContainer.appendChild(clickedTile);
+                if(selectedTile === clickedTile) {
+                    selectedTile.classList.remove('selected-tile');
+                    selectedTile = null;
+                }
+                return;
+            }
+
+            if (selectedTile === clickedTile) {
+                selectedTile.classList.remove('selected-tile');
+                selectedTile = null;
+            } else {
+                if (selectedTile) {
+                    selectedTile.classList.remove('selected-tile');
+                }
+                selectedTile = clickedTile;
+                selectedTile.classList.add('selected-tile');
+            }
+        }
+
+        function handleSlotClick(event) {
+            const clickedSlot = event.currentTarget;
+            
+            if (selectedTile && !clickedSlot.firstChild) {
+                clickedSlot.appendChild(selectedTile);
+                selectedTile.classList.remove('selected-tile');
+                selectedTile = null; 
+                checkAnswer();
+            }
+        }
+
+        // --- Initial UI State ---
+        function setInitialUI() {
+            mainGameArea.classList.add('hidden');
+            startFooter.classList.remove('hidden');
+        }
+
+        setInitialUI();
+    });
+    </script>
+</body>
+</html>

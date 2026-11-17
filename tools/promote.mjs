@@ -1,7 +1,7 @@
 // Promote a tested build from next/ to the live root.
 //   node tools/promote.mjs carushikaru          (moves next/carushikaru.html → carushikaru.html)
 //   node tools/promote.mjs carushikaru --dry    (show what would change)
-// Rewrites "../" references (lib/, gallery link, data) to root-relative ones, drops the
+// Rewrites "../" references (lib/, gallery link, data) to "./" ones, drops the
 // noindex tag, and marks the app as upgraded in apps.json. Review with `git diff`, then commit.
 import fs from "node:fs";
 import path from "node:path";
@@ -15,7 +15,8 @@ if (!fs.existsSync(src)) { console.error(`missing ${path.relative(ROOT, src)}`);
 
 let html = fs.readFileSync(src, "utf8");
 const before = (html.match(/(["'(`])\.\.\//g) ?? []).length;
-html = html.replace(/(["'(`])\.\.\//g, "$1").replace(/\s*<meta name="robots" content="noindex">/, "");
+// "../x" → "./x" (not "x"): import-map addresses must start with "./", "../" or "/".
+html = html.replace(/(["'(`])\.\.\//g, "$1./").replace(/\s*<meta name="robots" content="noindex">/, "");
 const left = (html.match(/\.\.\//g) ?? []).length;
 
 console.log(`${path.relative(ROOT, src)} → ${path.relative(ROOT, dst)}: rewrote ${before} "../" reference(s)${left ? `, ${left} left — check them!` : ""}`);

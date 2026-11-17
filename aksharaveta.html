@@ -1,433 +1,964 @@
-<!DOCTYPE html>
-<html lang="te">
+<!doctype html>
+<html lang="te" data-theme="dark" data-accent="leaf">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>అక్షరాల వేట (Aksharaala Veta)</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #1a1a2e; /* Dark blue background */
-            display: flex;
-            flex-direction: column;
-            align-items: center; /* Center content blocks horizontally */
-            height: 100vh; /* Or 100dvh for dynamic viewport height */
-            font-family: 'Noto Sans Telugu', 'Gautami', sans-serif; /* Telugu fonts */
-            padding: 5px;
-            box-sizing: border-box;
-            color: #e0e1dd;
-        }
-
-        #gameTitle {
-            font-size: clamp(18px, 5vw, 28px); /* Responsive font size */
-            color: #e0e1dd;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-
-        #scoreBoard {
-            font-size: clamp(14px, 4vw, 20px); /* Responsive font size */
-            color: #FFD700; /* Gold for score */
-            margin-bottom: 5px;
-            text-align: center;
-        }
-
-        #gameDisplayArea {
-            flex-grow: 1; /* Takes up most of the vertical space */
-            width: 100%;
-            max-width: 800px; /* Max width for very large screens, canvas will scale within */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden; /* Ensure canvas doesn't overflow this container */
-            margin-bottom: 5px; /* Space before controls */
-        }
-
-        canvas {
-            border: 1px solid #61dafb; /* Thinner border for smaller screens */
-            display: block;
-            background-color: #232730; /* Slightly lighter game area background */
-            box-shadow: 0 0 10px rgba(97, 218, 251, 0.3); /* Softer glow */
-            /* Actual width/height attributes are set by JS (internal resolution) */
-            /* Style width/height are set by JS to scale visually */
-            /* image-rendering: pixelated; /* Optional: for crisp pixels if upscaling significantly */
-        }
-
-        #controlsContainer {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px; /* Space between button rows */
-            padding: 5px 0;
-            user-select: none; /* Prevent text selection on buttons */
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE10+ */
-        }
-        #controlsContainer .button-row {
-            display: flex;
-            gap: 20px; /* Space between left and right */
-        }
-        #controlsContainer button {
-            font-size: clamp(18px, 5vw, 24px);
-            padding: 8px 12px; /* Slightly smaller padding */
-            min-width: 55px; /* Ensure buttons are tappable */
-            min-height: 35px;
-            background-color: #43A047; /* Greener */
-            color: white;
-            border: 1px solid #2E7D32;
-            border-radius: 8px; /* More rounded */
-            cursor: pointer;
-            touch-action: manipulation; /* Improve touch responsiveness, prevent double-tap zoom */
-            font-weight: bold;
-        }
-        #controlsContainer button:active {
-            background-color: #388E3C;
-        }
-
-        #instructions {
-            font-size: clamp(12px, 3vw, 14px); /* Slightly smaller max */
-            color: #aaa; /* Light gray for instructions */
-            text-align: center;
-            margin-top: 5px;
-        }
-
-        /* Hide scrollbar that might appear due to 100vh calculations on some browsers */
-        html, body {
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* Internet Explorer 10+ */
-        }
-        html::-webkit-scrollbar, body::-webkit-scrollbar { /* WebKit */
-            display: none;
-        }
-
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0c16">
+<title>అక్షరాల వేట — తెలుగు తునకలు</title>
+<meta name="description" content="3D చిక్కుదారిలో సరైన తెలుగు అక్షరాలను వేటాడండి — తప్పు అక్షరాలకు, భూతాలకు దూరంగా ఉండండి!">
+<meta property="og:title" content="అక్షరాల వేట — తెలుగు తునకలు">
+<meta property="og:description" content="పాక్‌మన్-శైలి 3D చిక్కుదారిలో సరైన తెలుగు అక్షరాలను సేకరించండి!">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2334d17e'/%3E%3Cpath d='M32 33L53 21A23 23 0 1 0 53 45Z' fill='%23ffd23f'/%3E%3Ccircle cx='29' cy='21' r='3.4' fill='%2300210f'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./lib/v1/tt.css">
+<style>
+  .hud { position: absolute; z-index: 16; left: 0; right: 0; top: calc(60px + var(--tt-safe-t)); display: flex; flex-direction: column;
+         align-items: center; gap: 6px; padding: 0 10px; pointer-events: none; }
+  .hud[hidden] { display: none; }
+  .target { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px 10px; max-width: min(620px, 100%);
+            padding: 5px 12px 5px 14px; border-radius: 20px; background: var(--tt-glass);
+            border: 2px solid color-mix(in srgb, var(--tt-accent) 60%, transparent);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .target .lead { color: var(--tt-muted); font-size: 13px; line-height: 1.2; white-space: nowrap; }
+  .target .lbl { font-family: var(--tt-font-display); font-weight: 400; font-size: 25px; line-height: 1.3; color: var(--tt-accent); white-space: nowrap; }
+  .target .big { font-size: 38px; line-height: 1.2; font-weight: 800; color: var(--tt-accent); }
+  .members { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+  .members span { min-width: 27px; height: 29px; padding: 0 4px; display: grid; place-items: center; border-radius: 8px; font-size: 17px; font-weight: 700;
+                  background: color-mix(in srgb, var(--tt-accent) 20%, transparent); color: var(--tt-ink); }
+  .say { pointer-events: auto; flex-shrink: 0; }
+  .stats { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .hearts b { color: #ff4d6d; letter-spacing: 1px; }
+  .hearts i { color: var(--tt-faint); font-style: normal; letter-spacing: 1px; }
+  .pop { animation: pop .28s var(--tt-ease); }
+  @keyframes pop { 50% { transform: scale(1.16); } }
+  .banner { position: absolute; z-index: 18; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap;
+            font-family: var(--tt-font-display); font-size: clamp(40px, 12vw, 76px); line-height: 1.3; color: #fff;
+            text-shadow: 0 6px 30px rgba(0,0,0,.6), 0 2px 0 rgba(0,0,0,.45); }
+  .banner[hidden] { display: none; }
+  .banner span { display: inline-block; animation: cd .5s var(--tt-ease); }
+  @keyframes cd { from { transform: scale(1.7); opacity: 0; } }
+  .flash { position: absolute; inset: 0; z-index: 12; pointer-events: none; opacity: 0; transition: opacity .5s ease-out;
+           background: radial-gradient(ellipse at center, transparent 35%, rgba(255, 40, 70, .55)); }
+  .flash.on { opacity: 1; transition: none; }
+  /* D-pad: ≥ 56 px buttons, bottom-centre in portrait, bottom-right in landscape */
+  .tt-pad.dpad { display: grid; grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(3, 62px); gap: 4px;
+                 left: 50%; transform: translateX(-50%); bottom: calc(12px + var(--tt-safe-b)); }
+  .tt-pad.dpad[hidden] { display: none; }
+  .tt-pad.dpad button { width: 62px; height: 62px; border-radius: 18px; font-size: 24px; cursor: pointer; touch-action: none;
+                        user-select: none; -webkit-user-select: none; }
+  .dpad .up { grid-area: 1 / 2; } .dpad .left { grid-area: 2 / 1; } .dpad .right { grid-area: 2 / 3; } .dpad .down { grid-area: 3 / 2; }
+  .pad-right .tt-pad.dpad { left: auto; transform: none; right: calc(12px + var(--tt-safe-r)); }
+  @media (max-width: 360px), (max-height: 420px) {
+    .tt-pad.dpad { grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 58px); gap: 3px; }
+    .tt-pad.dpad button { width: 58px; height: 58px; }
+  }
+  @media (max-height: 700px) and (orientation: portrait) {
+    .tt-pad.dpad { grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); gap: 3px; }
+    .tt-pad.dpad button { width: 56px; height: 56px; }
+  }
+  @media (max-width: 380px) {
+    .target { padding: 4px 10px; gap: 2px 8px; }
+    .target .lead { flex-basis: 100%; text-align: center; font-size: 12px; }
+    .target .lbl { font-size: 22px; }
+    .target .big { font-size: 32px; }
+    .members span { min-width: 24px; height: 26px; font-size: 15px; border-radius: 6px; }
+  }
+  html.toast-high .tt-toasts { bottom: calc(var(--av-pad-h, 210px) + 20px + var(--tt-safe-b)); }
+  /* short landscape: HUD becomes a column on the left */
+  .is-side .hud { top: calc(58px + var(--tt-safe-t)); left: calc(8px + var(--tt-safe-l)); right: auto; width: 196px; padding: 0; align-items: stretch; }
+  .is-side .target { flex-direction: column; gap: 1px; padding: 5px 8px; }
+  .is-side .target .lbl { font-size: 22px; }
+  .is-side .target .big { font-size: 32px; }
+  .is-side .members span { min-width: 23px; height: 25px; font-size: 15px; border-radius: 6px; }
+  .is-side .stats { justify-content: flex-start; }
+  .is-side .tt-pill { min-height: 32px; padding: 4px 10px; font-size: 14px; }
+  .intro p { margin: 6px 0; }
+  .intro .ctl { color: var(--tt-ink); font-weight: 700; }
+  .intro small { display: block; margin-top: 10px; color: var(--tt-faint); }
+  .done-big { font-family: var(--tt-font-display); font-size: clamp(24px, 7vw, 32px); color: var(--tt-ink); margin: 4px 0; }
+  .done-syls { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .done-syls span { min-width: 34px; padding: 2px 8px; border-radius: 10px; background: var(--tt-accent); color: var(--tt-accent-ink); font-weight: 800; font-size: 20px; }
+  /* short landscape phones: overlay cards must fit without scrolling to their buttons */
+  @media (max-height: 520px) {
+    .tt-overlay { padding-top: 58px; padding-bottom: calc(8px + var(--tt-safe-b)); }
+    .tt-card { padding: 14px 18px; }
+    .tt-card h2 { font-size: 26px; margin-bottom: 2px; }
+    .tt-card p { margin: 3px 0; }
+    .tt-card__stat { margin: 6px 0 0; }
+    .tt-card__stat b { font-size: 22px; }
+    .tt-card__actions { margin-top: 10px; }
+    .done-big { font-size: 21px; margin: 0; }
+    .done-note { display: none; }
+    .done-syls { margin-top: 4px; }
+    .done-syls span { font-size: 17px; }
+  }
+</style>
+<script type="importmap">{ "imports": { "three": "./lib/v1/vendor/three/three.module.min.js", "three/addons/": "./lib/v1/vendor/three/addons/", "tt/": "./lib/v1/" } }</script>
 </head>
 <body>
-    <div id="gameTitle">అక్షరాల వేట</div>
-    <div id="scoreBoard">Score: 0 | Remaining: 0</div>
+<noscript>ఈ ఆట ఆడటానికి JavaScript అవసరం.</noscript>
+<script type="module">
+import { createApp, createLoop, pointerControls, keyControls, fontsReady, haptic, isTouch, params, prefersReducedMotion } from "tt/shell.js";
+import { el, setChildren, icon } from "tt/safe.js";
+import { sfx, speak, canSpeakTelugu } from "tt/sfx.js";
+import * as te from "tt/telugu.js";
+import { THREE, createRenderer, createComposer, autoResize, composerColor, glyphTexture, Burst, voxelMesh, dotTexture, qualityTier } from "tt/three-kit.js";
 
-    <div id="gameDisplayArea">
-        <canvas id="gameCanvas"></canvas>
-    </div>
+/* ============================== tuning ============================== */
+const DEBUG = params().has("debug");
+const tier = qualityTier();
+const SEED = params().has("seed") ? +params().get("seed") : Date.now() >>> 0;
+const rand = te.rng(SEED);                // mazes + letters (reproducible with ?seed=)
+const ai = te.rng(SEED ^ 0x5bd1e995);     // chaser decisions
+const REDUCED = prefersReducedMotion();
+const VS = 0.2;                 // wall voxel size: one maze cell = 5 voxels = 1 world unit
+const PLAYER_SPEED = 3.6;       // cells per second (fixed timestep → same at 60/120 Hz)
+const INVULN = 2.2;             // seconds of blinking safety after losing a life
+const PITCH = THREE.MathUtils.degToRad(62);
+const SIZES = { small: [6, 8], medium: [7, 10], large: [9, 12] };   // columns × rows; +1 every two levels
+const MAX_DIM = [10, 13];
+const DIFF = {
+  easy:   { speed: 2.0, ramp: 0.10, chase: 0.25, ghosts: 2 },
+  normal: { speed: 2.5, ramp: 0.12, chase: 0.45, ghosts: 2 },
+  hard:   { speed: 3.0, ramp: 0.12, chase: 0.65, ghosts: 3 },
+};
+// Full aksharas only — the original also dropped bare vowel signs, ం ః and ్ into the field; never again.
+const UNIVERSE = [...te.VOWELS, ...te.CONSONANTS];
+const LOOKALIKE_LETTERS = [...new Set(te.LOOKALIKES.flat())].filter(c => UNIVERSE.includes(c));
+const GHOST_COLORS = ["#ff4d6d", "#38d6e8", "#ff8ad8", "#ffa63d"];
+const PALETTES = [   // ఉదయం → మధ్యాహ్నం → సంధ్య → రాత్రి, one per level
+  { bg: "#3f7f35", hemiSky: "#ffffff", hemiGround: "#7a9a4a", hemi: 1.45, sun: "#fff3dc", sunI: 1.75, night: 0, theme: "hedge" },
+  { bg: "#4f7a30", hemiSky: "#fff1d8", hemiGround: "#8a7a4a", hemi: 1.4, sun: "#ffd9a0", sunI: 1.8, night: 0.1, theme: "fort" },
+  { bg: "#2c2440", hemiSky: "#ffb48a", hemiGround: "#4a3346", hemi: 1.15, sun: "#ff9a5a", sunI: 1.3, night: 0.55, theme: "hedge" },
+  { bg: "#0b1030", hemiSky: "#8a96ff", hemiGround: "#1d2238", hemi: 0.85, sun: "#a8b8ff", sunI: 0.6, night: 1, theme: "fort" },
+];
+const THEMES = {
+  hedge: { body: ["#2f7d32", "#378c3a", "#2a7030"], top: ["#5cb653", "#4fa548", "#6cc261"], post: ["#cdb48a", "#bfa57a"],
+           cap: ["#ff7fb0", "#f2d65c", "#b99cff", "#ffa040"], floor: ["#e9d7a9", "#e2cf9e", "#dcc794"], speck: ["#cdb784", "#f3e4bd"], grout: "#c2aa78" },
+  fort:  { body: ["#d39a5f", "#c98a4f", "#dba86e"], top: ["#ecc489", "#e8b97a", "#f2cf98"], post: ["#a8703f", "#9a6536"],
+           cap: ["#ffd34d", "#ffc233"], floor: ["#c7bfae", "#bdb5a3", "#d0c9b9"], speck: ["#aaa190", "#ddd6c8"], grout: "#9a907e" },
+};
 
-    <div id="controlsContainer">
-        <button id="btnUp" aria-label="Move Up">▲</button>
-        <div class="button-row">
-            <button id="btnLeft" aria-label="Move Left">◀</button>
-            <button id="btnRight" aria-label="Move Right">▶</button>
-        </div>
-        <button id="btnDown" aria-label="Move Down">▼</button>
-    </div>
+/* ============================== app shell ============================== */
+const SETTINGS = [
+  { key: "target", label: "వేటాడే అక్షరాలు", type: "segmented", default: "mix", restart: true,
+    help: "మిశ్రమం: ప్రతి స్థాయిలో ఒక కొత్త గుంపు, మధ్యమధ్యలో ఒక్క అక్షరం వేట",
+    options: [{ value: "mix", label: "మిశ్రమం" }, ...Object.entries(te.GROUPS).map(([value, g]) => ({ value, label: g.te }))] },
+  { key: "size", label: "చిక్కుదారి పరిమాణం", type: "segmented", default: "small", restart: true,
+    options: [{ value: "small", label: "చిన్నది" }, { value: "medium", label: "మధ్యస్థం" }, { value: "large", label: "పెద్దది" }] },
+  { key: "difficulty", label: "భూతాల వేగం", type: "segmented", default: "normal", restart: true,
+    options: [{ value: "easy", label: "సులభం" }, { value: "normal", label: "మామూలు" }, { value: "hard", label: "కష్టం" }] },
+  { key: "lives", label: "ప్రాణాలు", type: "segmented", default: 3, restart: true, options: [{ value: 3, label: "3" }, { value: 5, label: "5" }] },
+  { key: "dpad", label: "దిశ బటన్లు", type: "toggle", default: isTouch(), help: "▲ ◀ ▶ ▼ బటన్లు చూపించు (తెరపై స్వైప్ ఎప్పుడూ పనిచేస్తుంది)" },
+  { key: "speak", label: "అక్షరాన్ని పలుకు", type: "toggle", default: true, help: "వేటాడాల్సిన అక్షరాన్ని వినిపిస్తుంది (పరికరంలో తెలుగు స్వరం ఉంటేనే)" },
+];
+const helpNode = () => el("div", { class: "intro" },
+  el("p", { text: "• పైన చూపిన గుంపులోని (ఉదా: క వర్గం) లేదా పైన చూపిన అక్షరాన్ని మాత్రమే తినండి. అవన్నీ తింటే తదుపరి స్థాయి!" }),
+  el("p", { text: "• తప్పు అక్షరం తిన్నా, భూతం తగిలినా ఒక ప్రాణం పోతుంది. మెరుస్తున్నంతసేపు మీకు రక్షణ ఉంటుంది." }),
+  el("p", { text: "• ప్రతి సరైన అక్షరం +10. స్థాయి పూర్తి చేస్తే బోనస్. ప్రతి స్థాయికి చిక్కుదారి పెద్దదవుతుంది, భూతాలు వేగం పెంచుతాయి." }),
+  el("p", { class: "ctl", text: "ఫోన్: తెరపై స్వైప్ చేయండి లేదా దిశ బటన్లు · కీబోర్డ్: ← ↑ → ↓ లేదా W A S D · ఆపడానికి P" }),
+);
+const app = createApp({ id: "aksharaveta", title: "అక్షరాల వేట", accent: "leaf", game: true, settings: SETTINGS, help: helpNode,
+  onSettings: (v, key) => {
+    if (key === "dpad" || key === null) { pad.hidden = !v.dpad; relayout(); }
+    if (key === "speak" || key === null) renderTarget();
+    if (state.mode === "menu" && (key === null || SETTINGS.find(f => f.key === key)?.restart)) {   // keep the menu preview in sync
+      state.cfg = { ...v }; state.maxLives = state.lives = v.lives; setupLevel(1); showMenu();
+    }
+  } });
+app.addAction("pause", "ఆపు", () => togglePause());
 
-    <div id="instructions">Use Arrow Keys to move. Eat all the Telugu letters!</div>
+/* ---------- HUD (DOM) ---------- */
+const targetEl = el("div", { class: "target", attrs: { role: "status", "aria-live": "polite" } });
+const livesPill = el("span", { class: "tt-pill hearts" });
+const scorePill = el("span", { class: "tt-pill" });
+const leftPill = el("span", { class: "tt-pill" });
+const hud = el("div", { class: "hud" }, targetEl, el("div", { class: "stats" }, livesPill, scorePill, leftPill));
+const banner = el("div", { class: "banner", hidden: true, attrs: { "aria-live": "assertive" } });
+const flash = el("div", { class: "flash" });
+const PAD_DIRS = [["up", "▲", "పైకి"], ["left", "◀", "ఎడమకు"], ["right", "▶", "కుడికి"], ["down", "▼", "కిందికి"]];
+const pad = el("div", { class: "tt-pad dpad", hidden: !app.settings.dpad, attrs: { role: "group", "aria-label": "దిశ బటన్లు" } },
+  PAD_DIRS.map(([d, t, label]) => el("button", { type: "button", class: d, text: t, attrs: { "aria-label": label },
+    on: { pointerdown: e => { e.preventDefault(); input(d); }, click: e => { if (e.detail === 0) input(d); } } })));
+app.stage.append(hud, flash, banner, pad);
 
-    <script>
-        // Game Script for "అక్షరాల వేట (Aksharaala Veta)"
-        const SCRIPT_LOAD_TIME = new Date();
-        console.log(`Aksharaala Veta script loaded at: ${SCRIPT_LOAD_TIME.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
-        console.log(`Location context: Hyderabad, Telangana, India. Current Time: ${SCRIPT_LOAD_TIME.toLocaleTimeString('en-US', { hour12: false })}`);
+/* ============================== 3D world ============================== */
+await fontsReady();
+const renderer = createRenderer({ container: app.stage, tier, exposure: 1.0 });
+if (!renderer) throw new Error("WebGL unavailable");   // createRenderer already showed a Telugu message
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 500);
+scene.background = composerColor(PALETTES[0].bg);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x7a9a4a, 1.45);
+const sun = new THREE.DirectionalLight(0xffffff, 1.75);
+sun.position.set(-5, 10, 6);    // front-left of the portrait camera, so the faces you see are lit
+scene.add(hemi, sun);
+// threshold above lit surfaces: only glowing letters, halos, lamps and sparks bloom
+const { composer, bloomPass } = createComposer(renderer, scene, camera, { bloom: { strength: 0.6, radius: 0.45, threshold: 0.92 } });
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreBoardElement = document.getElementById('scoreBoard');
-        const gameDisplayArea = document.getElementById('gameDisplayArea');
-        const instructionsElement = document.getElementById('instructions');
+function pixelTex(canvas, { repeat = null } = {}) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter; t.anisotropy = 4;
+  if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); }
+  return t;
+}
+function canvas2d(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return [c, c.getContext("2d")]; }
 
-        // Fixed internal game resolution
-        const INTERNAL_WIDTH = 800;
-        const INTERNAL_HEIGHT = 600;
-        canvas.width = INTERNAL_WIDTH;
-        canvas.height = INTERNAL_HEIGHT;
+/* ---------- lawn around the maze ---------- */
+const grassTex = (() => {
+  const [c, g] = canvas2d(32, 32), r = te.rng(6);
+  g.fillStyle = "#4f9a3a"; g.fillRect(0, 0, 32, 32);
+  for (let i = 0; i < 230; i++) { g.fillStyle = r() < 0.5 ? "#458d33" : "#5cab45"; g.fillRect(r() * 32 | 0, r() * 32 | 0, 1, 2); }
+  for (const [x, y, col] of [[5, 7, "#e6c84a"], [22, 4, "#e58ab4"], [14, 24, "#d9d2f0"], [27, 19, "#e6c84a"]]) { g.fillStyle = col; g.fillRect(x, y, 2, 2); }
+  return pixelTex(c, { repeat: 110 });
+})();
+const lawn = new THREE.Mesh(new THREE.PlaneGeometry(220, 220).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ map: grassTex }));
+lawn.position.y = -0.01;
+scene.add(lawn);
 
-        // --- Game State Variables ---
-        let score = 0;
-        let lettersRemaining = 0;
-        let gameOver = false;
-        const initialLetterCount = 25;
+/* ---------- voxel helpers ---------- */
+/** Recolour the front-most voxel (largest z) of each (x, y) column — eyes on a round face. */
+function paintFront(list, cols, color) {
+  for (const [x, y] of cols) {
+    let best = null;
+    for (const v of list) if (v.x === x && v.y === y && (!best || v.z > best.z)) best = v;
+    if (best) best.color = color;
+  }
+}
+const blobGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+const blobMat = new THREE.MeshBasicMaterial({ map: dotTexture(), color: 0x000000, transparent: true, opacity: 0.4, depthWrite: false });
+const blob = s => { const m = new THREE.Mesh(blobGeo, blobMat); m.scale.set(s, 1, s); m.position.y = 0.012; return m; };
 
-        // --- Pac-Man Configuration ---
-        const pacman = {
-            x: INTERNAL_WIDTH / 2,
-            y: INTERNAL_HEIGHT / 2,
-            radius: 20,
-            speed: 3.5,
-            dx: 3.5,
-            dy: 0,
-            color: '#FFD700',
-            mouthOpenValue: 0,
-            mouthAngle: 0.40,
-            isMouthOpening: true,
-            mouthSpeed: 0.09
-        };
+/* ---------- the chomper: a round voxel creature whose two halves open like a mouth ---------- */
+const CS = 0.085;
+function chomperVoxels() {
+  const top = [], bot = [], feet = [];
+  for (let x = -4; x < 4; x++) for (let y = -4; y < 4; y++) for (let z = -4; z < 4; z++) {
+    const px = x + 0.5, py = y + 0.5, pz = z + 0.5;
+    if (px * px + py * py + pz * pz > 17.2) continue;
+    const inner = (y === 0 || y === -1) && px * px + pz * pz < 9.5;   // inside of the mouth, seen only when open
+    let color = (x + y + z) & 1 ? "#ffd23f" : "#ffc52b";
+    if (inner) color = y === -1 && pz > 0 && Math.abs(px) < 2 ? "#ff6f91" : "#7a1d2e";
+    (y >= 0 ? top : bot).push({ x, y, z, color });
+  }
+  paintFront(top, [[-2, 1], [-2, 2], [1, 1], [1, 2]], "#1b1b22");                 // eyes
+  top.push({ x: -1, y: 4, z: -1, color: "#2e7d32" }, { x: -1, y: 5, z: -1, color: "#2e7d32" },   // a little leaf sprout
+    { x: 0, y: 5, z: -1, color: "#34d17e" }, { x: 0, y: 6, z: -1, color: "#34d17e" }, { x: -2, y: 6, z: -1, color: "#5fe39a" });
+  for (const fx of [-3, -2, 1, 2]) for (const fz of [0, 1]) feet.push({ x: fx, y: -5, z: fz, color: "#ff8a3d" });
+  return { top, bot, feet };
+}
+const creatureGlow = [];   // materials lifted at dusk/night so the hero and chasers stay readable
+const hero = new THREE.Group();
+const heroBody = new THREE.Group();
+heroBody.position.y = 5 * CS;                  // sphere centre: radius 4 voxels + 1 voxel of feet
+const jawTop = new THREE.Group(), jawBot = new THREE.Group();
+jawTop.position.z = jawBot.position.z = -4 * CS;   // hinge at the back of the head
+{
+  const v = chomperVoxels();
+  const t = voxelMesh(v.top, { size: CS }), b = voxelMesh(v.bot, { size: CS }), f = voxelMesh(v.feet, { size: CS });
+  t.position.set(0.5 * CS, 0, 4.5 * CS); b.position.set(0.5 * CS, 0, 4.5 * CS); f.position.set(0.5 * CS, 0, 0.5 * CS);
+  jawTop.add(t); jawBot.add(b); heroBody.add(jawTop, jawBot, f);
+  for (const m of [t, b, f]) { m.material.emissive.set("#ffc52b"); creatureGlow.push({ mat: m.material, k: 0.3 }); }
+}
+hero.add(heroBody, blob(0.8));
+scene.add(hero);
 
-        // --- Telugu Letters (Targets/Food) ---
-        const letters = [];
-        const teluguChars = [
-            'అ', 'ఆ', 'ఇ', 'ఈ', 'ఉ', 'ఊ', 'ఋ', 'ఎ', 'ఏ', 'ఐ', 'ఒ', 'ఓ', 'ఔ',
-            'క', 'ఖ', 'గ', 'ఘ', 'ఙ', 'చ', 'ఛ', 'జ', 'ఝ', 'ఞ',
-            'ట', 'ఠ', 'డ', 'ఢ', 'ణ', 'త', 'థ', 'ద', 'ధ', 'న',
-            'ప', 'ఫ', 'బ', 'భ', 'మ', 'య', 'ర', 'ల', 'వ',
-            'శ', 'ష', 'స', 'హ', 'ళ', 'క్ష', 'ఱ',
-            'ం', 'ః', '్', 'ా', 'ి', 'ీ', 'ు', 'ూ', 'ృ', 'ె', 'ే', 'ై', 'ొ', 'ో', 'ౌ'
-        ];
-        const letterBaseSpeed = 1.2;
+/* ---------- chasers: voxel భూతాలు ---------- */
+function ghostVoxels(hex) {
+  const out = [], dark = "#" + new THREE.Color(hex).multiplyScalar(0.78).getHexString();
+  for (let x = -4; x < 4; x++) for (let z = -4; z < 4; z++) {
+    const px = x + 0.5, pz = z + 0.5, rr = px * px + pz * pz;
+    if (rr > 16.8) continue;
+    const sector = Math.floor((Math.atan2(pz, px) + Math.PI) / (Math.PI / 4));
+    for (let y = 0; y < 9; y++) {
+      if (y === 0 && (sector % 2 || rr < 6)) continue;                 // wavy hem
+      if (y >= 5 && rr + (y - 4.5) ** 2 * 1.15 > 16.8) continue;      // dome
+      out.push({ x, y, z, color: y <= 1 ? dark : hex });
+    }
+  }
+  paintFront(out, [[-3, 5], [-3, 6], [-2, 5], [-2, 6], [1, 5], [1, 6], [2, 5], [2, 6]], "#ffffff");
+  paintFront(out, [[-2, 5], [1, 5]], "#1d3bbf");
+  return out;
+}
+const ghosts = GHOST_COLORS.map(col => {
+  const group = new THREE.Group(), body = voxelMesh(ghostVoxels(col), { size: CS });
+  body.position.set(0.5 * CS, 0.04, 0.5 * CS);
+  body.material.emissive.set(col); creatureGlow.push({ mat: body.material, k: 0.4 });
+  group.add(body, blob(0.75)); group.visible = false; scene.add(group);
+  return { group, body, color: col, active: false, m: null, wait: 0, speed: 2, travel: 0, cur: new THREE.Vector3(), prev: new THREE.Vector3(), phase: Math.random() * 6 };
+});
 
-        // --- Static Background Phrase ---
-        const staticPhraseText = "తెలుగు తునకలు";
-        const staticPhraseFontSize = Math.min(INTERNAL_WIDTH / 18, 35);
-        const staticPhraseFont = `bold ${staticPhraseFontSize}px 'Noto Sans Telugu', 'Gautami', sans-serif`;
-        const staticPhraseColor = "rgba(200, 200, 220, 0.15)";
-        const staticPhraseYPosition = INTERNAL_HEIGHT * 0.08;
+/* ---------- letters, particles ---------- */
+const letterGroup = new THREE.Group();
+scene.add(letterGroup);
+// text kept just under the bloom threshold so it stays crisp; the halo behind the plate does the glowing
+const LETTER_STYLE = { height: 160, weight: 800, color: "#ffeeb8", bg: "#173d22", padding: 0.12, radius: 0.26 };
+const haloMat = new THREE.SpriteMaterial({ map: dotTexture(), color: 0xffd34d, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, depthTest: false, opacity: 0.4 });
+const burst = new Burst({ max: 900, size: 0.16 });
+scene.add(burst);
 
-        function getRandomColor() {
-            const h = Math.floor(Math.random() * 360);
-            const s = Math.floor(Math.random() * 30 + 70);
-            const l = Math.floor(Math.random() * 20 + 50);
-            return `hsl(${h}, ${s}%, ${l}%)`;
+/* ============================== maze ============================== */
+const DIRS = {
+  N: { dx: 0, dy: -1, bit: 1, opp: "S" }, E: { dx: 1, dy: 0, bit: 2, opp: "W" },
+  S: { dx: 0, dy: 1, bit: 4, opp: "N" }, W: { dx: -1, dy: 0, bit: 8, opp: "E" },
+};
+const DIR_KEYS = ["N", "E", "S", "W"];
+
+/** Recursive backtracker, then braided (no dead ends — chasers + dead ends are unfair) plus a few extra loops. */
+function genMaze(W, H, r) {
+  const open = new Uint8Array(W * H);
+  const idx = (x, y) => y * W + x;
+  const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+  const carve = (x, y, d) => { const D = DIRS[d]; open[idx(x, y)] |= D.bit; open[idx(x + D.dx, y + D.dy)] |= DIRS[D.opp].bit; };
+  const seen = new Uint8Array(W * H), stack = [[r.int(0, W - 1), r.int(0, H - 1)]];
+  seen[idx(...stack[0])] = 1;
+  while (stack.length) {
+    const [x, y] = stack[stack.length - 1];
+    const opts = DIR_KEYS.filter(d => { const nx = x + DIRS[d].dx, ny = y + DIRS[d].dy; return inside(nx, ny) && !seen[idx(nx, ny)]; });
+    if (!opts.length) { stack.pop(); continue; }
+    const d = r.pick(opts), nx = x + DIRS[d].dx, ny = y + DIRS[d].dy;
+    carve(x, y, d); seen[idx(nx, ny)] = 1; stack.push([nx, ny]);
+  }
+  const degree = i => (open[i] & 1) + (open[i] >> 1 & 1) + (open[i] >> 2 & 1) + (open[i] >> 3 & 1);
+  for (const i of r.shuffle([...open.keys()])) {
+    if (degree(i) !== 1) continue;
+    const x = i % W, y = (i / W) | 0;
+    const closed = DIR_KEYS.filter(d => !(open[i] & DIRS[d].bit) && inside(x + DIRS[d].dx, y + DIRS[d].dy));
+    const toDeadEnd = closed.filter(d => degree(idx(x + DIRS[d].dx, y + DIRS[d].dy)) === 1);
+    if (closed.length) carve(x, y, r.pick(toDeadEnd.length ? toDeadEnd : closed));
+  }
+  for (let k = 0, tries = 0, extra = Math.round(W * H * 0.05); k < extra && tries < 300; tries++) {
+    const x = r.int(0, W - 1), y = r.int(0, H - 1), d = r.pick(DIR_KEYS), nx = x + DIRS[d].dx, ny = y + DIRS[d].dy;
+    if (!inside(nx, ny) || open[idx(x, y)] & DIRS[d].bit) continue;
+    carve(x, y, d); k++;
+  }
+  return { W, H, open, idx, inside, canGo: (x, y, d) => inside(x, y) && !!(open[idx(x, y)] & DIRS[d].bit) };
+}
+function bfs(m, sx, sy) {
+  const dist = new Int16Array(m.W * m.H).fill(-1), q = [m.idx(sx, sy)];
+  dist[q[0]] = 0;
+  for (let h = 0; h < q.length; h++) {
+    const i = q[h], x = i % m.W, y = (i / m.W) | 0;
+    for (const d of DIR_KEYS) if (m.open[i] & DIRS[d].bit) {
+      const j = m.idx(x + DIRS[d].dx, y + DIRS[d].dy);
+      if (dist[j] < 0) { dist[j] = dist[i] + 1; q.push(j); }
+    }
+  }
+  return dist;
+}
+
+/* ---------- maze → voxels (one InstancedMesh for every wall, one for post caps) ---------- */
+const wallMat = new THREE.MeshLambertMaterial();
+const capMat = new THREE.MeshLambertMaterial({ emissive: 0xffc96b, emissiveIntensity: 0 });
+let mazeGroup = null;
+function buildMaze3D(m, themeKey, seed) {
+  if (mazeGroup) {
+    scene.remove(mazeGroup);
+    mazeGroup.traverse(o => { if (o.isInstancedMesh) o.dispose(); else if (o.isMesh) { o.geometry.dispose(); o.material.map?.dispose(); o.material.dispose(); } });
+  }
+  const T = THEMES[themeKey], r = te.rng(seed);
+  const segs = [];   // { i, j, h } — wall from lattice point (i, j), horizontal or vertical
+  for (let j = 0; j <= m.H; j++) for (let x = 0; x < m.W; x++) if (j === 0 || j === m.H || !m.canGo(x, j, "N")) segs.push({ i: x, j, h: true });
+  for (let i = 0; i <= m.W; i++) for (let y = 0; y < m.H; y++) if (i === 0 || i === m.W || !m.canGo(i, y, "W")) segs.push({ i, j: y, h: false });
+  const body = [], caps = [], posts = new Set();
+  for (const s of segs) {
+    for (let k = 1; k <= 4; k++) for (let y = 0; y < 3; y++)
+      body.push({ x: s.i * 5 + (s.h ? k : 0), y, z: s.j * 5 + (s.h ? 0 : k), color: y === 2 ? r.pick(T.top) : r.pick(T.body) });
+    posts.add(`${s.i},${s.j}`); posts.add(s.h ? `${s.i + 1},${s.j}` : `${s.i},${s.j + 1}`);
+  }
+  for (const p of posts) {
+    const [i, j] = p.split(",").map(Number);
+    for (let y = 0; y < 3; y++) body.push({ x: i * 5, y, z: j * 5, color: r.pick(T.post) });
+    caps.push({ x: i * 5, y: 3, z: j * 5, color: r.pick(T.cap) });
+  }
+  const g = new THREE.Group();
+  g.position.set(-m.W / 2, 0, -m.H / 2);
+  g.add(voxelMesh(body, { size: VS, material: wallMat }), voxelMesh(caps, { size: VS, material: capMat }));
+  // floor: pixel flagstones with the walls' shadows baked in (sun front-left → shadows fall back-right)
+  const PX = 20, B = 2, cw = m.W * PX + B * 2, ch = m.H * PX + B * 2;
+  const [c, fg] = canvas2d(cw, ch);
+  fg.fillStyle = T.grout; fg.fillRect(0, 0, cw, ch);
+  for (let y = 0; y < m.H; y++) for (let x = 0; x < m.W; x++) {
+    const ox = B + x * PX, oy = B + y * PX;
+    for (let k = 0; k < 4; k++) { fg.fillStyle = r.pick(T.floor); fg.fillRect(ox + (k & 1) * 10 + 1, oy + (k >> 1) * 10 + 1, 9, 9); }
+    for (let k = 0; k < 5; k++) { fg.fillStyle = r.pick(T.speck); fg.fillRect(ox + r.int(1, 18), oy + r.int(1, 18), 1, 1); }
+  }
+  const [sc, sg] = canvas2d(cw, ch);
+  sg.fillStyle = "#000";
+  for (const s of segs) {
+    const x = B + s.i * PX - 2, y = B + s.j * PX - 2, w = s.h ? PX + 4 : 4, h = s.h ? 4 : PX + 4;
+    for (let k = 0; k <= 7; k++) sg.fillRect(x + k, y - k * 1.2, w, h);
+  }
+  fg.globalAlpha = 0.26; fg.drawImage(sc, 0, 0); fg.globalAlpha = 1;
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(m.W + 2 * B / PX, m.H + 2 * B / PX).rotateX(-Math.PI / 2),
+    new THREE.MeshLambertMaterial({ map: pixelTex(c) }));
+  floor.position.set(m.W / 2, 0.002, m.H / 2);
+  g.add(floor);
+  scene.add(g);
+  mazeGroup = g;
+}
+
+/* ============================== game state ============================== */
+const state = {
+  mode: "menu",   // menu | ready | playing | levelDone | over | paused
+  cfg: null, level: 1, lives: 3, maxLives: 3, score: 0, plan: null, maze: null, letters: [], letterAt: new Map(),
+  targetsLeft: 0, eaten: [], player: null, heroCur: new THREE.Vector3(), heroPrev: new THREE.Vector3(), facing: Math.PI,
+  mouth: 0, mouthPhase: 0, invuln: 0, readyT: 0, t: 0, shake: 0, pausedFrom: null, run: 0, graceCell: -1, playerCell: -1,
+  dist: null, chase: 0.45, lastGroup: null, lastLetter: null, frozen: false, nextFly: 0, deathT: 0,
+};
+const cellWorld = (x, y, out = new THREE.Vector3()) => out.set(x + 0.5 - state.maze.W / 2, 0, y + 0.5 - state.maze.H / 2);
+const dims = n => { const [w, h] = SIZES[state.cfg.size] ?? SIZES.small, g = Math.floor((n - 1) / 2); return [Math.min(MAX_DIM[0], w + g), Math.min(MAX_DIM[1], h + g)]; };
+
+/* ---------- grid movement (Pac-Man feel: buffered turns, instant reverse, corner forgiveness) ---------- */
+const mover = (x, y) => ({ from: { x, y }, dir: null, t: 0, want: null });
+function moverPos(m) { if (!m.dir) return { x: m.from.x, y: m.from.y }; const D = DIRS[m.dir]; return { x: m.from.x + D.dx * m.t, y: m.from.y + D.dy * m.t }; }
+function reverse(m) { const D = DIRS[m.dir]; m.from = { x: m.from.x + D.dx, y: m.from.y + D.dy }; m.t = 1 - m.t; m.dir = D.opp; }
+/** Advance `dist` cells; `decide(m)` picks the direction at each cell centre (null = stop). */
+function stepMover(m, dist, decide) {
+  for (let guard = 0; dist > 1e-6 && guard < 8; guard++) {
+    if (!m.dir) { const d = decide(m); if (!d) return; m.dir = d; m.t = 0; }
+    const rem = 1 - m.t;
+    if (dist < rem) { m.t += dist; return; }
+    dist -= rem;
+    const D = DIRS[m.dir];
+    m.from = { x: m.from.x + D.dx, y: m.from.y + D.dy }; m.t = 0;
+    m.dir = decide(m);
+  }
+}
+function playerDecide(m) {
+  const mz = state.maze, { x, y } = m.from;
+  if (m.want && mz.canGo(x, y, m.want)) return m.want;
+  if (m.dir && mz.canGo(x, y, m.dir)) return m.dir;
+  return null;
+}
+function ghostDecide(m) {
+  const mz = state.maze, { x, y } = m.from, back = m.dir ? DIRS[m.dir].opp : null;
+  let opts = DIR_KEYS.filter(d => mz.canGo(x, y, d) && d !== back);
+  if (!opts.length) opts = back && mz.canGo(x, y, back) ? [back] : [];
+  if (!opts.length) return null;
+  if (state.dist && ai() < state.chase) {    // mild chase: step toward the hero along the maze
+    let best = null, bd = 1e9;
+    for (const d of opts) { const v = state.dist[mz.idx(x + DIRS[d].dx, y + DIRS[d].dy)]; if (v >= 0 && v < bd) { bd = v; best = d; } }
+    if (best) return best;
+  }
+  return ai.pick(opts);
+}
+
+/* ---------- level planning: what to hunt ---------- */
+function planLevel(n) {
+  const set = state.cfg.target, keys = Object.keys(te.GROUPS);
+  const kind = set === "mix" ? (n % 3 === 0 ? "letter" : "group") : (n % 2 === 0 ? "letter" : "group");
+  if (kind === "group") {
+    let key = set;
+    if (set === "mix") { let guard = 0; do key = rand.pick(keys); while (key === state.lastGroup && guard++ < 20); }
+    state.lastGroup = key;
+    const g = te.GROUPS[key];
+    return { kind, key, label: g.te, members: [...g.letters] };
+  }
+  const pool = set === "mix" ? LOOKALIKE_LETTERS : te.GROUPS[set].letters;
+  const rich = pool.filter(c => te.lookalikesOf(c).length), from = rich.length ? rich : pool;
+  let letter, guard = 0;
+  do letter = rand.pick(from); while (letter === state.lastLetter && from.length > 1 && guard++ < 20);
+  state.lastLetter = letter;
+  return { kind, key: set, label: letter, members: [letter] };
+}
+/** Target letters + distractors; distractors prefer look-alikes (బ/భ, ద/ధ …) from telugu.js. */
+function chooseLetters(plan, T, D) {
+  const isT = c => plan.members.includes(c);
+  const members = rand.shuffle(plan.members);
+  const targets = Array.from({ length: T }, (_, i) => members[i % members.length]);
+  const looks = rand.shuffle([...new Set(plan.members.flatMap(c => te.lookalikesOf(c)))].filter(c => !isT(c) && UNIVERSE.includes(c)));
+  const others = rand.shuffle(UNIVERSE.filter(c => !isT(c) && !looks.includes(c)));
+  const nLook = looks.length ? Math.ceil(D * (plan.kind === "letter" ? 0.6 : 0.5)) : 0;
+  const wrong = [];
+  for (let i = 0; i < nLook; i++) wrong.push(looks[i % looks.length]);
+  for (let i = 0; wrong.length < D; i++) wrong.push(others[i % others.length]);
+  return rand.shuffle([...targets.map(ch => ({ ch, target: true })), ...wrong.map(ch => ({ ch, target: false }))]);
+}
+function pickHomes(m, dist, n) {
+  const order = [...dist.keys()].sort((a, b) => dist[b] - dist[a]), homes = [];
+  const far = (i, k) => homes.every(j => Math.abs(j % m.W - i % m.W) + Math.abs(((j / m.W) | 0) - ((i / m.W) | 0)) >= k);
+  for (const i of order) { if (homes.length >= n || dist[i] < 4) break; if (far(i, 3)) homes.push(i); }
+  for (const i of order) { if (homes.length >= n) break; if (!homes.includes(i)) homes.push(i); }
+  return homes;
+}
+
+/* ---------- build a level ---------- */
+function clearLetters() {
+  for (const L of state.letters) { letterGroup.remove(L.g); L.s.material.dispose(); }
+  state.letters = []; state.letterAt.clear();
+}
+function makeLetter(ch, i, target) {
+  const m = state.maze, cx = i % m.W, cy = (i / m.W) | 0;
+  const tex = glyphTexture(ch, LETTER_STYLE);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false }));
+  const h = 0.8; s.scale.set(h * tex.userData.aspect, h, 1); s.position.y = 0.62; s.renderOrder = 10;
+  const halo = new THREE.Sprite(haloMat); halo.scale.setScalar(1.3); halo.position.y = 0.5; halo.renderOrder = 9;
+  const g = new THREE.Group(); g.add(halo, s); cellWorld(cx, cy, g.position);
+  letterGroup.add(g);
+  const L = { ch, i, cx, cy, target, eaten: false, g, s, halo, phase: rand() * 6.28, anim: null };
+  state.letters.push(L); state.letterAt.set(i, L);
+  return L;
+}
+function setupLevel(n) {
+  state.run++; state.level = n;
+  const [W, H] = dims(n);
+  state.plan = planLevel(n);
+  const m = state.maze = genMaze(W, H, rand);
+  const look = PALETTES[(n - 1) % PALETTES.length];
+  buildMaze3D(m, look.theme, rand.int(1, 1e9));
+  palTarget = look; if (n === 1) snapPalette();
+  // hero starts bottom-centre; chasers start in the cells farthest from it
+  const spawn = { x: Math.floor(W / 2), y: H - 1 }, dist = bfs(m, spawn.x, spawn.y);
+  const dcfg = DIFF[state.cfg.difficulty] ?? DIFF.normal;
+  const nG = Math.min(4, dcfg.ghosts + Math.floor((n - 1) / 2));
+  const homes = pickHomes(m, dist, nG);
+  state.chase = dcfg.chase;
+  ghosts.forEach((g, k) => {
+    g.active = k < nG; g.group.visible = g.active;
+    if (!g.active) return;
+    const hx = homes[k] % W, hy = (homes[k] / W) | 0;
+    g.home = { x: hx, y: hy }; g.m = mover(hx, hy); g.wait = 1.0 + k * 2.0; g.speed = Math.min(PLAYER_SPEED * 0.92, dcfg.speed + dcfg.ramp * (n - 1));
+    cellWorld(hx, hy, g.cur); g.prev.copy(g.cur); g.group.position.copy(g.cur); g.group.rotation.y = 0;
+  });
+  // letters: targets + distractors, spread out, never on the start or a chaser home
+  clearLetters();
+  const cells = W * H, T = Math.max(4, Math.min(9, Math.round(cells * 0.085)));
+  const D = Math.min(Math.round(cells * 0.3) - T, T + Math.min(3, Math.floor((n - 1) / 2)));
+  const banned = new Set(homes);
+  dist.forEach((d, i) => { if (d >= 0 && d <= 1) banned.add(i); });
+  const free = rand.shuffle([...Array(cells).keys()].filter(i => !banned.has(i)));
+  const list = chooseLetters(state.plan, T, D), chosen = [];
+  const spaced = i => chosen.every(j => Math.abs(j % W - i % W) + Math.abs(((j / W) | 0) - ((i / W) | 0)) >= 2);
+  for (const i of free) if (chosen.length < list.length && spaced(i)) chosen.push(i);
+  for (const i of free) if (chosen.length < list.length && !chosen.includes(i)) chosen.push(i);
+  chosen.forEach((i, k) => makeLetter(list[k].ch, i, list[k].target));
+  state.targetsLeft = state.letters.filter(L => L.target).length;
+  // hero
+  state.player = mover(spawn.x, spawn.y);
+  cellWorld(spawn.x, spawn.y, state.heroCur); state.heroPrev.copy(state.heroCur); hero.position.copy(state.heroCur);
+  state.facing = Math.PI; hero.rotation.set(0, Math.PI, 0); hero.scale.setScalar(1); hero.visible = true;
+  state.invuln = 0; state.graceCell = -1; state.playerCell = -1; state.dist = bfs(m, spawn.x, spawn.y); state.eaten = []; state.deathT = 0;
+  renderTarget(); renderStats();
+  fitCamera();
+}
+
+/* ---------- HUD rendering ---------- */
+const sayTarget = () => { if (app.settings.speak && state.plan) speak(state.plan.label); };
+function renderTarget() {
+  const p = state.plan; if (!p) return;
+  const letter = p.kind === "letter";
+  setChildren(targetEl,
+    el("small", { class: "lead", text: `స్థాయి ${state.level} · వేటాడండి` }),
+    el("b", { class: letter ? "big" : "lbl", text: p.label }),
+    !letter && p.members.length <= 14 ? el("span", { class: "members" }, p.members.map(c => el("span", { text: c }))) : null,
+    app.settings.speak && canSpeakTelugu() ? el("button", { type: "button", class: "tt-iconbtn say", attrs: { "aria-label": "మళ్ళీ విను" }, on: { click: sayTarget } }, icon("sound")) : null);
+}
+function renderStats() {
+  setChildren(livesPill, el("b", { text: "♥".repeat(Math.max(0, state.lives)) }), el("i", { text: "♥".repeat(Math.max(0, state.maxLives - state.lives)) }));
+  setChildren(scorePill, el("small", { text: "స్కోరు" }), String(state.score));
+  setChildren(leftPill, el("small", { text: "మిగిలినవి" }), String(state.targetsLeft));
+}
+function pop(node) { node.classList.remove("pop"); void node.offsetWidth; node.classList.add("pop"); }
+function showBanner(text) { setChildren(banner, el("span", { text })); banner.hidden = false; }
+
+/* ---------- palettes (day → dusk → night, eased) ---------- */
+const pal = { hemiSky: new THREE.Color(), hemiGround: new THREE.Color(), sun: new THREE.Color(), bg: new THREE.Color(), hemi: 1, sunI: 1, night: 0 };
+for (const p of PALETTES) p.bgLin = composerColor(p.bg);
+let palTarget = PALETTES[0];
+const tmpC = new THREE.Color();
+function snapPalette() {
+  for (const c of ["hemiSky", "hemiGround", "sun"]) pal[c].set(palTarget[c]);
+  pal.bg.copy(palTarget.bgLin);
+  for (const n of ["hemi", "sunI", "night"]) pal[n] = palTarget[n];
+  stepPalette(0);
+}
+function stepPalette(dt) {
+  const k = 1 - Math.exp(-dt * 1.5);
+  for (const c of ["hemiSky", "hemiGround", "sun"]) pal[c].lerp(tmpC.set(palTarget[c]), k);
+  pal.bg.lerp(palTarget.bgLin, k);
+  for (const n of ["hemi", "sunI", "night"]) pal[n] += (palTarget[n] - pal[n]) * k;
+  hemi.color.copy(pal.hemiSky); hemi.groundColor.copy(pal.hemiGround); hemi.intensity = pal.hemi;
+  sun.color.copy(pal.sun); sun.intensity = pal.sunI;
+  scene.background.copy(pal.bg);
+  capMat.emissiveIntensity = pal.night * 1.4;
+  for (const g of creatureGlow) g.mat.emissiveIntensity = pal.night * g.k;
+  haloMat.opacity = 0.45 + pal.night * 0.45;
+}
+
+/* ============================== camera: fit the whole maze into the free part of the screen ============================== */
+const rig = { yaw: 0, d: 20, base: new THREE.Vector3(), free: { x0: 0, y0: 0, x1: 1, y1: 1 } };
+const fitCam = new THREE.PerspectiveCamera();
+const _v = new THREE.Vector3();
+function placeCam(cam, yaw, d) {
+  cam.position.set(-Math.sin(yaw) * Math.cos(PITCH) * d, Math.sin(PITCH) * d, Math.cos(yaw) * Math.cos(PITCH) * d);
+  cam.lookAt(0, 0, 0); cam.updateMatrixWorld(true);
+}
+function projBounds(cam, pts, W, H) {
+  const b = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
+  for (const p of pts) {
+    _v.copy(p).project(cam);
+    const px = (_v.x + 1) / 2 * W, py = (1 - _v.y) / 2 * H;
+    b.x0 = Math.min(b.x0, px); b.x1 = Math.max(b.x1, px); b.y0 = Math.min(b.y0, py); b.y1 = Math.max(b.y1, py);
+  }
+  return b;
+}
+function mazeCorners() {
+  const hw = state.maze.W / 2 + 0.12, hh = state.maze.H / 2 + 0.12, pts = [];
+  for (const x of [-hw, hw]) for (const z of [-hh, hh]) for (const y of [0, 1.0]) pts.push(new THREE.Vector3(x, y, z));
+  return pts;
+}
+function solveFit(yaw, W, H, fw, fh, pts) {
+  fitCam.fov = camera.fov; fitCam.aspect = W / H; fitCam.updateProjectionMatrix();
+  let lo = 1, hi = 600;
+  for (let i = 0; i < 36; i++) {
+    const mid = (lo + hi) / 2; placeCam(fitCam, yaw, mid);
+    const b = projBounds(fitCam, pts, W, H);
+    if (b.x1 - b.x0 <= fw && b.y1 - b.y0 <= fh) hi = mid; else lo = mid;
+  }
+  placeCam(fitCam, yaw, hi);
+  return { yaw, d: hi, b: projBounds(fitCam, pts, W, H) };
+}
+function freeRect(W, H) {
+  const sr = app.stage.getBoundingClientRect(), side = app.stage.classList.contains("is-side");
+  let x0 = 8, y0 = Math.max(8, app.topbar.getBoundingClientRect().bottom - sr.top + 2), x1 = W - 8, y1 = H - 8;
+  const hr = hud.getBoundingClientRect();
+  if (side) x0 = Math.max(x0, hr.right - sr.left + 8); else y0 = Math.max(y0, hr.bottom - sr.top + 6);
+  if (!pad.hidden) {
+    const pr = pad.getBoundingClientRect();
+    if (app.stage.classList.contains("pad-right")) x1 = Math.min(x1, pr.left - sr.left - 8); else y1 = Math.min(y1, pr.top - sr.top - 8);
+  }
+  return { x0, y0, x1: Math.max(x1, x0 + 40), y1: Math.max(y1, y0 + 40) };
+}
+function fitCamera() {
+  if (!state.maze) return;
+  const W = app.stage.clientWidth, H = app.stage.clientHeight;
+  if (!W || !H) return;
+  const f = rig.free = freeRect(W, H), fw = (f.x1 - f.x0) * 0.97, fh = (f.y1 - f.y0) * 0.97, pts = mazeCorners();
+  const a = solveFit(0, W, H, fw, fh, pts), b = solveFit(Math.PI / 2, W, H, fw, fh, pts);
+  const [keep, other] = rig.yaw === 0 ? [a, b] : [b, a];
+  const pick = other.d < keep.d * 0.95 ? other : keep;    // a little hysteresis so the view doesn't flip-flop
+  rig.yaw = pick.yaw; rig.d = pick.d;
+  camera.aspect = W / H; camera.clearViewOffset();
+  placeCam(camera, rig.yaw, rig.d);
+  rig.base.copy(camera.position);
+  // shift the image (not the perspective) so the maze sits in the middle of the free area
+  const fx = (f.x0 + f.x1) / 2, fy = (f.y0 + f.y1) / 2;
+  camera.setViewOffset(W, H, (pick.b.x0 + pick.b.x1) / 2 - fx, (pick.b.y0 + pick.b.y1) / 2 - fy, W, H);
+  banner.style.left = `${fx}px`; banner.style.top = `${fy}px`;
+}
+function relayout() {
+  const w = app.stage.clientWidth, h = app.stage.clientHeight;
+  app.stage.classList.toggle("is-side", w > h && h < 560);
+  app.stage.classList.toggle("pad-right", w > h);
+  document.documentElement.classList.toggle("toast-high", !pad.hidden && w <= h);
+  document.documentElement.style.setProperty("--av-pad-h", `${pad.offsetHeight || 0}px`);   // toasts sit just above the D-pad
+  fitCamera();
+}
+// screen direction ↔ maze direction for the two camera orientations (portrait: north is up; landscape: east is up)
+const SCREEN_TO_WORLD = [{ up: "N", down: "S", left: "W", right: "E" }, { up: "E", down: "W", left: "N", right: "S" }];
+const screenToWorld = sd => SCREEN_TO_WORLD[rig.yaw ? 1 : 0][sd];
+const worldToScreen = wd => Object.entries(SCREEN_TO_WORLD[rig.yaw ? 1 : 0]).find(([, w]) => w === wd)[0];
+
+/* ============================== events ============================== */
+function eat(L) {
+  const at = cellWorld(L.cx, L.cy); at.y = 0.6;
+  if (L.target) {
+    L.eaten = true; L.anim = { t: 0, good: true };
+    state.targetsLeft--; state.score += 10; state.eaten.push(L.ch); state.mouthPhase = 0;
+    sfx.play("coin"); haptic(10);
+    burst.emit(at, { count: REDUCED ? 20 : 46, color: 0xffd34d, speed: 4.2, gravity: -5, life: 0.8 });
+    if (app.settings.speak) speak(L.ch);
+    renderStats(); pop(scorePill);
+    if (state.targetsLeft <= 0) levelDone();
+    return;
+  }
+  if (state.invuln > 0) { state.graceCell = L.i; return; }   // protected: walk past it
+  L.eaten = true; L.anim = { t: 0, good: false };
+  burst.emit(at, { count: REDUCED ? 16 : 36, color: 0xff4d6d, speed: 3.6, gravity: -4, life: 0.7 });
+  app.toast(`"${L.ch}" తప్పు అక్షరం! వేటాడాల్సింది: ${state.plan.label}`, { tone: "bad", ms: 2000 });
+  hurt("letter");
+}
+function hurt(kind) {
+  state.lives--; state.invuln = INVULN;
+  state.shake = REDUCED ? 0 : 0.35;
+  flash.classList.add("on"); requestAnimationFrame(() => requestAnimationFrame(() => flash.classList.remove("on")));
+  sfx.play(kind === "ghost" ? "crash" : "bad"); haptic([40, 30, 60]);
+  if (kind === "ghost") app.toast("భూతం పట్టుకుంది! జాగ్రత్త!", { tone: "bad", ms: 1600 });
+  burst.emit(new THREE.Vector3(state.heroCur.x, 0.5, state.heroCur.z), { count: REDUCED ? 16 : 40, color: kind === "ghost" ? 0xffffff : 0xff4d6d, speed: 4 });
+  renderStats(); pop(livesPill);
+  if (state.lives <= 0) {
+    state.mode = "over"; state.deathT = 0;
+    const run = state.run;
+    setTimeout(() => { if (state.run === run && state.mode === "over") gameOver(); }, 1100);
+  }
+}
+function levelDone() {
+  state.mode = "levelDone";
+  const bonus = 50 * state.level;
+  state.score += bonus;
+  renderStats(); sfx.play("level"); haptic([20, 40, 20]);
+  burst.emit(new THREE.Vector3(state.heroCur.x, 0.6, state.heroCur.z), { count: REDUCED ? 40 : 140, color: 0x34d17e, speed: 6 });
+  const run = state.run, eaten = [...state.eaten];
+  setTimeout(() => {
+    if (state.run !== run || state.mode !== "levelDone") return;
+    app.overlay({
+      title: "భలే!",
+      body: el("div", {}, el("div", { class: "done-big", text: "అక్షరాలు పూర్తయ్యాయి!" }),
+        el("p", { class: "done-note", text: `వేటాడినవి: ${state.plan.label}` }),
+        el("div", { class: "done-syls" }, eaten.map(c => el("span", { text: c })))),
+      stats: [{ label: "స్కోరు", value: state.score.toLocaleString("en-IN") }, { label: "బోనస్", value: `+${bonus}` }, { label: "ప్రాణాలు", value: String(state.lives) }],
+      actions: [{ label: "తదుపరి స్థాయి →", onClick: nextLevel }],
+    });
+  }, 900);
+}
+function gameOver() {
+  const key = `${state.cfg.target}-${state.cfg.difficulty}`;
+  const { best, isNew } = app.best(key).submit(state.score);
+  app.overlay({
+    title: "ఆట ముగిసింది!", body: isNew ? "కొత్త రికార్డు! 🎉" : `స్థాయి ${state.level} వరకు వచ్చారు.`,
+    stats: [{ label: "స్కోరు", value: state.score.toLocaleString("en-IN") }, { label: "ఉత్తమం", value: best.toLocaleString("en-IN") }, { label: "స్థాయి", value: String(state.level) }],
+    actions: [{ label: "మళ్ళీ ఆడు", onClick: startGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+  });
+}
+
+/* ============================== flow ============================== */
+function beginReady() {
+  state.mode = "ready"; state.readyT = 1.5; showBanner("సిద్ధం!"); sfx.play("tick");
+  setTimeout(sayTarget, 250);
+}
+function startGame() {
+  const fromMenu = state.mode === "menu";     // the menu already shows level 1 (maze + target): play exactly that
+  state.cfg = { ...app.settings };
+  state.maxLives = state.lives = state.cfg.lives;
+  state.score = 0;
+  app.hideOverlay();
+  if (fromMenu) { state.run++; renderStats(); } else { state.lastGroup = null; state.lastLetter = null; setupLevel(1); }
+  beginReady();
+  loop.start();
+}
+function nextLevel() { app.hideOverlay(); setupLevel(state.level + 1); beginReady(); }
+function togglePause() {
+  if (state.mode === "paused") return resume();
+  if (!["playing", "ready"].includes(state.mode)) return;
+  state.pausedFrom = state.mode; state.mode = "paused";
+  app.overlay({ title: "ఆట ఆగింది", actions: [
+    { label: "కొనసాగించు", onClick: resume },
+    { label: "మళ్ళీ మొదలు", ghost: true, onClick: startGame },
+    { label: "అమరికలు", ghost: true, onClick: app.openSettings },
+  ] });
+}
+function resume() { if (state.mode !== "paused") return; state.mode = state.pausedFrom; app.hideOverlay(); loop.start(); }
+function showMenu() {
+  state.mode = "menu"; banner.hidden = true;
+  const lbl = k => SETTINGS.find(f => f.key === k).options.find(o => o.value === app.settings[k])?.label;
+  app.overlay({
+    title: "అక్షరాల వేట",
+    body: el("div", { class: "intro" },
+      el("p", { text: "చిక్కుదారిలో తిరుగుతూ పైన చూపిన అక్షరాలను మాత్రమే తినండి!" }),
+      el("p", { text: "తప్పు అక్షరం తిన్నా, భూతం తగిలినా ఒక ప్రాణం పోతుంది." }),
+      el("p", { class: "ctl", text: isTouch() ? "తెరపై స్వైప్ చేయండి లేదా దిశ బటన్లు నొక్కండి" : "← ↑ → ↓ బాణం కీలు లేదా W A S D" }),
+      el("small", { text: `తెలుగు తునకలు · ${lbl("target")} · ${lbl("size")} · ${lbl("difficulty")}` })),
+    actions: [{ label: "ఆట ప్రారంభించు", onClick: startGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+  });
+}
+function input(sd) {
+  if (state.mode !== "playing" && state.mode !== "ready") return;
+  state.player.want = screenToWorld(sd);
+}
+
+/* ============================== simulation ============================== */
+const facingOf = d => Math.atan2(DIRS[d].dx, DIRS[d].dy);   // models face +z
+const angleTo = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
+function updatePlayer(dt) {
+  const P = state.player, mz = state.maze;
+  if (P.want && P.dir && P.want !== P.dir) {
+    if (P.want === DIRS[P.dir].opp) reverse(P);                                              // reversing is always allowed
+    else if (P.t < 0.15 && mz.canGo(P.from.x, P.from.y, P.want)) { P.t = 0; P.dir = P.want; }  // just missed the turn: forgive
+  }
+  stepMover(P, PLAYER_SPEED * dt, playerDecide);
+  const pos = moverPos(P), cx = Math.round(pos.x), cy = Math.round(pos.y), ci = mz.idx(cx, cy);
+  if (ci !== state.playerCell) { state.playerCell = ci; state.dist = bfs(mz, cx, cy); if (ci !== state.graceCell) state.graceCell = -1; }
+  if (Math.abs(pos.x - cx) + Math.abs(pos.y - cy) < 0.4) {
+    const L = state.letterAt.get(ci);
+    if (L && !L.eaten && state.graceCell !== ci) eat(L);
+  }
+}
+function updateGhosts(dt) {
+  const pp = moverPos(state.player);
+  for (const g of ghosts) {
+    if (!g.active) continue;
+    if (g.wait > 0) g.wait -= dt;
+    else if (!state.frozen) { stepMover(g.m, g.speed * dt, ghostDecide); g.travel += g.speed * dt; }
+    const gp = moverPos(g.m);
+    if (state.mode === "playing" && state.invuln <= 0 && Math.hypot(gp.x - pp.x, gp.y - pp.y) < 0.62) {
+      hurt("ghost");
+      if (g.m.dir) reverse(g.m);
+    }
+  }
+}
+function update(dt) {
+  if (state.mode === "paused") return;
+  state.t += dt;
+  state.heroPrev.copy(state.heroCur);
+  for (const g of ghosts) g.prev.copy(g.cur);
+
+  if (state.mode === "ready") {
+    state.readyT -= dt;
+    if (state.readyT <= 0.4 && banner.textContent !== "పద!") { showBanner("పద!"); sfx.play("whoosh"); }
+    if (state.readyT <= 0) { state.mode = "playing"; banner.hidden = true; }
+  }
+  if (state.mode === "playing") {
+    state.invuln = Math.max(0, state.invuln - dt);
+    updatePlayer(dt);
+    if (state.mode === "playing") updateGhosts(dt);
+  }
+
+  // positions (rendered with interpolation)
+  if (state.maze) {
+    const p = moverPos(state.player);
+    cellWorld(p.x, p.y, state.heroCur);
+    for (const g of ghosts) if (g.active) { const q = moverPos(g.m); cellWorld(q.x, q.y, g.cur); }
+  }
+
+  // hero: face the way it moves, chomp while moving, blink while protected, spin away when out of lives
+  const P = state.player;
+  if (P?.dir) state.facing += angleTo(state.facing, facingOf(P.dir)) * Math.min(1, dt * 16);
+  hero.rotation.y = state.facing;
+  const moving = state.mode === "playing" && !!P?.dir;
+  if (moving) { state.mouthPhase += dt * 15; state.mouth = (0.5 - 0.5 * Math.cos(state.mouthPhase)) * 0.62; }
+  else state.mouth += ((state.mode === "menu" ? 0.25 + 0.2 * Math.sin(state.t * 3) : 0.12) - state.mouth) * Math.min(1, dt * 8);
+  jawTop.rotation.x = -state.mouth; jawBot.rotation.x = state.mouth * 0.55;
+  heroBody.position.y = 5 * CS + (moving && !REDUCED ? Math.abs(Math.sin(state.mouthPhase * 0.5)) * 0.04 : 0);
+  if (state.mode === "over") {
+    state.deathT += dt;
+    hero.scale.setScalar(Math.max(0.01, 1 - state.deathT * 0.9));
+    if (!REDUCED) hero.rotation.y = state.facing + state.deathT * 9;
+    hero.visible = true;
+  } else hero.visible = state.invuln <= 0 || Math.floor(state.t * 12) % 2 === 0;
+
+  // chasers
+  for (const g of ghosts) {
+    if (!g.active) continue;
+    const want = g.m?.dir ? facingOf(g.m.dir) : 0;
+    g.group.rotation.y += angleTo(g.group.rotation.y, want) * Math.min(1, dt * 10);
+    g.body.position.y = 0.04 + (REDUCED ? 0 : Math.sin(state.t * 5 + g.phase) * 0.04);
+  }
+
+  // letters: gentle bob; eaten ones pop (right) or flush red and sink (wrong)
+  for (const L of state.letters) {
+    if (L.anim) {
+      L.anim.t += dt;
+      const k = Math.min(1, L.anim.t / 0.35);
+      L.s.material.opacity = 1 - k; L.halo.visible = false;
+      if (L.anim.good) { L.s.position.y = 0.62 + k * 0.5; L.s.scale.setScalar(0.8 * (1 + k * 0.6)); L.s.scale.x *= L.s.material.map.userData.aspect; }
+      else { L.s.material.color.set(0xff5a6a); L.s.position.y = 0.62 - k * 0.4; L.s.position.x = REDUCED ? 0 : Math.sin(L.anim.t * 60) * 0.06 * (1 - k); }
+      if (k >= 1) { L.g.visible = false; L.anim = null; }
+    } else if (!L.eaten && !REDUCED) {
+      L.s.position.y = 0.62 + Math.sin(state.t * 2.4 + L.phase) * 0.035;
+      L.halo.scale.setScalar(1.3 + Math.sin(state.t * 3 + L.phase) * 0.12);
+    }
+  }
+
+  // night: fireflies
+  if (!REDUCED && pal.night > 0.4 && state.maze && state.t > state.nextFly) {
+    state.nextFly = state.t + 0.18;
+    burst.emit(new THREE.Vector3((Math.random() - 0.5) * state.maze.W, 0.3 + Math.random() * 0.6, (Math.random() - 0.5) * state.maze.H),
+      { count: 1, color: 0xd8ff7a, speed: 0.25, gravity: 0.15, life: 2.2 });
+  }
+  burst.update(dt);
+  stepPalette(dt);
+  state.shake = Math.max(0, state.shake - dt * 1.4);
+}
+function render(dt, alpha) {
+  const k = state.mode === "paused" ? 1 : alpha;
+  hero.position.lerpVectors(state.heroPrev, state.heroCur, k);
+  for (const g of ghosts) if (g.active) g.group.position.lerpVectors(g.prev, g.cur, k);
+  const s = state.shake * state.shake;
+  camera.position.copy(rig.base);
+  if (s > 0) camera.position.add(_v.set((Math.random() - 0.5) * s, (Math.random() - 0.5) * s, (Math.random() - 0.5) * s));
+  composer.render();
+}
+const loop = createLoop({ update, render, onHidden: () => { if (["playing", "ready"].includes(state.mode)) togglePause(); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && state.mode !== "paused") loop.start(); });
+
+/* ============================== input ============================== */
+// swipe anywhere: a direction fires as soon as the finger has moved ~22 px, and again for every new stroke
+let anchor = null;
+pointerControls(app.stage, {
+  onDragStart: () => { anchor = { x: 0, y: 0 }; },
+  onDrag: ({ dx, dy }) => {
+    if (!anchor) return;
+    const ax = dx - anchor.x, ay = dy - anchor.y;
+    if (Math.hypot(ax, ay) < 22) return;
+    input(Math.abs(ax) > Math.abs(ay) ? (ax > 0 ? "right" : "left") : (ay > 0 ? "down" : "up"));
+    anchor = { x: dx, y: dy };
+  },
+  onDragEnd: () => { anchor = null; },
+});
+keyControls({
+  ArrowUp: () => input("up"), KeyW: () => input("up"), ArrowDown: () => input("down"), KeyS: () => input("down"),
+  ArrowLeft: () => input("left"), KeyA: () => input("left"), ArrowRight: () => input("right"), KeyD: () => input("right"),
+  KeyP: togglePause, Escape: togglePause,
+});
+window.speechSynthesis?.addEventListener?.("voiceschanged", renderTarget);
+
+/* ============================== boot ============================== */
+state.cfg = { ...app.settings };
+state.maxLives = state.lives = state.cfg.lives;
+setupLevel(1);
+autoResize({ renderer, camera, composer, bloomPass, container: app.stage, onResize: relayout });
+new ResizeObserver(() => fitCamera()).observe(hud);
+showMenu();
+loop.start();
+
+if (DEBUG) {
+  const teleport = (x, y) => {
+    state.player = mover(x, y); cellWorld(x, y, state.heroCur); state.heroPrev.copy(state.heroCur);
+    state.playerCell = state.maze.idx(x, y); state.dist = bfs(state.maze, x, y);
+  };
+  window.__game = {
+    state, ghosts, startGame, togglePause, teleport,
+    get yaw() { return rig.yaw; },
+    freeze(on = true) { state.frozen = on; },
+    pos: () => moverPos(state.player),
+    /** Put the hero next to an uneaten target/wrong letter; returns the screen direction that walks into it. */
+    approach(kind) {
+      const mz = state.maze;
+      for (const L of state.letters) {
+        if (L.eaten || L.target !== (kind === "target")) continue;
+        for (const d of DIR_KEYS) {
+          const nx = L.cx - DIRS[d].dx, ny = L.cy - DIRS[d].dy;
+          if (!mz.inside(nx, ny) || !mz.canGo(nx, ny, d) || state.letterAt.get(mz.idx(nx, ny))?.eaten === false) continue;
+          if (ghosts.some(g => g.active && Math.hypot(moverPos(g.m).x - nx, moverPos(g.m).y - ny) < 1.5)) continue;
+          teleport(nx, ny);
+          return { dir: worldToScreen(d), ch: L.ch, cell: [L.cx, L.cy] };
         }
-
-        function createLetter() {
-            const char = teluguChars[Math.floor(Math.random() * teluguChars.length)];
-            const size = Math.random() * 18 + 18;
-            const padding = 40;
-            let x, y;
-            do {
-                x = Math.random() * (INTERNAL_WIDTH - 2 * padding - size) + padding + size / 2;
-                y = Math.random() * (INTERNAL_HEIGHT - 2 * padding - size) + padding + size / 2;
-            } while (Math.sqrt((x - pacman.x)**2 + (y - pacman.y)**2) < pacman.radius * 3);
-
-            const angle = Math.random() * Math.PI * 2;
-            const speed = letterBaseSpeed + (Math.random() - 0.5) * 0.5;
-            const vx = Math.cos(angle) * speed;
-            const vy = Math.sin(angle) * speed;
-            const color = getRandomColor();
-            ctx.font = `${size}px 'Noto Sans Telugu', 'Lohit Telugu', sans-serif`;
-            const metrics = ctx.measureText(char);
-            const pWidth = metrics.width > 0 ? metrics.width : size * 0.6;
-            const pHeight = size;
-            letters.push({ char, x, y, vx, vy, color, size, width: pWidth, height: pHeight, changeDirectionTimer: Math.random() * 240 + 120 });
-        }
-
-        function initializeGame() {
-            score = 0;
-            letters.length = 0;
-            gameOver = false;
-            pacman.x = INTERNAL_WIDTH / 2;
-            pacman.y = INTERNAL_HEIGHT / 2;
-            pacman.dx = pacman.speed;
-            pacman.dy = 0;
-            pacman.mouthOpenValue = 0;
-            pacman.isMouthOpening = true;
-            for (let i = 0; i < initialLetterCount; i++) createLetter();
-            lettersRemaining = letters.length;
-            updateScoreBoard();
-            console.log("Game initialized. Pac-Man ready. Chasing " + lettersRemaining + " letters.");
-        }
-
-        function updateScoreBoard() {
-            scoreBoardElement.textContent = `Score: ${score} | Remaining: ${lettersRemaining}`;
-        }
-
-        function updatePacman() {
-            if (gameOver) return;
-            pacman.x += pacman.dx;
-            pacman.y += pacman.dy;
-            if (pacman.x - pacman.radius < 0) pacman.x = pacman.radius;
-            if (pacman.x + pacman.radius > INTERNAL_WIDTH) pacman.x = INTERNAL_WIDTH - pacman.radius;
-            if (pacman.y - pacman.radius < 0) pacman.y = pacman.radius;
-            if (pacman.y + pacman.radius > INTERNAL_HEIGHT) pacman.y = INTERNAL_HEIGHT - pacman.radius;
-            if (pacman.isMouthOpening) {
-                pacman.mouthOpenValue += pacman.mouthSpeed;
-                if (pacman.mouthOpenValue >= pacman.mouthAngle) pacman.isMouthOpening = false;
-            } else {
-                pacman.mouthOpenValue -= pacman.mouthSpeed;
-                if (pacman.mouthOpenValue <= 0) pacman.isMouthOpening = true;
-            }
-        }
-
-        function drawPacman() {
-            ctx.beginPath();
-            let startAngle, endAngle;
-            if (pacman.dx > 0) { startAngle = pacman.mouthOpenValue; endAngle = Math.PI * 2 - pacman.mouthOpenValue; }
-            else if (pacman.dx < 0) { startAngle = Math.PI + pacman.mouthOpenValue; endAngle = Math.PI - pacman.mouthOpenValue; }
-            else if (pacman.dy > 0) { startAngle = Math.PI / 2 + pacman.mouthOpenValue; endAngle = Math.PI / 2 - pacman.mouthOpenValue; }
-            else if (pacman.dy < 0) { startAngle = -Math.PI / 2 + pacman.mouthOpenValue; endAngle = -Math.PI / 2 - pacman.mouthOpenValue; }
-            else { startAngle = pacman.mouthOpenValue; endAngle = Math.PI * 2 - pacman.mouthOpenValue; }
-            ctx.arc(pacman.x, pacman.y, pacman.radius, startAngle, endAngle);
-            ctx.lineTo(pacman.x, pacman.y);
-            ctx.closePath();
-            ctx.fillStyle = pacman.color;
-            ctx.fill();
-            ctx.beginPath();
-            const eyeRadius = pacman.radius / 5;
-            let eyeX = pacman.x + pacman.radius * 0.3;
-            let eyeY = pacman.y - pacman.radius * 0.5;
-            if (pacman.dx < 0) eyeX = pacman.x - pacman.radius * 0.3;
-            if (pacman.dy > 0 && pacman.dx === 0) { eyeX = pacman.x; eyeY = pacman.y + pacman.radius * 0.3; }
-            if (pacman.dy < 0 && pacman.dx === 0) { eyeX = pacman.x; eyeY = pacman.y - pacman.radius * 0.3; }
-            ctx.arc(eyeX, eyeY, eyeRadius, 0, Math.PI * 2);
-            ctx.fillStyle = "#333";
-            ctx.fill();
-        }
-
-        function updateLetters() {
-            if (gameOver) return;
-            for (let i = letters.length - 1; i >= 0; i--) {
-                const l = letters[i];
-                l.x += l.vx;
-                l.y += l.vy;
-                const letterLeft = l.x - l.width / 2;
-                const letterRight = l.x + l.width / 2;
-                const letterTop = l.y - l.height / 2;
-                const letterBottom = l.y + l.height / 2;
-                if (letterRight > INTERNAL_WIDTH || letterLeft < 0) {
-                    l.vx *= -1; l.x = (letterRight > INTERNAL_WIDTH) ? INTERNAL_WIDTH - l.width / 2 -1 : l.width / 2 + 1;
-                }
-                if (letterBottom > INTERNAL_HEIGHT || letterTop < 0) {
-                    l.vy *= -1; l.y = (letterBottom > INTERNAL_HEIGHT) ? INTERNAL_HEIGHT - l.height / 2 -1 : l.height / 2 + 1;
-                }
-                l.changeDirectionTimer--;
-                if (l.changeDirectionTimer <= 0) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = letterBaseSpeed + (Math.random() - 0.5) * 0.5;
-                    l.vx = Math.cos(angle) * speed;
-                    l.vy = Math.sin(angle) * speed;
-                    l.changeDirectionTimer = Math.random() * 240 + 120;
-                }
-                const dxPacLetter = pacman.x - l.x;
-                const dyPacLetter = pacman.y - l.y;
-                const distanceSquared = dxPacLetter * dxPacLetter + dyPacLetter * dyPacLetter;
-                const collisionDistance = pacman.radius + Math.max(l.width, l.height) * 0.5;
-                if (distanceSquared < collisionDistance * collisionDistance) {
-                    letters.splice(i, 1);
-                    score += 10;
-                    lettersRemaining = letters.length;
-                    updateScoreBoard();
-                    if (lettersRemaining === 0) {
-                        gameOver = true;
-                        console.log("Game Over! All letters eaten.");
-                    }
-                }
-            }
-        }
-
-        function drawLetters() {
-            for (const l of letters) {
-                ctx.font = `${l.size}px 'Noto Sans Telugu', 'Lohit Telugu', sans-serif`;
-                ctx.fillStyle = l.color;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(l.char, l.x, l.y);
-            }
-        }
-
-        function drawStaticBackgroundPhrase() {
-            ctx.font = staticPhraseFont;
-            ctx.fillStyle = staticPhraseColor;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(staticPhraseText, INTERNAL_WIDTH / 2, staticPhraseYPosition);
-        }
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
-            drawStaticBackgroundPhrase();
-            updatePacman();
-            drawPacman();
-            updateLetters();
-            drawLetters();
-            if (gameOver) {
-                ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-                ctx.fillRect(0, INTERNAL_HEIGHT / 2 - 60, INTERNAL_WIDTH, 120);
-                ctx.font = "bold 40px 'Noto Sans Telugu', Arial, sans-serif";
-                ctx.fillStyle = "#FFD700";
-                ctx.textAlign = "center";
-                ctx.fillText("అక్షరాలు పూర్తయ్యాయి!", INTERNAL_WIDTH / 2, INTERNAL_HEIGHT / 2 - 15);
-                ctx.font = "20px Arial, sans-serif";
-                ctx.fillStyle = "#FFFFFF";
-                ctx.fillText("Refresh to Play Again", INTERNAL_WIDTH / 2, INTERNAL_HEIGHT / 2 + 25);
-                return;
-            }
-            requestAnimationFrame(gameLoop);
-        }
-
-        // --- Pac-Man Control Handler ---
-        function handlePacmanControl(direction) {
-            if (gameOver) return;
-            switch(direction) {
-                case 'ArrowUp': if (pacman.dy === 0) { pacman.dx = 0; pacman.dy = -pacman.speed; } break;
-                case 'ArrowDown': if (pacman.dy === 0) { pacman.dx = 0; pacman.dy = pacman.speed; } break;
-                case 'ArrowLeft': if (pacman.dx === 0) { pacman.dx = -pacman.speed; pacman.dy = 0; } break;
-                case 'ArrowRight': if (pacman.dx === 0) { pacman.dx = pacman.speed; pacman.dy = 0; } break;
-            }
-        }
-
-        // --- Event Listeners for Pac-Man Control ---
-        window.addEventListener('keydown', (e) => {
-            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-                e.preventDefault(); // Prevent browser scroll for arrow keys
-                handlePacmanControl(e.key);
-            }
-            // Support WASD
-            const key = e.key.toLowerCase();
-            if (key === 'w') handlePacmanControl('ArrowUp');
-            if (key === 's') handlePacmanControl('ArrowDown');
-            if (key === 'a') handlePacmanControl('ArrowLeft');
-            if (key === 'd') handlePacmanControl('ArrowRight');
-        });
-
-        // --- On-Screen Button Controls ---
-        const btnUp = document.getElementById('btnUp');
-        const btnDown = document.getElementById('btnDown');
-        const btnLeft = document.getElementById('btnLeft');
-        const btnRight = document.getElementById('btnRight');
-
-        ['click', 'touchstart'].forEach(eventType => {
-            btnUp.addEventListener(eventType, (e) => { e.preventDefault(); handlePacmanControl('ArrowUp'); });
-            btnDown.addEventListener(eventType, (e) => { e.preventDefault(); handlePacmanControl('ArrowDown'); });
-            btnLeft.addEventListener(eventType, (e) => { e.preventDefault(); handlePacmanControl('ArrowLeft'); });
-            btnRight.addEventListener(eventType, (e) => { e.preventDefault(); handlePacmanControl('ArrowRight'); });
-        });
-
-
-        // --- Canvas Display Sizing ---
-        function adjustCanvasDisplaySize() {
-            const containerWidth = gameDisplayArea.clientWidth;
-            const containerHeight = gameDisplayArea.clientHeight;
-            const aspectRatio = INTERNAL_WIDTH / INTERNAL_HEIGHT;
-            let newDisplayWidth;
-            let newDisplayHeight;
-
-            if (containerWidth / containerHeight > aspectRatio) {
-                newDisplayHeight = containerHeight;
-                newDisplayWidth = newDisplayHeight * aspectRatio;
-            } else {
-                newDisplayWidth = containerWidth;
-                newDisplayHeight = newDisplayWidth / aspectRatio;
-            }
-            canvas.style.width = `${Math.floor(newDisplayWidth)}px`;
-            canvas.style.height = `${Math.floor(newDisplayHeight)}px`;
-        }
-
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(adjustCanvasDisplaySize, 50); // Debounce resize
-        });
-
-        // --- Game Initialization on Load ---
-        window.addEventListener('load', () => {
-            if ('ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0) {
-                instructionsElement.textContent = "Use on-screen buttons to move. Eat all Telugu letters!";
-            } else {
-                 instructionsElement.textContent = "Use Arrow Keys or WASD to move. Eat all Telugu letters!";
-            }
-            adjustCanvasDisplaySize(); // Initial sizing
-            initializeGame();
-            requestAnimationFrame(gameLoop);
-        });
-
-    </script>
+      }
+      return null;
+    },
+    halt() { const p = moverPos(state.player); teleport(Math.round(p.x), Math.round(p.y)); },
+    /** Drop chaser 0 right onto the hero (it then moves on). */
+    ghostTouch() { const g = ghosts.find(q => q.active); const p = state.player.from; g.m = mover(p.x, p.y); g.wait = 0; },
+    ghostsHome() { for (const g of ghosts) if (g.active) { g.m = mover(g.home.x, g.home.y); cellWorld(g.home.x, g.home.y, g.cur); g.prev.copy(g.cur); } },
+    eatAllTargetsBut(k = 1) { const ts = state.letters.filter(L => L.target && !L.eaten); ts.slice(0, Math.max(0, ts.length - k)).forEach(eat); },
+    setLives(n) { state.lives = n; renderStats(); },
+    setupLevel,
+    letters: () => state.letters.map(L => ({ ch: L.ch, target: L.target, eaten: L.eaten, cell: [L.cx, L.cy] })),
+    /** Close-up camera on the hero (visual checks of the voxel models). */
+    /** Close-up of the hero and a chaser standing on the lawn beside the maze (pause first). */
+    closeup(mouth = 0, yaw = 0.6) {
+      const x0 = state.maze.W / 2 + 3, g = ghosts[0];
+      state.heroCur.set(x0, 0, 0); state.heroPrev.copy(state.heroCur);
+      g.cur.set(x0 + 1.1, 0, 0); g.prev.copy(g.cur); g.group.visible = true; g.group.rotation.y = -0.4;
+      jawTop.rotation.x = -mouth; jawBot.rotation.x = mouth * 0.55; hero.rotation.y = yaw; hero.visible = true;
+      camera.clearViewOffset(); rig.base.set(x0 + 0.55, 2.0, 4.6); camera.position.copy(rig.base); camera.lookAt(x0 + 0.55, 0.3, 0);
+    },
+    screen() {
+      const W = app.stage.clientWidth, H = app.stage.clientHeight, b = projBounds(camera, mazeCorners(), W, H);
+      return { maze: b, free: rig.free, W, H, yaw: rig.yaw };
+    },
+  };
+}
+</script>
 </body>
 </html>

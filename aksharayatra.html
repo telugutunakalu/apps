@@ -9,6 +9,7 @@
 <meta property="og:description" content="తెలుగు లిపి పరిణామం — క్రీ.పూ. 3వ శతాబ్దం నుండి నేటి వరకు, ప్రతి అక్షరం.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -628,6 +629,8 @@ function tick() {
 }
 
 /* ---------- boot ---------- */
+// installable + offline (live site only)
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./sw.js").catch(() => {});
 setPlaying(state.playing);
 resize();
 await goLetter(0);

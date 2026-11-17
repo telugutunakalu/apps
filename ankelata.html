@@ -1,384 +1,688 @@
-<!DOCTYPE html>
-<html lang="te">
+<!doctype html>
+<html lang="te" data-theme="dark" data-accent="peacock">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>అంకెల ఆట (Ankela ఆట) - Telugu Number Game </title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Prevent scrollbars */
-            background-color: #f0f0f0; /* Light gray background for the page */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: 'Noto Sans Telugu', Arial, sans-serif; /* Added Noto Sans Telugu */
-        }
-        canvas {
-            display: block;
-            box-shadow: 0 0 20px rgba(0,0,0,0.15);
-        }
-        /* Fallback font if Noto Sans Telugu is not available or for broader compatibility */
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap');
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0c16">
+<title>అంకెల ఆట — తెలుగు అంకెలు నేర్చుకుందాం</title>
+<meta name="description" content="తెలుగు అంకెలు (౧, ౨, ౩…) చూసి సరైన సంఖ్య ఉన్న బుడగను తాకండి. ఐదు స్థాయిలు, మూడు జీవితాలు.">
+<meta property="og:title" content="అంకెల ఆట — తెలుగు తునకలు">
+<meta property="og:description" content="తెలుగు అంకెలు నేర్చుకుందాం రండి!">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2322c3d6'/%3E%3Ccircle cx='32' cy='33' r='22' fill='%2300222a'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23fff' opacity='.7'/%3E%3Ctext x='32' y='44' font-size='30' font-weight='700' text-anchor='middle' fill='%23fff'%3E%E0%B1%A7%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="./lib/v1/tt.css">
+<style>
+  /* A DOM quiz needs no gesture lock: keep pinch-zoom (buttons are already touch-action: manipulation). */
+  .tt-app--game { touch-action: manipulation; }
+  .tt-stage { background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--tt-accent) 16%, var(--tt-bg)) 0%, var(--tt-bg) 62%); }
+  .tt-iconbtn[hidden], .tt-pill[hidden] { display: none; }
+  .tt-back { min-width: var(--tt-tap); justify-content: center; }   /* kit: icon-only back link is 40px wide on phones */
+  .tt-app--game .tt-topbar { z-index: 31; }   /* keep back / sound / help / settings usable above the cards (overlay padding clears it) */
+
+  /* ---------- play area: one grid, never scrolls ---------- */
+  .play { position: absolute; z-index: 2; inset: 0; margin: 0 auto; width: min(100%, 760px);
+          display: grid; grid-template-columns: minmax(0, 1fr);
+          grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+          grid-template-areas: "hud" "lvl" "prompt" "fb" "answers" "tools";
+          gap: 8px; padding: calc(60px + var(--tt-safe-t)) calc(14px + var(--tt-safe-r)) calc(12px + var(--tt-safe-b)) calc(14px + var(--tt-safe-l));
+          transition: opacity .25s; }
+  .play.is-away { opacity: 0; pointer-events: none; }
+
+  .hud { grid-area: hud; display: flex; justify-content: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+  .hud .tt-pill { min-height: 34px; padding: 4px 12px; font-size: 15px; white-space: nowrap; }
+  .hud .tt-pill small { font-size: 13px; }
+  .hud .star { color: var(--tt-accent); }
+  .hearts b { color: #ff4d6d; letter-spacing: 1px; }
+  .hearts i { color: var(--tt-faint); font-style: normal; letter-spacing: 1px; }
+  .streak b { color: var(--tt-warn); }
+  .streak .mult { color: var(--tt-accent); }
+  .bump { animation: bump .32s var(--tt-ease); }
+  @keyframes bump { 50% { transform: scale(1.16); } }
+  .shake { animation: shake .4s ease; }
+  @keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+  .hud.tight small { display: none; }          /* labels drop out only when the pills would not fit */
+  .hud.tight .tt-pill { padding: 4px 10px; }
+  @media (max-width: 359px) { .tt-topbar__title { opacity: 0; } }   /* only "అం…" would fit beside five buttons; the cards carry the name */
+
+  .lvl { grid-area: lvl; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; min-width: 0; }
+  .lvl .name { font-size: 15px; line-height: 1.3; color: var(--tt-muted); }
+  .progress { display: flex; align-items: center; gap: 8px; }
+  .dots { display: flex; gap: 5px; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--tt-line); transition: background .25s, box-shadow .25s; }
+  .dots i.on { background: var(--tt-accent); box-shadow: 0 0 8px color-mix(in srgb, var(--tt-accent) 70%, transparent); }
+  .progress small { font-size: 12.5px; color: var(--tt-faint); font-variant-numeric: tabular-nums; }
+
+  /* ---------- the question ---------- */
+  .prompt { grid-area: prompt; position: relative; min-height: 0; overflow: hidden; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 2px; padding: 6px 12px; border-radius: 26px;
+            background: color-mix(in srgb, var(--tt-surface) 55%, transparent); border: 1px solid var(--tt-glass-line);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .cap { font-size: 15px; line-height: 1.3; color: var(--tt-muted); text-align: center; }
+  .num { font-weight: 800; line-height: 1.15; white-space: nowrap; font-variant-numeric: tabular-nums; color: #fff;
+         font-size: 70px; font-size: clamp(52px, min(22vw, 14dvh), 150px);
+         text-shadow: 0 0 26px color-mix(in srgb, var(--tt-accent) 65%, transparent), 0 4px 0 rgba(0, 0, 0, .25); }
+  .num[hidden], .hint[hidden], .listen[hidden], .bub[hidden] { display: none; }
+  .num .sep { color: var(--tt-muted); }
+  .prompt.has-hint .num { font-size: clamp(42px, min(17vw, 10dvh), 118px); }
+  /* where supported, the number fills its card: limited by the card height and by its own width (--w, in em) */
+  @supports (font-size: 1cqh) {
+    .prompt { container-type: size; }
+    .num { font-size: max(34px, min(50cqh, calc(86cqw / var(--w, 1)), 230px)); }
+    .prompt.has-hint .num { font-size: max(30px, min(34cqh, calc(86cqw / var(--w, 1)), 170px)); }
+    .listen { width: clamp(64px, 40cqh, 130px); }
+  }
+  .hint { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 2px 8px; font-size: 22px; font-weight: 800; line-height: 1.3; }
+  .hint .op { color: var(--tt-faint); font-weight: 500; }
+  .hint .count { letter-spacing: 3px; font-size: 18px; }
+  /* place-value colours, shared by the hint and the prompt digits (ones, tens, hundreds, thousands) */
+  .p0 { --pc: #5ee08f; } .p1 { --pc: #ff7aa8; } .p2 { --pc: #ffc233; } .p3 { --pc: #a99bff; }
+  .hint [class^="p"], .has-hint .num [class^="p"] { color: var(--pc); }
+  .listen { display: grid; place-items: center; width: clamp(72px, 15dvh, 116px); aspect-ratio: 1; border-radius: 50%; border: 0; cursor: pointer; margin: 4px 0;
+            background: var(--tt-accent); color: var(--tt-accent-ink); box-shadow: 0 10px 30px color-mix(in srgb, var(--tt-accent) 40%, transparent); }
+  .listen .tt-icon { width: 46%; height: 46%; }
+  .listen.speaking { animation: ring 1.1s ease-out 2; }
+  @keyframes ring { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tt-accent) 60%, transparent); } to { box-shadow: 0 0 0 26px transparent; } }
+
+  /* feedback has its own fixed slot: it can never cover the score or the question */
+  .fb { grid-area: fb; height: 40px; display: flex; align-items: center; justify-content: center; gap: 10px; overflow: hidden;
+        white-space: nowrap; font-weight: 800; font-size: clamp(16px, 4.6vw, 21px); line-height: 1.2; }
+  .fb .ok { color: var(--tt-good); } .fb .no { color: var(--tt-bad); }
+  .fb .eq { color: var(--tt-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .fb .pts { color: var(--tt-accent); }
+  .fb > * { animation: tt-pop .25s var(--tt-ease); }
+  @media (max-width: 359px) { .fb .lbl { display: none; } }
+
+  /* ---------- answer bubbles: real buttons ---------- */
+  .answers { grid-area: answers; display: grid; justify-content: center; align-content: center; gap: 12px 16px;
+             --cols: 2; --bsz: min(40vw, 19vh, 150px); --bsz: min(40vw, 19dvh, 150px);
+             grid-template-columns: repeat(var(--cols), var(--bsz)); }
+  .answers[data-n="3"] { --cols: 3; --bsz: min(28vw, 21vh, 140px); --bsz: min(28vw, 21dvh, 140px); }
+  .bub { position: relative; width: var(--bsz); height: var(--bsz); padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+         display: grid; place-items: center; color: #fff; font-family: var(--tt-font); font-weight: 800; line-height: 1;
+         font-size: calc(var(--bsz) * var(--fs, .38)); font-variant-numeric: tabular-nums; text-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+         touch-action: manipulation; user-select: none; -webkit-user-select: none;
+         background:
+           radial-gradient(circle at 31% 25%, rgba(255, 255, 255, .8) 0 4%, rgba(255, 255, 255, 0) 13%),
+           radial-gradient(circle at 50% 115%, color-mix(in srgb, var(--tt-accent) 80%, #fff) 0%, transparent 52%),
+           radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--tt-accent) 50%, #06303a) 0%, color-mix(in srgb, var(--tt-accent) 30%, #021217) 78%);
+         box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--tt-accent) 75%, #fff), inset 0 -10px 24px rgba(0, 0, 0, .35),
+                     0 12px 28px rgba(0, 0, 0, .4), 0 0 26px color-mix(in srgb, var(--tt-accent) 28%, transparent);
+         animation: float var(--dur, 3.4s) ease-in-out var(--d, 0s) infinite; transition: filter .15s, opacity .25s; }
+  .bub[data-len="3"] { --fs: .31; } .bub[data-len="4"] { --fs: .25; } .bub[data-len="5"] { --fs: .22; }
+  @keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 calc(var(--bsz) * -.05); } }
+  @media (hover: hover) { .bub:hover { filter: brightness(1.18); } }
+  .bub:active { filter: brightness(1.25); }
+  .bub:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+  .bub .k { position: absolute; bottom: 9%; left: 0; right: 0; display: none; font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .62); text-shadow: none; }
+  @media (hover: hover) and (pointer: fine) { .bub .k { display: block; } }
+  .bub::after { content: none; position: absolute; top: 0; right: 0; width: 30%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+                background: #fff; font-size: calc(var(--bsz) * .17); text-shadow: none; box-shadow: 0 4px 10px rgba(0, 0, 0, .3); }
+  .bub.is-right { background: radial-gradient(circle at 31% 25%, rgba(255, 255, 255, .8) 0 4%, rgba(255, 255, 255, 0) 13%), radial-gradient(circle at 50% 38%, #3fe190 0%, #0c6b3c 80%);
+                  box-shadow: inset 0 0 0 2px #b6ffd6, 0 0 34px rgba(52, 209, 126, .6); }
+  .bub.is-right::after { content: "✓"; color: #0c6b3c; }
+  .bub.is-wrong { background: radial-gradient(circle at 31% 25%, rgba(255, 255, 255, .7) 0 4%, rgba(255, 255, 255, 0) 13%), radial-gradient(circle at 50% 38%, #ff6b7a 0%, #7d0f1f 80%);
+                  box-shadow: inset 0 0 0 2px #ffc2c9, 0 0 30px rgba(255, 90, 106, .5); }
+  .bub.is-wrong::after { content: "✗"; color: #a3142a; }
+  .bub.is-dim { opacity: .3; filter: saturate(.4); }
+  .bub[aria-disabled="true"] { cursor: default; }
+
+  .tools { grid-area: tools; display: flex; justify-content: center; gap: 10px; }
+  .tools .tt-btn { min-height: 44px; padding: 8px 18px; font-size: 15px; }
+  .tools small { font-weight: 600; color: var(--tt-muted); }
+
+  .fx { position: fixed; inset: 0; z-index: 25; pointer-events: none; overflow: hidden; }
+  .drop { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, var(--c, #5ee08f)); }
+  .confetti { position: absolute; margin: -0.6em 0 0 -0.3em; font-weight: 800; color: var(--c); font-size: 26px; text-shadow: 0 0 12px var(--c); }
+  .flash { position: absolute; inset: 0; z-index: 12; pointer-events: none; opacity: 0; transition: opacity .5s ease-out;
+           background: radial-gradient(ellipse at center, transparent 40%, rgba(255, 40, 70, .5)); }
+  .flash.on { opacity: 1; transition: none; }
+
+  /* ---------- cards (start / level / game over) ---------- */
+  .intro p { margin: 6px 0; }
+  .intro .lead { color: var(--tt-ink); font-size: 18px; font-weight: 700; }
+  .intro .ctl { color: var(--tt-ink); }
+  .intro small { display: block; margin-top: 10px; color: var(--tt-faint); }
+  .chart { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; margin: 12px 0 6px; }
+  .chart > div { display: grid; padding: 4px 0 3px; border-radius: 10px; line-height: 1.2; background: color-mix(in srgb, var(--tt-accent) 14%, transparent); }
+  .chart b { font-size: 22px; color: var(--tt-ink); }
+  .chart span { font-size: 13px; color: var(--tt-muted); }
+  @media (max-width: 420px) { .chart { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+  /* ---------- wide screens: one row of bubbles under a big number ---------- */
+  @media (min-width: 900px) and (min-height: 640px) {
+    .play { grid-template-rows: auto auto minmax(200px, 340px) auto auto auto; align-content: center; gap: 12px; }
+    .answers, .answers[data-n="3"] { --cols: var(--n, 4); --bsz: min(150px, calc((100vw - 160px) / 4)); }
+  }
+  /* ---------- phones held sideways: question left, bubbles right ---------- */
+  @media (orientation: landscape) and (max-height: 560px) {
+    .play { width: 100%; max-width: 1100px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+            grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "hud answers" "lvl answers" "prompt answers" "fb tools";
+            column-gap: 18px; row-gap: 6px; }
+    .answers { --bsz: min(calc((52vw - 70px) / 2), calc((100dvh - 150px) / 2), 140px); }
+    .answers[data-n="3"] { --bsz: min(calc((52vw - 90px) / 3), calc(100dvh - 200px), 130px); }
+    .num { font-size: clamp(44px, 18dvh, 110px); }
+    .prompt.has-hint .num { font-size: clamp(36px, 12dvh, 80px); }
+    .fb { height: 44px; }
+    .tt-card { padding: 16px 20px; }
+    .tt-card h2 { font-size: 26px; }
+    .chart { margin: 8px 0 4px; } .chart b { font-size: 18px; }
+    .tt-card__actions { margin-top: 12px; }
+  }
+  @media (max-height: 680px) and (orientation: portrait) {
+    .cap { font-size: 13.5px; }
+    .prompt.has-hint .cap { display: none; }
+    .lvl .name { font-size: 14px; }
+  }
+</style>
+<script type="importmap">{ "imports": { "three": "./lib/v1/vendor/three/three.module.min.js", "three/addons/": "./lib/v1/vendor/three/addons/", "tt/": "./lib/v1/" } }</script>
 </head>
 <body>
-    <script>
-        // --- Game Configuration & Global Variables ---
-        let gameState = 'start'; // 'start', 'playing', 'levelComplete', 'gameOver', 'gameWon'
-        let currentLevel = 1;
-        let score = 0;
-        let lives = 3;
-        let questionsAnsweredInLevel = 0;
+<noscript>అంకెల ఆట ఆడటానికి JavaScript అవసరం.</noscript>
+<script type="module">
+import { createApp, keyControls, haptic, isTouch, params, prefersReducedMotion } from "tt/shell.js";
+import { el, setChildren, icon } from "tt/safe.js";
+import { sfx, speak, canSpeakTelugu } from "tt/sfx.js";
+import * as te from "tt/telugu.js";
+import { createBackdrop } from "tt/three-kit.js";
 
-        let targetTeluguNumberStr = '';
-        let targetArabicNumber = 0;
-        let choiceBubbles = []; // { x, y, radius, value, isCorrect, displayValue }
-        let feedbackMessage = ''; // For "సరి!" or "కాదు!"
-        let feedbackColor = [0,0,0];
-        let feedbackTimer = 0;
+/* ============================== content (from the original game, unchanged) ============================== */
+const DEBUG = params().has("debug");
+const rand = te.rng(params().has("seed") ? +params().get("seed") : Date.now() >>> 0);
+const TELUGU_DIGITS = te.DIGITS;        // ['౦', '౧', '౨', '౩', '౪', '౫', '౬', '౭', '౮', '౯'] — the original's table
+const MAX_LEVELS = 5;
 
-        const TELUGU_DIGITS = ['౦', '౧', '౨', '౩', '౪', '౫', '౬', '౭', '౮', '౯'];
-        const MAX_LEVELS = 5;
+let levelConfig = [
+    // Level 1: Single digit
+    { level: 1, min: 1, max: 9, choices: 3, goal: 5, name: "మొదటి స్థాయి: ఒక అంకె" },
+    // Level 2: Two digits (easy)
+    { level: 2, min: 10, max: 30, choices: 3, goal: 7, name: "రెండవ స్థాయి: రెండు అంకెలు (సులువు)" },
+    // Level 3: Two digits (medium)
+    { level: 3, min: 31, max: 99, choices: 4, goal: 7, name: "మూడవ స్థాయి: రెండు అంకెలు (మధ్యస్థం)" },
+    // Level 4: Three digits (introduction)
+    { level: 4, min: 100, max: 300, choices: 4, goal: 10, name: "నాలుగవ స్థాయి: మూడు అంకెలు (పరిచయం)" },
+    // Level 5: Three digits (practice)
+    { level: 5, min: 301, max: 999, choices: 4, goal: 10, name: "ఐదవ స్థాయి: మూడు అంకెలు (అభ్యాసం)" }
+];
+// Optional (setting): 4-digit numbers shown with Indian grouping, e.g. ౪,౩౨౧.
+const EXTRA_LEVEL = { level: 6, min: 1000, max: 9999, choices: 4, goal: 10, name: "అదనపు స్థాయి: ౪ అంకెలు", extra: true };
 
-        let levelConfig = [
-            // Level 1: Single digit
-            { level: 1, min: 1, max: 9, choices: 3, goal: 5, name: "మొదటి స్థాయి: ఒక అంకె" },
-            // Level 2: Two digits (easy)
-            { level: 2, min: 10, max: 30, choices: 3, goal: 7, name: "రెండవ స్థాయి: రెండు అంకెలు (సులువు)" },
-            // Level 3: Two digits (medium)
-            { level: 3, min: 31, max: 99, choices: 4, goal: 7, name: "మూడవ స్థాయి: రెండు అంకెలు (మధ్యస్థం)" },
-            // Level 4: Three digits (introduction)
-            { level: 4, min: 100, max: 300, choices: 4, goal: 10, name: "నాలుగవ స్థాయి: మూడు అంకెలు (పరిచయం)" },
-            // Level 5: Three digits (practice)
-            { level: 5, min: 301, max: 999, choices: 4, goal: 10, name: "ఐదవ స్థాయి: మూడు అంకెలు (అభ్యాసం)" }
-        ];
+const POINTS = 10;          // per correct answer (original); a streak multiplies it
+const HINT_COST = 5;
+const ARM_MS = 250;         // a new question ignores input this long: no tap can carry over from the previous screen
+const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
-        let startButton, nextLevelButton, playAgainButton;
-        let canvasWidth, canvasHeight;
+const MODES = {
+  te2num: { label: "౪౭ → 47", cap: "ఇది ఏ సంఖ్య?", intro: "తెలుగు అంకెలు చూసి, అదే సంఖ్య ఉన్న బుడగను ఎంచుకోండి." },
+  num2te: { label: "47 → ౪౭", cap: "తెలుగు అంకెల్లో ఏది?", intro: "సంఖ్య చూసి, అదే తెలుగు అంకెలు ఉన్న బుడగను ఎంచుకోండి." },
+  listen: { label: "🔊 → ౪౭", cap: "విని, సరైనది ఎంచుకోండి", intro: "సంఖ్యను విని, అదే తెలుగు అంకెలు ఉన్న బుడగను ఎంచుకోండి." },
+};
 
-        // --- P5.js Functions ---
-        function setup() {
-            canvasWidth = min(windowWidth * 0.9, 800); // Max width 800px or 90% of window
-            canvasHeight = min(windowHeight * 0.9, 600); // Max height 600px or 90% of window
-            let canvas = createCanvas(canvasWidth, canvasHeight);
-            canvas.parent(document.body); // Ensure canvas is centered by flexbox
+/* ============================== app shell ============================== */
+const tnum = n => te.formatIndian(n, { telugu: true });          // HUD numbers in Telugu digits
+const modeSetting = { key: "mode", label: "ఆట రకం", type: "segmented", default: "te2num", restart: true,
+  options: [{ value: "te2num", label: MODES.te2num.label }, { value: "num2te", label: MODES.num2te.label }],
+  help: "తెలుగు అంకెలు చూసి సంఖ్య, లేదా సంఖ్య చూసి తెలుగు అంకెలు" };
+/** The listening mode is offered only where the device has a Telugu voice (voices can arrive late). */
+function offerListening() {
+  if (!canSpeakTelugu() || modeSetting.options.some(o => o.value === "listen")) return;
+  modeSetting.options.push({ value: "listen", label: MODES.listen.label });
+  modeSetting.help = "తెలుగు అంకెలు చూసి సంఖ్య, సంఖ్య చూసి తెలుగు అంకెలు, లేదా విని తెలుగు అంకెలు";
+}
+offerListening();
+window.speechSynthesis?.addEventListener?.("voiceschanged", () => { offerListening(); if (state.phase === "menu") refreshMenu(); });
 
-            textFont('Noto Sans Telugu'); // Set default font
-            textAlign(CENTER, CENTER);
-            
-            // Define button properties
-            let buttonWidth = canvasWidth * 0.3;
-            let buttonHeight = canvasHeight * 0.08;
-            startButton = { x: canvasWidth / 2, y: canvasHeight * 0.65, w: buttonWidth, h: buttonHeight, text: "ఆరంభించు" };
-            nextLevelButton = { x: canvasWidth / 2, y: canvasHeight * 0.65, w: buttonWidth, h: buttonHeight, text: "తదుపరి స్థాయి" };
-            playAgainButton = { x: canvasWidth / 2, y: canvasHeight * 0.65, w: buttonWidth, h: buttonHeight, text: "మళ్ళీ ఆడు" };
-        }
+const allLevels = [...levelConfig, EXTRA_LEVEL];
+const range = L => `${tnum(L.min)}–${tnum(L.max)}`;
+const SETTINGS = [
+  modeSetting,
+  { key: "lives", label: "జీవితాలు", type: "segmented", default: 3, restart: true, options: [{ value: 3, label: "౩" }, { value: 5, label: "౫" }] },
+  { key: "start", label: "మొదలయ్యే స్థాయి", type: "segmented", default: 1, restart: true,
+    options: allLevels.map(L => ({ value: L.level, label: tnum(L.level) })),
+    help: allLevels.map(L => `${tnum(L.level)}: ${range(L)}`).join(" · ") + " (౬ = అదనపు స్థాయి)" },
+  { key: "extra", label: "అదనపు స్థాయి (౪ అంకెలు)", type: "toggle", default: false, restart: true,
+    help: `ఐదవ స్థాయి తర్వాత ${range(EXTRA_LEVEL)} సంఖ్యలు, కామాలతో (౪,౩౨౧)` },
+  { key: "speak", label: "సంఖ్యను పలుకు", type: "toggle", default: true, help: "సరైన జవాబు తర్వాత వినిపిస్తుంది (పరికరంలో తెలుగు స్వరం ఉంటేనే)" },
+];
+const digitChart = () => el("div", { class: "chart", attrs: { role: "list", "aria-label": "తెలుగు అంకెలు" } },
+  TELUGU_DIGITS.map((d, i) => el("div", { attrs: { role: "listitem", "aria-label": `${d} = ${i}` } }, el("b", { text: d }), el("span", { text: String(i) }))));
+const helpNode = () => el("div", { class: "intro" },
+  el("p", { text: "• పైన చూపిన సంఖ్యకు సరిపోయే బుడగను తాకండి. ప్రతి సరైన జవాబుకు ౧౦ పాయింట్లు." }),
+  el("p", { text: "• వరుసగా ౩ సరైనవి → ×౨, ౬ సరైనవి → ×౩ పాయింట్లు!" }),
+  el("p", { text: "• తప్పు జవాబుకు ఒక జీవితం పోతుంది, సరైనది ఆకుపచ్చగా కనిపిస్తుంది. జీవితాలు అయిపోతే ఆట ముగుస్తుంది." }),
+  el("p", { text: `• 'సూచన' ప్రతి అంకె స్థాన విలువను (౧౦౦, ౧౦, ౧) రంగుల్లో విడదీసి చూపిస్తుంది. దీనికి ${tnum(HINT_COST)} పాయింట్లు తగ్గుతాయి.` }),
+  el("p", { text: "• ఆట రకాలు (అమరికలు): " + modeSetting.options.map(o => o.label).join(" · ") }),
+  el("p", { class: "ctl", text: "కీబోర్డ్: 1–4 = జవాబు · H = సూచన · P = ఆపు" + (modeSetting.options.length > 2 ? " · R = మళ్ళీ విను" : "") }),
+  digitChart());
 
-        function draw() {
-            background(230, 240, 255); // Light blue background
+const app = createApp({ id: "ankelata", title: "అంకెల ఆట", accent: "peacock", game: true, settings: SETTINGS, help: helpNode,
+  onSettings: () => { if (state.phase === "menu") refreshMenu(); } });
+const pauseBtn = app.addAction("pause", "ఆపు", () => togglePause());
+pauseBtn.hidden = true;
 
-            if (gameState === 'start') {
-                displayStartScreen();
-            } else if (gameState === 'playing') {
-                displayPlayingScreen();
-            } else if (gameState === 'levelComplete') {
-                displayLevelCompleteScreen();
-            } else if (gameState === 'gameOver') {
-                displayGameOverScreen();
-            } else if (gameState === 'gameWon') {
-                displayGameWonScreen();
-            }
+/* ---------- play area (DOM) ---------- */
+const scorePill = el("span", { class: "tt-pill" });
+const livesPill = el("span", { class: "tt-pill hearts" });
+const streakPill = el("span", { class: "tt-pill streak", hidden: true });
+const hud = el("div", { class: "hud" }, scorePill, livesPill, streakPill);
+const lvlName = el("div", { class: "name" });
+const dotsEl = el("div", { class: "dots", attrs: { "aria-hidden": "true" } });
+const countEl = el("small");
+const lvl = el("div", { class: "lvl" }, lvlName, el("div", { class: "progress" }, dotsEl, countEl));
+const cap = el("div", { class: "cap" });
+const numEl = el("div", { class: "num" });
+const listenBtn = el("button", { type: "button", class: "listen", hidden: true, title: "మళ్ళీ వినండి (R)",
+  attrs: { "aria-label": "మళ్ళీ వినండి" }, on: { click: () => speakPrompt() } }, icon("sound"));
+const hintEl = el("div", { class: "hint", hidden: true });
+const prompt = el("div", { class: "prompt", attrs: { role: "group", "aria-label": "ప్రశ్న", "aria-live": "polite" } }, cap, numEl, listenBtn, hintEl);
+const fb = el("div", { class: "fb", attrs: { role: "status", "aria-live": "polite" } });
+const answersEl = el("div", { class: "answers", attrs: { role: "group", "aria-label": "జవాబులు" } });
+const bubbles = [0, 1, 2, 3].map(i => el("button", { type: "button", class: "bub", attrs: { "aria-keyshortcuts": String(i + 1) },
+  style: { "--d": `${-i * 0.9}s`, "--dur": `${3.1 + i * 0.37}s` }, on: { click: () => answer(i) } },
+  el("span", { class: "v" }), el("span", { class: "k", text: String(i + 1), attrs: { "aria-hidden": "true" } })));
+answersEl.append(...bubbles);
+const hintBtn = el("button", { type: "button", class: "tt-btn tt-btn--ghost", title: "సూచన (H)", attrs: { "aria-keyshortcuts": "h" }, on: { click: () => useHint() } },
+  el("span", { text: "💡 సూచన" }), el("small", { text: `−${tnum(HINT_COST)}` }));
+const tools = el("div", { class: "tools" }, hintBtn);
+const play = el("div", { class: "play is-away" }, hud, lvl, prompt, fb, answersEl, tools);
+play.inert = true;
+const flash = el("div", { class: "flash" });
+const fx = el("div", { class: "fx", attrs: { "aria-hidden": "true" } });
+app.stage.append(play, flash, fx);
 
-            if (feedbackTimer > 0) {
-                displayFeedback();
-                feedbackTimer--;
-            }
-        }
+/* ============================== state ============================== */
+const state = {
+  phase: "menu",   // menu | question | feedback | between | over | won | paused
+  cfg: null, mode: "te2num", levels: levelConfig, idx: 0, score: 0, lives: 3, maxLives: 3, inLevel: 0,
+  streak: 0, bestStreak: 0, right: 0, wrong: 0, answers: 0, target: 0, choices: [], kinds: {}, answerIdx: -1,
+  hinted: false, armedAt: 0, used: new Set(), spokeOk: true, pausedFrom: null,
+};
+const level = () => state.levels[state.idx];
+const multiplier = () => (state.streak >= 6 ? 3 : state.streak >= 3 ? 2 : 1);
+const bestKey = () => `${state.mode}-${state.maxLives}`;
+/** 47 → "47"/"౪౭"; 4321 → "4,321"/"౪,౩౨౧" (Indian grouping for the 4-digit level). */
+const fmt = (n, telugu) => (String(n).length >= 4 ? te.formatIndian(n, { telugu }) : telugu ? te.toTeluguDigits(n) : String(n));
 
-        function mousePressed() {
-            if (gameState === 'start') {
-                if (isButtonClicked(startButton, mouseX, mouseY)) {
-                    startGame();
-                }
-            } else if (gameState === 'playing') {
-                choiceBubbles.forEach(bubble => {
-                    if (dist(mouseX, mouseY, bubble.x, bubble.y) < bubble.radius) {
-                        checkAnswer(bubble);
-                    }
-                });
-            } else if (gameState === 'levelComplete') {
-                if (isButtonClicked(nextLevelButton, mouseX, mouseY)) {
-                    startNextLevel();
-                }
-            } else if (gameState === 'gameOver' || gameState === 'gameWon') {
-                if (isButtonClicked(playAgainButton, mouseX, mouseY)) {
-                    resetGame();
-                }
-            }
-        }
-        
-        function windowResized() {
-            canvasWidth = min(windowWidth * 0.9, 800);
-            canvasHeight = min(windowHeight * 0.9, 600);
-            resizeCanvas(canvasWidth, canvasHeight);
+/* ---------- one pending step (time based, held while paused or the tab is hidden) ---------- */
+const pending = { fn: null, id: 0, due: 0, left: 0, held: false };
+function later(fn, ms) { clearLater(); Object.assign(pending, { fn, due: performance.now() + ms }); pending.id = setTimeout(runLater, ms); }
+function runLater() { const fn = pending.fn; pending.fn = null; pending.id = 0; fn?.(); }
+function clearLater() { clearTimeout(pending.id); Object.assign(pending, { fn: null, id: 0, held: false }); }
+function holdLater() { if (!pending.fn || pending.held) return; clearTimeout(pending.id); pending.left = Math.max(0, pending.due - performance.now()); pending.held = true; }
+function releaseLater() {
+  if (!pending.held) return;
+  pending.held = false; const ms = Math.max(450, pending.left);
+  pending.due = performance.now() + ms; pending.id = setTimeout(runLater, ms);
+}
 
-            // Update button positions/sizes if they are relative to canvas size
-            let buttonWidth = canvasWidth * 0.3;
-            let buttonHeight = canvasHeight * 0.08;
-            startButton.w = buttonWidth; startButton.h = buttonHeight; startButton.x = canvasWidth / 2; startButton.y = canvasHeight * 0.65;
-            nextLevelButton.w = buttonWidth; nextLevelButton.h = buttonHeight; nextLevelButton.x = canvasWidth / 2; nextLevelButton.y = canvasHeight * 0.65;
-            playAgainButton.w = buttonWidth; playAgainButton.h = buttonHeight; playAgainButton.x = canvasWidth / 2; playAgainButton.y = canvasHeight * 0.65;
-        }
+/* ============================== distractors ============================== */
+function permutations(s) {
+  if (s.length <= 1) return [s];
+  const out = new Set();
+  for (let i = 0; i < s.length; i++) for (const p of permutations(s.slice(0, i) + s.slice(i + 1))) out.add(s[i] + p);
+  return [...out];
+}
+/**
+ * Wrong answers a learner could really pick, always with the target's digit count:
+ *   swap  — the same digits in another order (47 ↔ 74, 347 → 374, 437…)
+ *   near  — neighbours ±1, ±10, ±100, ±1000
+ *   share — one digit changed, preferring digits the target already has (47 → 44, 77, 41)
+ */
+function makeChoices(n, L, r = rand) {
+  const s = String(n), D = s.length;
+  const lo = D === 1 ? 1 : 10 ** (D - 1), hi = 10 ** D - 1;
+  const ok = x => Number.isInteger(x) && x >= lo && x <= hi && x !== n;
+  const inLevel = x => x >= L.min && x <= L.max;
+  const swap = D > 1 ? permutations(s).filter(p => p[0] !== "0").map(Number).filter(ok) : [];
+  const near = [1, 10, 100, 1000].filter(st => st < 10 ** D).flatMap(st => [n - st, n + st]).concat(D === 1 ? [n - 2, n + 2] : []).filter(ok);
+  const share = [];
+  for (let i = 0; i < D; i++) for (let v = 0; v <= 9; v++) {
+    if (String(v) === s[i]) continue;
+    const x = Number(s.slice(0, i) + v + s.slice(i + 1));
+    if (!ok(x)) continue;
+    share.push(x);
+    if (s.includes(String(v))) share.push(x, x);            // made only of the target's own digits: weighted up
+  }
+  const pools = { swap, near, share };
+  const kinds = r.shuffle(["swap", "near", "share"]);
+  if (swap.length && r() < 0.75) kinds.unshift(...kinds.splice(kinds.indexOf("swap"), 1));
+  const picked = [n], kindOf = { [n]: "target" };
+  const take = list => {
+    const fresh = list.filter(x => !picked.includes(x));
+    if (!fresh.length) return null;
+    const pref = fresh.filter(inLevel);
+    return r.pick(pref.length && r() < 0.7 ? pref : fresh);
+  };
+  for (let k = 0; picked.length < L.choices && k < 12; k++) {
+    const kind = kinds[k % kinds.length], x = take(pools[kind]);
+    if (x != null) { picked.push(x); kindOf[x] = kind; }
+  }
+  for (let g = 0; picked.length < L.choices && g < 500; g++) {   // safety net (never needed for the shipped levels)
+    const x = r.int(lo, hi);
+    if (ok(x) && !picked.includes(x)) { picked.push(x); kindOf[x] = "random"; }
+  }
+  return { choices: r.shuffle(picked), kinds: kindOf };
+}
+function pickTarget(L) {
+  if (state.used.size >= (L.max - L.min + 1) * 0.6) state.used.clear();
+  let n, tries = 0;
+  do { n = rand.int(L.min, L.max); } while ((state.used.has(n) || n === state.target) && ++tries < 60);
+  state.used.add(n);
+  return n;
+}
 
-        // --- Game State Display Functions ---
-        function displayStartScreen() {
-            fill(50, 50, 150); // Dark blue
-            textSize(canvasHeight * 0.1);
-            text("అంకెల ఆట", canvasWidth / 2, canvasHeight * 0.3);
-            
-            textSize(canvasHeight * 0.04);
-            text("తెలుగు అంకెలను గుర్తించండి!", canvasWidth / 2, canvasHeight * 0.45);
+/* ============================== rendering ============================== */
+/** Digits as spans tagged with their place (p0 = ones, p1 = tens…) so a hint can colour them. */
+function placeSpans(str) {
+  let place = [...str].filter(c => c !== ",").length;
+  return [...str].map(c => (c === "," ? el("span", { class: "sep", text: c }) : el("span", { class: "p" + (--place), text: c })));
+}
+function hintNodes(n) {
+  const s = String(n), D = s.length;
+  if (D === 1) return [el("span", { class: "p0 count", text: "●".repeat(Math.min(n, 5)) + (n > 5 ? " " + "●".repeat(n - 5) : ""), attrs: { "aria-label": `${tnum(n)} చుక్కలు` } })];
+  const parts = [];
+  [...s].forEach((d, i) => { const place = D - 1 - i; if (d !== "0") parts.push(el("span", { class: "p" + place, text: fmt(+d * 10 ** place, true) })); });
+  return parts.flatMap((p, i) => (i ? [el("span", { class: "op", text: "+" }), p] : [p]));
+}
+function renderHud(bump = null) {
+  setChildren(scorePill, el("span", { class: "star", text: "★" }), el("small", { text: "పాయింట్లు" }), el("b", { text: tnum(state.score) }));
+  scorePill.setAttribute("aria-label", `పాయింట్లు: ${state.score}`);
+  const alive = Math.max(0, state.lives);
+  setChildren(livesPill, el("small", { text: "జీవితాలు" }), el("b", { text: "♥".repeat(alive) }), el("i", { text: "♥".repeat(Math.max(0, state.maxLives - alive)) }));
+  livesPill.setAttribute("aria-label", `జీవితాలు: ${alive}/${state.maxLives}`);
+  const m = multiplier();
+  streakPill.hidden = state.streak < 2;
+  setChildren(streakPill, "🔥", el("b", { text: tnum(state.streak) }), m > 1 ? el("span", { class: "mult", text: `×${tnum(m)}` }) : null);
+  streakPill.setAttribute("aria-label", `వరుసగా ${state.streak} సరైనవి`);
+  fitHud();
+  if (bump) { const [pill, cls] = bump === "lives" ? [livesPill, "shake"] : bump === "streak" ? [streakPill, "bump"] : [scorePill, "bump"];
+    pill.classList.remove("bump", "shake"); void pill.offsetWidth; pill.classList.add(cls); }
+}
+function fitHud() { hud.classList.remove("tight"); if (hud.scrollWidth > hud.clientWidth + 1) hud.classList.add("tight"); }
+new ResizeObserver(() => fitHud()).observe(hud);
+function renderLevel() {
+  const L = level();
+  lvlName.textContent = L.name;
+  setChildren(dotsEl, Array.from({ length: L.goal }, (_, i) => el("i", { class: i < state.inLevel ? "on" : "" })));
+  countEl.textContent = `${tnum(state.inLevel)}/${tnum(L.goal)}`;
+}
+function renderPrompt() {
+  const n = state.target, listen = state.mode === "listen";
+  cap.textContent = listen && !state.spokeOk ? (sfx.muted ? "శబ్దం ఆఫ్‌లో ఉంది — సంఖ్యను చూపిస్తున్నాం" : "స్వరం అందలేదు — సంఖ్యను చూపిస్తున్నాం") : MODES[state.mode].cap;
+  listenBtn.hidden = !listen;
+  numEl.hidden = listen && state.spokeOk;
+  // te2num shows Telugu digits; the reverse and the listening fallback show the number itself
+  const str = fmt(n, state.mode === "te2num");
+  setChildren(numEl, placeSpans(str));
+  numEl.setAttribute("aria-label", str);
+  const commas = str.split(",").length - 1;
+  numEl.style.setProperty("--w", ((str.length - commas) * 0.74 + commas * 0.32).toFixed(2));   // rendered width in em
+  prompt.classList.toggle("has-hint", state.hinted);
+  hintEl.hidden = !state.hinted;
+  if (state.hinted) setChildren(hintEl, hintNodes(n)); else hintEl.replaceChildren();
+}
+const isCssAnim = a => (window.CSSAnimation && a instanceof CSSAnimation) || (window.CSSTransition && a instanceof CSSTransition);
+function renderBubbles() {
+  const n = state.choices.length, teluguAnswers = state.mode !== "te2num";
+  answersEl.dataset.n = n;
+  answersEl.style.setProperty("--n", n);
+  bubbles.forEach((b, i) => {
+    b.getAnimations().forEach(a => { if (!isCssAnim(a)) a.cancel(); });   // drop the last pop/shake, keep the CSS float
+    b.className = "bub";
+    b.hidden = i >= n;
+    b.removeAttribute("aria-disabled");
+    if (i >= n) return;
+    const str = fmt(state.choices[i], teluguAnswers);
+    b.dataset.len = [...str].length;
+    b.dataset.value = state.choices[i];
+    b.querySelector(".v").textContent = str;
+  });
+}
+function renderHintBtn() { hintBtn.disabled = state.hinted; hintBtn.setAttribute("aria-pressed", String(state.hinted)); }
+function showFeedback(ok, pts = 0, mult = 1) {
+  const n = state.target, teFirst = state.mode !== "num2te";
+  const eq = teFirst ? `${fmt(n, true)} = ${fmt(n, false)}` : `${fmt(n, false)} = ${fmt(n, true)}`;
+  if (ok) setChildren(fb, el("span", { class: "ok", text: "సరి!" }), el("span", { class: "eq", text: eq }),
+    el("span", { class: "pts", text: `+${tnum(pts)}${mult > 1 ? ` (×${tnum(mult)})` : ""}` }));
+  else setChildren(fb, el("span", { class: "no", text: "కాదు!" }), el("span", { class: "lbl", text: "సరైనది:" }), el("span", { class: "eq", text: eq }));
+}
 
-            drawButton(startButton);
-        }
+/* ---------- motion (WAAPI; skipped when the device asks for reduced motion) ---------- */
+const calm = () => prefersReducedMotion();
+function animateIn() {
+  if (calm()) return;
+  numEl.animate([{ opacity: 0, transform: "scale(.8)" }, { opacity: 1, transform: "scale(1)" }], { duration: 260, easing: EASE });
+  bubbles.forEach((b, i) => { if (!b.hidden) b.animate([{ opacity: 0, transform: "scale(.3)" }, { opacity: 1, transform: "scale(1.08)", offset: 0.7 }, { opacity: 1, transform: "scale(1)" }],
+    { duration: 420, delay: i * 70, easing: EASE, fill: "backwards" }); });
+}
+function popBubble(b) {
+  if (calm()) return;
+  b.animate([{ transform: "scale(1)" }, { transform: "scale(1.18)", offset: 0.35 }, { transform: "scale(1.5)", opacity: 0 }], { duration: 420, delay: 180, easing: "ease-out", fill: "forwards" });
+  setTimeout(() => droplets(b, "#5ee08f", 14), 330);
+}
+function droplets(b, color, count) {
+  const r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2 + rand() * 0.4, d = r.width * (0.5 + rand() * 0.4);
+    const s = el("i", { class: "drop", style: { left: cx + "px", top: cy + "px", "--c": color } });
+    fx.append(s);
+    s.animate([{ transform: "translate(0, 0) scale(1)", opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px) scale(.2)`, opacity: 0 }],
+      { duration: 520 + rand() * 220, easing: "cubic-bezier(.2, .7, .3, 1)" }).onfinish = () => s.remove();
+  }
+}
+function celebrate() {
+  if (calm()) return;
+  const colors = ["#22c3d6", "#ffc233", "#ff7aa8", "#5ee08f", "#a99bff"];
+  for (let i = 0; i < 26; i++) {
+    const x = innerWidth * (0.15 + rand() * 0.7), s = el("span", { class: "confetti", text: rand.pick(TELUGU_DIGITS), style: { left: x + "px", top: innerHeight + 20 + "px", "--c": rand.pick(colors) } });
+    fx.append(s);
+    const up = innerHeight * (0.45 + rand() * 0.45);
+    s.animate([{ transform: "translate(0, 0) rotate(0deg)", opacity: 1 }, { transform: `translate(${(rand() - 0.5) * 160}px, ${-up}px) rotate(${(rand() - 0.5) * 540}deg)`, opacity: 0 }],
+      { duration: 1300 + rand() * 900, delay: rand() * 250, easing: "cubic-bezier(.15, .7, .3, 1)", fill: "backwards" }).onfinish = () => s.remove();
+  }
+}
+function shakeEl(b) { if (!calm()) b.animate([{ transform: "translateX(0)" }, { transform: "translateX(-9px)" }, { transform: "translateX(8px)" }, { transform: "translateX(-5px)" }, { transform: "translateX(0)" }], { duration: 380 }); }
+function flashRed() { if (calm()) return; flash.classList.add("on"); requestAnimationFrame(() => requestAnimationFrame(() => flash.classList.remove("on"))); }
 
-        function displayPlayingScreen() {
-            // Display Level Name
-            fill(0);
-            textSize(canvasHeight * 0.04);
-            text(levelConfig[currentLevel - 1].name, canvasWidth / 2, canvasHeight * 0.1);
+/* ============================== speech ============================== */
+let speakWhenVisible = false;
+const say = text => { try { return speak(text, { rate: 0.85 }); } catch { return false; } };   // speech must never break a round
+/** Listening mode: say the target. If speech can't play (muted / voice gone) the number is shown instead. */
+function speakPrompt() {
+  if (state.mode !== "listen" || !["question", "feedback"].includes(state.phase)) return;
+  if (document.hidden) { speakWhenVisible = true; return; }
+  const ok = say(String(state.target));
+  if (ok !== state.spokeOk) { state.spokeOk = ok; renderPrompt(); }
+  if (ok) { listenBtn.classList.remove("speaking"); void listenBtn.offsetWidth; listenBtn.classList.add("speaking"); }
+}
 
-            // Display Target Telugu Number
-            fill(200, 0, 0); // Red for target
-            textSize(canvasHeight * 0.15);
-            text(targetTeluguNumberStr, canvasWidth / 2, canvasHeight * 0.3);
+/* ============================== flow ============================== */
+let overlayAt = 0;
+/** Cards: the play area goes inert underneath, and buttons ignore presses in the first 350 ms so a fast
+ *  tap meant for a bubble can never land on "next level" / "play again" as the card appears. */
+function showOverlay(opts) {
+  overlayAt = performance.now();
+  play.classList.add("is-away"); play.inert = true;
+  pauseBtn.hidden = opts.pause !== true;
+  app.overlay({ ...opts, actions: (opts.actions ?? []).filter(Boolean).map(a => ({ ...a, onClick: () => { if (performance.now() - overlayAt >= 350) a.onClick(); } })) });
+}
+function hideOverlay() { app.hideOverlay(); play.classList.remove("is-away"); play.inert = false; pauseBtn.hidden = false; }
 
-            // Display Score and Lives
-            fill(0);
-            textSize(canvasHeight * 0.035);
-            textAlign(LEFT, TOP);
-            text("పాయింట్లు: " + score, canvasWidth * 0.05, canvasHeight * 0.03);
-            textAlign(RIGHT, TOP);
-            text("జీవితాలు: " + '❤️'.repeat(lives), canvasWidth * 0.95, canvasHeight * 0.03);
-            textAlign(CENTER, CENTER); // Reset alignment
+function settingsNow() {
+  const s = { ...app.settings };
+  if (!MODES[s.mode]) s.mode = "te2num";
+  s.lives = s.lives === 5 ? 5 : 3;
+  s.start = Math.min(6, Math.max(1, Math.round(+s.start) || 1));
+  return s;
+}
+function startGame() {
+  clearLater(); window.speechSynthesis?.cancel();
+  const cfg = state.cfg = settingsNow();
+  state.mode = cfg.mode === "listen" && !canSpeakTelugu() ? "te2num" : cfg.mode;
+  state.levels = cfg.extra || cfg.start === 6 ? [...levelConfig, EXTRA_LEVEL] : [...levelConfig];
+  state.maxLives = state.lives = cfg.lives;
+  Object.assign(state, { score: 0, streak: 0, bestStreak: 0, right: 0, wrong: 0, answers: 0, target: 0, spokeOk: true });
+  startLevel(Math.min(cfg.start, state.levels.length) - 1);
+}
+function startLevel(idx) {
+  state.idx = idx; state.inLevel = 0; state.used = new Set();
+  hideOverlay();
+  renderLevel(); renderHud();
+  nextQuestion();
+}
+function nextQuestion() {
+  const L = level();
+  state.target = pickTarget(L);
+  ({ choices: state.choices, kinds: state.kinds } = makeChoices(state.target, L));
+  state.answerIdx = state.choices.indexOf(state.target);
+  state.hinted = false;
+  state.phase = "question";
+  state.armedAt = performance.now() + ARM_MS;
+  fb.replaceChildren();
+  renderPrompt(); renderBubbles(); renderHintBtn();
+  animateIn();
+  if (state.mode === "listen") speakPrompt();
+}
+/** The single entry point for an answer (tap, click, Enter/Space on a bubble, or keys 1–4). */
+function answer(i) {
+  if (state.phase !== "question" || performance.now() < state.armedAt || i >= state.choices.length) return false;
+  state.phase = "feedback"; state.answers++;
+  const b = bubbles[i], ok = i === state.answerIdx;
+  bubbles.forEach(x => x.setAttribute("aria-disabled", "true"));
+  if (ok) {
+    if (!state.hinted) state.streak++;
+    const mult = multiplier(), pts = POINTS * mult;
+    state.score += pts; state.inLevel++; state.right++; state.bestStreak = Math.max(state.bestStreak, state.streak);
+    b.classList.add("is-right");
+    bubbles.forEach((x, j) => j !== i && x.classList.add("is-dim"));
+    popBubble(b); sfx.play("pop"); sfx.play("good"); haptic(12);
+    showFeedback(true, pts, mult);
+    renderHud(state.streak === 3 || state.streak === 6 ? "streak" : "score"); renderLevel();
+    if (app.settings.speak && state.mode !== "listen" && !document.hidden) say(String(state.target));
+    later(afterAnswer, 800);
+  } else {
+    state.lives--; state.streak = 0; state.wrong++;
+    b.classList.add("is-wrong"); bubbles[state.answerIdx].classList.add("is-right");
+    bubbles.forEach((x, j) => j !== i && j !== state.answerIdx && x.classList.add("is-dim"));
+    shakeEl(b); flashRed(); sfx.play("bad"); haptic([20, 30, 20]);
+    showFeedback(false);
+    renderHud("lives");
+    later(afterAnswer, 1600);
+  }
+  return true;
+}
+function afterAnswer() {
+  if (state.lives <= 0) return gameOver();
+  if (state.inLevel >= level().goal) return levelComplete();
+  nextQuestion();
+}
+function useHint() {
+  if (state.phase !== "question" || state.hinted) return;
+  state.hinted = true;
+  state.score = Math.max(0, state.score - HINT_COST);
+  sfx.play("tap");
+  renderPrompt(); renderHintBtn(); renderHud("score");
+}
+function levelComplete() {
+  if (state.idx >= state.levels.length - 1) return gameWon();
+  state.phase = "between"; sfx.play("level"); haptic([20, 40, 20]); celebrate();
+  const next = state.levels[state.idx + 1];
+  showOverlay({
+    title: "స్థాయి పూర్తయింది!",
+    body: el("div", { class: "intro" }, el("p", { text: `తదుపరి: ${next.name}` })),
+    stats: [{ label: "మీ పాయింట్లు", value: tnum(state.score) }, { label: "జీవితాలు", value: `${tnum(state.lives)}/${tnum(state.maxLives)}` },
+            { label: "ఉత్తమ వరుస", value: tnum(state.bestStreak) }],
+    actions: [{ label: "తదుపరి స్థాయి", onClick: () => startLevel(state.idx + 1) }],
+  });
+}
+function finalStats(best) {
+  return [{ label: "మీ తుది పాయింట్లు", value: tnum(state.score) }, { label: "ఉత్తమం", value: tnum(best) }, { label: "సరైనవి", value: tnum(state.right) }];
+}
+function gameOver() {
+  state.phase = "over";
+  const { best, isNew } = app.best(bestKey()).submit(state.score);
+  showOverlay({
+    title: "ఆట ముగిసింది!",
+    body: isNew ? "కొత్త రికార్డు! 🎉" : `స్థాయి ${tnum(level().level)} వరకు వచ్చారు.`,
+    stats: finalStats(best),
+    actions: [{ label: "మళ్ళీ ఆడు", onClick: startGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+  });
+}
+function gameWon() {
+  state.phase = "won"; sfx.play("win"); haptic([30, 40, 30, 40, 60]); celebrate();
+  const { best, isNew } = app.best(bestKey()).submit(state.score);
+  const canExtra = !state.levels.includes(EXTRA_LEVEL);
+  showOverlay({
+    title: "అభినందనలు!",
+    body: el("div", { class: "intro" }, el("p", { class: "lead", text: "మీరు అన్ని స్థాయిలను పూర్తి చేసారు!" }),
+      isNew ? el("p", { text: "కొత్త రికార్డు! 🎉" }) : null,
+      canExtra ? el("p", { text: `ఇంకా ఆడాలా? ${EXTRA_LEVEL.name} (${range(EXTRA_LEVEL)})` }) : null),
+    stats: finalStats(best),
+    actions: [
+      canExtra && { label: "అదనపు స్థాయి →", onClick: () => { state.levels = [...state.levels, EXTRA_LEVEL]; startLevel(state.levels.length - 1); } },
+      { label: "మళ్ళీ ఆడు", ghost: canExtra, onClick: startGame },
+      { label: "అమరికలు", ghost: true, onClick: app.openSettings },
+    ],
+  });
+}
+function togglePause() {
+  if (state.phase === "paused") return resume();
+  if (!["question", "feedback"].includes(state.phase)) return;
+  state.pausedFrom = state.phase; state.phase = "paused";
+  holdLater(); window.speechSynthesis?.cancel();
+  showOverlay({ title: "ఆట ఆగింది", pause: true, actions: [
+    { label: "కొనసాగించు", onClick: resume },
+    { label: "మళ్ళీ మొదలు", ghost: true, onClick: startGame },
+    { label: "అమరికలు", ghost: true, onClick: app.openSettings },
+  ] });
+}
+function resume() {
+  if (state.phase !== "paused") return;
+  state.phase = state.pausedFrom; hideOverlay();
+  state.armedAt = performance.now() + ARM_MS;
+  if (!document.hidden) releaseLater();
+}
 
-            // Draw Choice Bubbles
-            choiceBubbles.forEach(bubble => {
-                fill(100, 150, 255); // Blue for bubbles
-                stroke(50, 100, 200);
-                strokeWeight(3);
-                ellipse(bubble.x, bubble.y, bubble.radius * 2);
-                noStroke();
-                fill(255);
-                textSize(bubble.radius * 0.6);
-                text(bubble.displayValue, bubble.x, bubble.y);
-            });
-        }
+/* ---------- start card ---------- */
+const menuCtl = el("p", { class: "ctl" });
+const menuNote = el("small");
+function refreshMenu() {
+  const s = settingsNow();
+  const mode = s.mode === "listen" && !canSpeakTelugu() ? "te2num" : s.mode;
+  menuCtl.textContent = MODES[mode].intro + (isTouch() ? "" : " (కీలు 1–4)");
+  const best = app.best(`${mode}-${s.lives}`).get();
+  menuNote.textContent = [MODES[mode].label, `జీవితాలు ${tnum(s.lives)}`, `స్థాయి ${tnum(s.start)} నుండి`, best ? `ఉత్తమం ${tnum(best)}` : null].filter(Boolean).join(" · ");
+}
+function showMenu() {
+  state.phase = "menu"; clearLater();
+  refreshMenu();
+  showOverlay({
+    title: "అంకెల ఆట",
+    body: el("div", { class: "intro" }, el("p", { class: "lead", text: "తెలుగు అంకెలను గుర్తించండి!" }), digitChart(), menuCtl, menuNote),
+    actions: [{ label: "ఆరంభించు", onClick: startGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+  });
+}
 
-        function displayLevelCompleteScreen() {
-            fill(0, 150, 0); // Green
-            textSize(canvasHeight * 0.08);
-            text("స్థాయి పూర్తయింది!", canvasWidth / 2, canvasHeight * 0.3);
-            
-            fill(0);
-            textSize(canvasHeight * 0.05);
-            text("మీ పాయింట్లు: " + score, canvasWidth / 2, canvasHeight * 0.45);
-            
-            drawButton(nextLevelButton);
-        }
+/* ============================== input ============================== */
+// Bubbles are <button>s answering on "click": one tap → exactly one click (the last event of the
+// gesture), so nothing is left over to hit the next screen. Keyboard: 1–4 pick a bubble.
+const pick = i => () => answer(i);
+keyControls({
+  "1": pick(0), "2": pick(1), "3": pick(2), "4": pick(3),
+  [TELUGU_DIGITS[1]]: pick(0), [TELUGU_DIGITS[2]]: pick(1), [TELUGU_DIGITS[3]]: pick(2), [TELUGU_DIGITS[4]]: pick(3),
+  KeyH: useHint, KeyR: () => speakPrompt(), " ": () => speakPrompt(), KeyP: togglePause, Escape: togglePause,
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { window.speechSynthesis?.cancel(); holdLater(); return; }
+  if (state.phase !== "paused") releaseLater();
+  if (speakWhenVisible) { speakWhenVisible = false; speakPrompt(); }
+});
 
-        function displayGameOverScreen() {
-            fill(200, 0, 0); // Red
-            textSize(canvasHeight * 0.1);
-            text("ఆట ముగిసింది!", canvasWidth / 2, canvasHeight * 0.3);
-
-            fill(0);
-            textSize(canvasHeight * 0.05);
-            text("మీ తుది పాయింట్లు: " + score, canvasWidth / 2, canvasHeight * 0.45);
-            
-            drawButton(playAgainButton);
-        }
-
-        function displayGameWonScreen() {
-            fill(255, 165, 0); // Orange/Gold
-            textSize(canvasHeight * 0.1);
-            text("అభినందనలు!", canvasWidth / 2, canvasHeight * 0.25);
-            textSize(canvasHeight * 0.06);
-            text("మీరు అన్ని స్థాయిలను పూర్తి చేసారు!", canvasWidth / 2, canvasHeight * 0.4);
-            
-            fill(0);
-            textSize(canvasHeight * 0.05);
-            text("మీ తుది పాయింట్లు: " + score, canvasWidth / 2, canvasHeight * 0.55);
-            
-            drawButton(playAgainButton);
-        }
-        
-        function displayFeedback() {
-            push();
-            fill(feedbackColor[0], feedbackColor[1], feedbackColor[2], map(feedbackTimer, 60, 0, 255, 0));
-            textSize(canvasHeight * 0.06);
-            text(feedbackMessage, canvasWidth / 2, canvasHeight * 0.45);
-            pop();
-        }
-
-        // --- Game Logic Functions ---
-        function startGame() {
-            currentLevel = 1;
-            score = 0;
-            lives = 3;
-            gameState = 'playing';
-            setupCurrentLevel();
-        }
-        
-        function resetGame() { // Used by playAgainButton
-            currentLevel = 1;
-            score = 0;
-            lives = 3;
-            questionsAnsweredInLevel = 0;
-            gameState = 'playing';
-            setupCurrentLevel();
-        }
-
-        function setupCurrentLevel() {
-            questionsAnsweredInLevel = 0;
-            generateNewQuestion();
-        }
-
-        function generateNewQuestion() {
-            if (lives <= 0) {
-                gameState = 'gameOver';
-                return;
-            }
-            
-            let config = levelConfig[currentLevel - 1];
-            targetArabicNumber = floor(random(config.min, config.max + 1));
-            targetTeluguNumberStr = arabicToTelugu(targetArabicNumber);
-
-            choiceBubbles = [];
-            let answers = [];
-            answers.push(targetArabicNumber);
-
-            // Generate distractors
-            for (let i = 0; i < config.choices - 1; i++) {
-                let distractor;
-                do {
-                    // Ensure distractors are roughly in the same digit category
-                    let distMin = config.min;
-                    let distMax = config.max;
-                    if (String(config.min).length !== String(config.max).length) { // Handle ranges spanning digit counts
-                        let targetDigits = String(targetArabicNumber).length;
-                        distMin = pow(10, targetDigits -1);
-                        distMax = pow(10, targetDigits) -1;
-                        if (targetDigits === 1) {distMin = 1;} // for single digits
-                        distMin = max(distMin, config.min); // clamp to level config
-                        distMax = min(distMax, config.max); // clamp to level config
-                    }
-                    distractor = floor(random(distMin, distMax + 1));
-                } while (answers.includes(distractor) || distractor === targetArabicNumber);
-                answers.push(distractor);
-            }
-
-            shuffleArray(answers); // Randomize order of choices
-
-            let bubbleRadius = canvasWidth * 0.08;
-            let spacing = (canvasWidth - (config.choices * bubbleRadius * 2)) / (config.choices + 1);
-            let startX = spacing + bubbleRadius;
-
-            for (let i = 0; i < config.choices; i++) {
-                choiceBubbles.push({
-                    x: startX + i * (bubbleRadius * 2 + spacing),
-                    y: canvasHeight * 0.7,
-                    radius: bubbleRadius,
-                    value: answers[i],
-                    isCorrect: (answers[i] === targetArabicNumber),
-                    displayValue: String(answers[i]) // Arabic numerals for choices
-                });
-            }
-        }
-
-        function checkAnswer(clickedBubble) {
-            if (feedbackTimer > 0) return; // Prevent multiple clicks while feedback is showing
-
-            if (clickedBubble.isCorrect) {
-                score += 10;
-                questionsAnsweredInLevel++;
-                feedbackMessage = "సరి!";
-                feedbackColor = [0, 180, 0]; // Green
-                if (questionsAnsweredInLevel >= levelConfig[currentLevel - 1].goal) {
-                    if (currentLevel === MAX_LEVELS) {
-                        gameState = 'gameWon';
-                    } else {
-                        gameState = 'levelComplete';
-                    }
-                } else {
-                    generateNewQuestion();
-                }
-            } else {
-                lives--;
-                feedbackMessage = "కాదు!";
-                feedbackColor = [200, 0, 0]; // Red
-                if (lives <= 0) {
-                    gameState = 'gameOver';
-                } else {
-                    // Optionally, regenerate question or let them try again
-                     generateNewQuestion(); // For now, new question on wrong answer
-                }
-            }
-            feedbackTimer = 60; // Show feedback for 1 second (60 frames)
-        }
-
-        function startNextLevel() {
-            currentLevel++;
-            if (currentLevel > MAX_LEVELS) {
-                 gameState = 'gameWon'; // Should have been caught earlier
-            } else {
-                gameState = 'playing';
-                setupCurrentLevel();
-            }
-        }
-
-        // --- Utility Functions ---
-        function arabicToTelugu(num) {
-            let s = String(num);
-            let teluguStr = '';
-            for (let char of s) {
-                teluguStr += TELUGU_DIGITS[parseInt(char)];
-            }
-            return teluguStr;
-        }
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = floor(random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-
-        function drawButton(button) {
-            push();
-            rectMode(CENTER);
-            fill(100, 100, 250); // Button color
-            stroke(50, 50, 150);
-            strokeWeight(2);
-            rect(button.x, button.y, button.w, button.h, 10); // Rounded corners
-            noStroke();
-            fill(255); // Text color
-            textSize(button.h * 0.4);
-            text(button.text, button.x, button.y);
-            pop();
-        }
-
-        function isButtonClicked(button, mx, my) {
-            return mx > button.x - button.w / 2 &&
-                   mx < button.x + button.w / 2 &&
-                   my > button.y - button.h / 2 &&
-                   my < button.y + button.h / 2;
-        }
-
-    </script>
+/* ============================== boot ============================== */
+renderHud();
+showMenu();
+createBackdrop(app.stage, { letters: TELUGU_DIGITS, count: 22, opacity: 0.18 }).catch(() => null);
+if (DEBUG) window.__game = { state, levelConfig, EXTRA_LEVEL, MAX_LEVELS, makeChoices, answer, useHint, startGame, togglePause, bubbles, renderHud,
+  correctIndex: () => state.answerIdx, wrongIndex: () => state.choices.findIndex((_, i) => i !== state.answerIdx),
+  skipWait: () => { if (pending.fn && !pending.held) { clearTimeout(pending.id); runLater(); } } };
+</script>
 </body>
 </html>

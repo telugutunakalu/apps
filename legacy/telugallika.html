@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>తెలుగల్లిక</title>
+
+    <!-- PWA / Android App Meta Tags -->
+    <meta name="theme-color" content="#6B21A8">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============================================
+           CSS VARIABLES
+        ============================================ */
+        :root {
+            --primary: #6B21A8;
+            --primary-light: #A855F7;
+            --primary-dark: #581C87;
+            --secondary: #F59E0B;
+            --secondary-light: #FCD34D;
+            --accent: #EC4899;
+
+            --bg-color: #F3F0F7;
+            --card-bg: #FFFFFF;
+
+            --text-dark: #1F2937;
+            --text-muted: #6B7280;
+
+            --success: #10B981;
+            --success-light: #D1FAE5;
+            --error: #EF4444;
+            --error-light: #FEE2E2;
+            --warning: #F59E0B;
+            --warning-light: #FEF3C7;
+            --info: #3B82F6;
+            --info-light: #DBEAFE;
+
+            --cols: 5;
+            --cell-size: min(calc((100vw - 32px) / var(--cols)), 44px);
+
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        /* ============================================
+           RESET & BASE (Mobile-First: 320px)
+        ============================================ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        html {
+            height: 100%;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        body {
+            font-family: 'Noto Sans Telugu', system-ui, sans-serif;
+            background: var(--bg-color);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-dark);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* ============================================
+           HEADER (App Bar)
+        ============================================ */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            padding: 12px;
+            padding-top: calc(12px + var(--safe-top));
+            text-align: center;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            /* Material elevation level 4 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.14),
+                        0 3px 4px rgba(0,0,0,0.12),
+                        0 1px 5px rgba(0,0,0,0.2);
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            letter-spacing: 1px;
+        }
+
+        .tagline {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.85);
+            margin-top: 2px;
+        }
+
+        /* ============================================
+           CONTAINER (Scrollable Content)
+        ============================================ */
+        .container {
+            flex: 1;
+            padding: 8px;
+            padding-bottom: calc(8px + var(--safe-bottom));
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* ============================================
+           CARDS (Material Elevation)
+        ============================================ */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            /* Material elevation level 1 */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12),
+                        0 1px 2px rgba(0,0,0,0.14);
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 3px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        /* ============================================
+           INPUT SECTION (Collapsible)
+        ============================================ */
+        .input-section details {
+            width: 100%;
+        }
+
+        .input-section summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 8px 0;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--primary);
+            list-style: none;
+            user-select: none;
+        }
+
+        .input-section summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .input-section summary::after {
+            content: '▼';
+            font-size: 0.65rem;
+            transition: transform 0.2s ease;
+        }
+
+        .input-section details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .input-section textarea {
+            width: 100%;
+            height: 70px;
+            padding: 10px;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 8px;
+            font-family: 'Noto Sans Telugu', monospace;
+            font-size: 13px;
+            resize: none;
+            margin-top: 8px;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-section textarea:focus {
+            border-color: var(--primary-light);
+            outline: none;
+        }
+
+        .hint-text {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ============================================
+           BUTTONS (Stacked on tiny screens)
+        ============================================ */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            user-select: none;
+        }
+
+        /* Ripple effect */
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255,255,255,0.4);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:active::after {
+            width: 300px;
+            height: 300px;
+            opacity: 1;
+            transition: 0s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #34D399 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%);
+            color: white;
+        }
+
+        /* ============================================
+           STATUS MESSAGES
+        ============================================ */
+        .status {
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: var(--success-light);
+            color: #065F46;
+            border-left: 3px solid var(--success);
+            display: block;
+        }
+
+        .status-error {
+            background: var(--error-light);
+            color: #991B1B;
+            border-left: 3px solid var(--error);
+            display: block;
+        }
+
+        .status-info {
+            background: var(--info-light);
+            color: #1E40AF;
+            border-left: 3px solid var(--info);
+            display: block;
+        }
+
+        /* ============================================
+           MAIN CONTENT
+        ============================================ */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* ============================================
+           CROSSWORD GRID
+        ============================================ */
+        .grid-section {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .grid-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 8px 0;
+        }
+
+        #crossword-grid {
+            display: inline-grid;
+            gap: 0;
+            border: 2px solid var(--primary-dark);
+            border-radius: 4px;
+            background: var(--primary-dark);
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 1px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Noto Sans Telugu', sans-serif;
+            font-size: calc(var(--cell-size) * 0.4);
+            font-weight: 500;
+            position: relative;
+            background: white;
+            cursor: text;
+        }
+
+        .cell-input {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            padding-top: 4px;
+        }
+
+        .cell-input:focus {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .cell:focus-within {
+            outline: 2px solid var(--secondary);
+            outline-offset: -2px;
+            z-index: 1;
+        }
+
+        .cell-black {
+            background: var(--primary-dark);
+            cursor: default;
+        }
+
+        .cell-number {
+            position: absolute;
+            top: 1px;
+            left: 2px;
+            font-size: calc(var(--cell-size) * 0.2);
+            font-weight: 700;
+            color: var(--accent);
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .cell-correct {
+            background: var(--success-light) !important;
+            border-color: var(--success) !important;
+        }
+
+        .cell-error {
+            background: var(--error-light) !important;
+            border-color: var(--error) !important;
+        }
+
+        .cell-empty-warning {
+            background: var(--warning-light) !important;
+            border-color: var(--warning) !important;
+        }
+
+        .cell-highlighted {
+            background: rgba(168, 85, 247, 0.15) !important;
+        }
+
+        /* ============================================
+           CLUES SECTION (Tabbed)
+        ============================================ */
+        .clues-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .clues-tab {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            background: #F3F4F6;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            min-height: 44px;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .clues-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .clues-content {
+            max-height: 180px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .clues-group {
+            display: none;
+        }
+
+        .clues-group.active {
+            display: block;
+        }
+
+        .clue-item {
+            padding: 10px;
+            margin-bottom: 6px;
+            background: #F9FAFB;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            border-left: 3px solid transparent;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+
+        .clue-item:active {
+            background: rgba(168, 85, 247, 0.15);
+            border-left-color: var(--primary);
+        }
+
+        .clue-number {
+            font-weight: 700;
+            color: var(--accent);
+            margin-right: 6px;
+        }
+
+        .clue-length {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            margin-left: 4px;
+        }
+
+        /* ============================================
+           EMPTY STATE
+        ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 0.85rem;
+        }
+
+        /* ============================================
+           BREAKPOINT: 375px+ (iPhone SE, larger phones)
+        ============================================ */
+        @media (min-width: 375px) {
+            .logo {
+                font-size: 1.9rem;
+            }
+
+            .button-group {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .btn-primary {
+                grid-column: span 2;
+            }
+
+            :root {
+                --cell-size: min(calc((100vw - 40px) / var(--cols)), 46px);
+            }
+
+            .input-section textarea {
+                height: 80px;
+            }
+        }
+
+        /* ============================================
+           BREAKPOINT: 480px+ (Large phones)
+        ============================================ */
+        @media (min-width: 480px) {
+            .header {
+                padding: 16px;
+            }
+
+            .logo {
+                font-size: 2.2rem;
+            }
+
+            .tagline {
+                font-size: 0.8rem;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .button-group {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .btn-primary {
+                grid-column: span 1;
+            }
+
+            .btn {
+                font-size: 0.9rem;
+            }
+
+            .input-section textarea {
+                height: 100px;
+            }
+
+            .clues-content {
+                max-height: 250px;
+            }
+
+            :root {
+                --cell-size: min(calc((100vw - 60px) / var(--cols)), 48px);
+            }
+        }
+
+        /* ============================================
+           BREAKPOINT: 768px+ (Tablets, Desktop)
+        ============================================ */
+        @media (min-width: 768px) {
+            .header {
+                padding: 24px 20px;
+            }
+
+            .logo {
+                font-size: 2.8rem;
+            }
+
+            .tagline {
+                font-size: 0.95rem;
+            }
+
+            .container {
+                padding: 20px;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+
+            .card {
+                padding: 20px;
+                border-radius: 16px;
+            }
+
+            .main-content {
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .grid-section {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .clues-section {
+                flex: 0 0 300px;
+            }
+
+            .input-section textarea {
+                height: 140px;
+            }
+
+            .clues-content {
+                max-height: 380px;
+            }
+
+            :root {
+                --cell-size: 50px;
+            }
+        }
+
+        /* ============================================
+           BREAKPOINT: 1024px+ (Large Desktop)
+        ============================================ */
+        @media (min-width: 1024px) {
+            .logo {
+                font-size: 3.2rem;
+            }
+
+            .clues-section {
+                flex: 0 0 380px;
+            }
+        }
+
+        /* ============================================
+           PRINT STYLES
+        ============================================ */
+        @media print {
+            .header, .input-section, .button-group, .status, .clues-tabs {
+                display: none !important;
+            }
+            .cell-input {
+                display: none !important;
+            }
+            body {
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1 class="logo">తెలుగల్లిక</h1>
+        <p class="tagline">Telugu Crossword Puzzle</p>
+    </header>
+
+    <div class="container">
+        <div class="card input-section">
+            <details open>
+                <summary>పదాలు జోడించు</summary>
+                <textarea id="csv-input">word,hint
+పాఠశాల,విద్యార్థులు చదువుకునే చోటు
+శాలువా,చలిలో కప్పుకునేది
+వాన,ఆకాశం నుండి పడేది
+నది,నీరు ప్రవహించే మార్గం
+దినం,24 గంటలు
+తల,శరీరంలో పై భాగం
+నల్ల,చీకటి రంగు
+లత,చెట్టుపై ఎక్కే మొక్క</textarea>
+                <p class="hint-text">word,hint ఫార్మాట్</p>
+            </details>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="generateCrossword()">రూపొందించు</button>
+                <button class="btn btn-success" onclick="validateAnswers()">తనిఖీ</button>
+                <button class="btn btn-warning" onclick="showAnswers()">సమాధానాలు</button>
+                <button class="btn btn-secondary" onclick="clearGrid()">క్లియర్</button>
+            </div>
+
+            <div id="status" class="status"></div>
+        </div>
+
+        <div class="main-content">
+            <div class="card grid-section">
+                <div class="card-title">పజిల్</div>
+                <div class="grid-wrapper">
+                    <div id="crossword-grid">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🧩</div>
+                            <p>రూపొందించు నొక్కండి</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card clues-section">
+                <div class="card-title">ఆధారాలు</div>
+                <div class="clues-tabs">
+                    <button class="clues-tab active" onclick="switchTab('across')">అడ్డం</button>
+                    <button class="clues-tab" onclick="switchTab('down')">నిలువు</button>
+                </div>
+                <div class="clues-content" id="clues-container">
+                    <div class="empty-state">
+                        <p>ఆధారాలు ఇక్కడ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telugu character sets
+        const TELUGU_VOWELS = new Set('అఆఇఈఉఊఋఌఎఏఐఒఓఔ');
+        const TELUGU_CONSONANTS = new Set('కఖగఘఙచఛజఝఞటఠడఢణతథదధనపఫబభమయరలళవశషసహఱ');
+        const TELUGU_VOWEL_SIGNS = new Set('ాిీుూృౄెేైొోౌ');
+        const TELUGU_VIRAMA = '్';
+        const TELUGU_MODIFIERS = new Set(['ం', 'ః', 'ఁ']);
+
+        function segmentTeluguWord(word) {
+            if (!word) return [];
+            const chars = [...word];
+            const n = chars.length;
+            const aksharams = [];
+            let i = 0;
+
+            while (i < n) {
+                const char = chars[i];
+                let aksharam = "";
+
+                if (TELUGU_VOWELS.has(char)) {
+                    aksharam = char;
+                    i++;
+                    while (i < n && TELUGU_MODIFIERS.has(chars[i])) {
+                        aksharam += chars[i];
+                        i++;
+                    }
+                } else if (TELUGU_CONSONANTS.has(char)) {
+                    if (aksharams.length > 0 && aksharams[aksharams.length - 1].endsWith(TELUGU_VIRAMA)) {
+                        aksharam = aksharams.pop();
+                    }
+                    aksharam += char;
+                    i++;
+                    while (i < n - 1 && chars[i] === TELUGU_VIRAMA && TELUGU_CONSONANTS.has(chars[i + 1])) {
+                        aksharam += chars[i] + chars[i + 1];
+                        i += 2;
+                    }
+                    if (i < n && TELUGU_VOWEL_SIGNS.has(chars[i])) {
+                        aksharam += chars[i];
+                        i++;
+                    }
+                    if (i < n && chars[i] === TELUGU_VIRAMA) {
+                        aksharam += chars[i];
+                        i++;
+                    }
+                    while (i < n && TELUGU_MODIFIERS.has(chars[i])) {
+                        aksharam += chars[i];
+                        i++;
+                    }
+                } else if (char === TELUGU_VIRAMA) {
+                    if (aksharams.length > 0) aksharams[aksharams.length - 1] += char;
+                    i++;
+                    continue;
+                } else if (TELUGU_MODIFIERS.has(char)) {
+                    if (aksharams.length > 0) aksharams[aksharams.length - 1] += char;
+                    else aksharams.push(char);
+                    i++;
+                    continue;
+                } else if (TELUGU_VOWEL_SIGNS.has(char)) {
+                    if (aksharams.length > 0) aksharams[aksharams.length - 1] += char;
+                    i++;
+                    continue;
+                } else {
+                    aksharam = char;
+                    i++;
+                }
+                if (aksharam) aksharams.push(aksharam);
+            }
+
+            const result = [];
+            let j = 0;
+            while (j < aksharams.length) {
+                const ak = aksharams[j];
+                if (ak.endsWith(TELUGU_VIRAMA) && j + 1 < aksharams.length && TELUGU_CONSONANTS.has(aksharams[j + 1][0])) {
+                    result.push(ak + aksharams[j + 1]);
+                    j += 2;
+                } else {
+                    result.push(ak);
+                    j++;
+                }
+            }
+            return result;
+        }
+
+        const Direction = { ACROSS: 'across', DOWN: 'down' };
+
+        class PlacedWord {
+            constructor(word, hint, aksharams, row, col, direction) {
+                this.word = word;
+                this.hint = hint;
+                this.aksharams = aksharams;
+                this.row = row;
+                this.col = col;
+                this.direction = direction;
+                this.number = 0;
+            }
+            getCells() {
+                return this.aksharams.map((ak, i) =>
+                    this.direction === Direction.ACROSS
+                        ? [this.row, this.col + i, ak]
+                        : [this.row + i, this.col, ak]
+                );
+            }
+        }
+
+        class CrosswordGrid {
+            constructor() {
+                this.cells = new Map();
+                this.placedWords = [];
+            }
+            canPlace(aksharams, row, col, direction) {
+                let intersections = 0;
+                for (let i = 0; i < aksharams.length; i++) {
+                    const r = direction === Direction.ACROSS ? row : row + i;
+                    const c = direction === Direction.ACROSS ? col + i : col;
+                    const key = `${r},${c}`;
+                    if (this.cells.has(key)) {
+                        if (this.cells.get(key) !== aksharams[i]) return [false, 0];
+                        intersections++;
+                    }
+                }
+                const before = direction === Direction.ACROSS ? `${row},${col-1}` : `${row-1},${col}`;
+                const after = direction === Direction.ACROSS ? `${row},${col+aksharams.length}` : `${row+aksharams.length},${col}`;
+                if (this.cells.has(before) || this.cells.has(after)) return [false, 0];
+                return [true, intersections];
+            }
+            placeWord(word, hint, aksharams, row, col, direction) {
+                const placed = new PlacedWord(word, hint, aksharams, row, col, direction);
+                placed.getCells().forEach(([r, c, ak]) => this.cells.set(`${r},${c}`, ak));
+                this.placedWords.push(placed);
+                return placed;
+            }
+            getBounds() {
+                if (this.cells.size === 0) return [0, 0, 0, 0];
+                const rows = [], cols = [];
+                for (const key of this.cells.keys()) {
+                    const [r, c] = key.split(',').map(Number);
+                    rows.push(r);
+                    cols.push(c);
+                }
+                return [Math.min(...rows), Math.max(...rows), Math.min(...cols), Math.max(...cols)];
+            }
+        }
+
+        function findIntersections(ak1, ak2) {
+            const result = [];
+            for (let i = 0; i < ak1.length; i++) {
+                for (let j = 0; j < ak2.length; j++) {
+                    if (ak1[i] === ak2[j]) result.push([i, j]);
+                }
+            }
+            return result;
+        }
+
+        function generateCrosswordGrid(wordsHints, maxWords = 15) {
+            const wordData = wordsHints.map(({word, hint}) => ({word, hint, aksharams: segmentTeluguWord(word)}))
+                .filter(w => w.aksharams.length >= 2);
+            if (wordData.length === 0) return [new CrosswordGrid(), wordsHints];
+
+            if (maxWords && wordData.length > maxWords) {
+                for (let i = wordData.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [wordData[i], wordData[j]] = [wordData[j], wordData[i]];
+                }
+                wordData.splice(maxWords);
+            }
+            wordData.sort((a, b) => b.aksharams.length - a.aksharams.length);
+
+            const grid = new CrosswordGrid();
+            const unplaced = [];
+            grid.placeWord(wordData[0].word, wordData[0].hint, wordData[0].aksharams, 0, 0, Direction.ACROSS);
+
+            for (let idx = 1; idx < wordData.length; idx++) {
+                const {word, hint, aksharams} = wordData[idx];
+                let best = null, bestScore = -1;
+
+                for (const pw of grid.placedWords) {
+                    const newDir = pw.direction === Direction.ACROSS ? Direction.DOWN : Direction.ACROSS;
+                    for (const [idxNew, idxPlaced] of findIntersections(aksharams, pw.aksharams)) {
+                        const [intR, intC] = pw.direction === Direction.ACROSS
+                            ? [pw.row, pw.col + idxPlaced]
+                            : [pw.row + idxPlaced, pw.col];
+                        const [startR, startC] = newDir === Direction.ACROSS
+                            ? [intR, intC - idxNew]
+                            : [intR - idxNew, intC];
+                        const [canPlace, score] = grid.canPlace(aksharams, startR, startC, newDir);
+                        if (canPlace && score > bestScore) {
+                            bestScore = score;
+                            best = [startR, startC, newDir];
+                        }
+                    }
+                }
+                if (best) grid.placeWord(word, hint, aksharams, ...best);
+                else unplaced.push({word, hint});
+            }
+
+            const starts = grid.placedWords.map(w => [w.row, w.col, w]).sort((a,b) => a[0]-b[0] || a[1]-b[1]);
+            const nums = new Map();
+            let num = 1;
+            for (const [r, c, w] of starts) {
+                const k = `${r},${c}`;
+                if (!nums.has(k)) nums.set(k, num++);
+                w.number = nums.get(k);
+            }
+            return [grid, unplaced];
+        }
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            if (lines.length < 2) return [];
+            return lines.slice(1).map(line => {
+                const parts = line.split(',');
+                if (parts.length >= 2) {
+                    const word = parts[0].trim();
+                    const hint = parts.slice(1).join(',').trim();
+                    return word ? {word, hint} : null;
+                }
+                return null;
+            }).filter(Boolean);
+        }
+
+        let currentGrid = null;
+
+        function updateCellSize(numCols) {
+            document.documentElement.style.setProperty('--cols', numCols);
+        }
+
+        function renderGrid(grid) {
+            const container = document.getElementById('crossword-grid');
+            container.innerHTML = '';
+            if (grid.cells.size === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧩</div><p>రూపొందించు నొక్కండి</p></div>';
+                return;
+            }
+
+            const [minR, maxR, minC, maxC] = grid.getBounds();
+            const numRows = maxR - minR + 1, numCols = maxC - minC + 1;
+            updateCellSize(numCols);
+
+            container.style.gridTemplateColumns = `repeat(${numCols}, var(--cell-size))`;
+            container.style.gridTemplateRows = `repeat(${numRows}, var(--cell-size))`;
+
+            const starts = new Map();
+            grid.placedWords.forEach(w => {
+                const k = `${w.row - minR},${w.col - minC}`;
+                if (!starts.has(k)) starts.set(k, []);
+                starts.get(k).push(w.number);
+            });
+
+            for (let r = 0; r < numRows; r++) {
+                for (let c = 0; c < numCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    const key = `${r + minR},${c + minC}`;
+
+                    if (grid.cells.has(key)) {
+                        cell.dataset.solution = grid.cells.get(key);
+                        const nk = `${r},${c}`;
+                        if (starts.has(nk)) {
+                            const num = document.createElement('span');
+                            num.className = 'cell-number';
+                            num.textContent = starts.get(nk)[0];
+                            cell.appendChild(num);
+                        }
+                        const input = document.createElement('span');
+                        input.className = 'cell-input';
+                        input.contentEditable = 'true';
+                        input.addEventListener('keydown', handleKeyNav);
+                        input.addEventListener('input', handleInput);
+                        cell.appendChild(input);
+                    } else {
+                        cell.classList.add('cell-black');
+                    }
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function renderClues(grid) {
+            const container = document.getElementById('clues-container');
+            container.innerHTML = '';
+            if (grid.placedWords.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>ఆధారాలు ఇక్కడ</p></div>';
+                return;
+            }
+
+            const across = grid.placedWords.filter(w => w.direction === Direction.ACROSS).sort((a,b) => a.number - b.number);
+            const down = grid.placedWords.filter(w => w.direction === Direction.DOWN).sort((a,b) => a.number - b.number);
+
+            const acrossDiv = document.createElement('div');
+            acrossDiv.className = 'clues-group active';
+            acrossDiv.id = 'clues-across';
+            across.forEach(w => {
+                const item = document.createElement('div');
+                item.className = 'clue-item';
+                item.innerHTML = `<span class="clue-number">${w.number}.</span>${w.hint}<span class="clue-length">(${w.aksharams.length})</span>`;
+                item.onclick = () => highlightWord(w);
+                acrossDiv.appendChild(item);
+            });
+            container.appendChild(acrossDiv);
+
+            const downDiv = document.createElement('div');
+            downDiv.className = 'clues-group';
+            downDiv.id = 'clues-down';
+            down.forEach(w => {
+                const item = document.createElement('div');
+                item.className = 'clue-item';
+                item.innerHTML = `<span class="clue-number">${w.number}.</span>${w.hint}<span class="clue-length">(${w.aksharams.length})</span>`;
+                item.onclick = () => highlightWord(w);
+                downDiv.appendChild(item);
+            });
+            container.appendChild(downDiv);
+        }
+
+        function switchTab(dir) {
+            document.querySelectorAll('.clues-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.clues-group').forEach(g => g.classList.remove('active'));
+            document.getElementById(`clues-${dir}`).classList.add('active');
+        }
+
+        function highlightWord(word) {
+            document.querySelectorAll('.cell-highlighted').forEach(c => c.classList.remove('cell-highlighted'));
+            const [minR,,minC] = currentGrid.getBounds();
+            word.getCells().forEach(([r,c]) => {
+                const cell = document.querySelector(`.cell[data-row="${r-minR}"][data-col="${c-minC}"]`);
+                if (cell) cell.classList.add('cell-highlighted');
+            });
+            const first = word.getCells()[0];
+            const cell = document.querySelector(`.cell[data-row="${first[0]-minR}"][data-col="${first[1]-minC}"]`);
+            if (cell) cell.querySelector('.cell-input')?.focus();
+        }
+
+        function handleInput(e) {
+            e.target.closest('.cell').classList.remove('cell-correct', 'cell-error', 'cell-empty-warning');
+        }
+
+        function handleKeyNav(e) {
+            const cell = e.target.closest('.cell');
+            const row = +cell.dataset.row, col = +cell.dataset.col;
+            let tr = row, tc = col;
+
+            switch(e.key) {
+                case 'ArrowUp': tr--; e.preventDefault(); break;
+                case 'ArrowDown': tr++; e.preventDefault(); break;
+                case 'ArrowLeft': tc--; e.preventDefault(); break;
+                case 'ArrowRight': tc++; e.preventDefault(); break;
+                case 'Tab': tc += e.shiftKey ? -1 : 1; e.preventDefault(); break;
+                default: return;
+            }
+
+            const target = document.querySelector(`.cell[data-row="${tr}"][data-col="${tc}"]:not(.cell-black)`);
+            target?.querySelector('.cell-input')?.focus();
+        }
+
+        function showStatus(msg, type) {
+            const s = document.getElementById('status');
+            s.textContent = msg;
+            s.className = 'status status-' + type;
+        }
+
+        function generateCrossword() {
+            const csv = document.getElementById('csv-input').value;
+            if (!csv.trim()) return showStatus('పదాలు జోడించండి', 'error');
+
+            const words = parseCSV(csv);
+            if (!words.length) return showStatus('పదాలు కనుగొనబడలేదు', 'error');
+
+            const [grid, unplaced] = generateCrosswordGrid(words);
+            if (!grid.placedWords.length) return showStatus('క్రాస్‌వర్డ్ సాధ్యం కాలేదు', 'error');
+
+            currentGrid = grid;
+            renderGrid(grid);
+            renderClues(grid);
+
+            let msg = `${grid.placedWords.length} పదాలతో సిద్ధం!`;
+            if (unplaced.length) msg += ` (${unplaced.length} వేయలేదు)`;
+            showStatus(msg, 'success');
+
+            if (window.innerWidth < 768) {
+                document.querySelector('.input-section details').removeAttribute('open');
+            }
+        }
+
+        function validateAnswers() {
+            if (!currentGrid) return showStatus('ముందుగా రూపొందించండి', 'error');
+
+            let correct = 0, wrong = 0, empty = 0;
+            document.querySelectorAll('.cell:not(.cell-black)').forEach(cell => {
+                const input = cell.querySelector('.cell-input')?.textContent.normalize('NFC').trim() || '';
+                const solution = (cell.dataset.solution || '').normalize('NFC').trim();
+                cell.classList.remove('cell-correct', 'cell-error', 'cell-empty-warning');
+
+                if (!input) { cell.classList.add('cell-empty-warning'); empty++; }
+                else if (input === solution) { cell.classList.add('cell-correct'); correct++; }
+                else { cell.classList.add('cell-error'); wrong++; }
+            });
+
+            if (!wrong && !empty) showStatus(`అభినందనలు! ${correct} సరైనవి!`, 'success');
+            else showStatus(`సరి: ${correct}, తప్పు: ${wrong}, ఖాళీ: ${empty}`, 'info');
+        }
+
+        function showAnswers() {
+            if (!currentGrid) return showStatus('ముందుగా రూపొందించండి', 'error');
+
+            document.querySelectorAll('.cell:not(.cell-black)').forEach(cell => {
+                const input = cell.querySelector('.cell-input');
+                if (input) input.textContent = cell.dataset.solution || '';
+                cell.classList.remove('cell-error', 'cell-empty-warning');
+                cell.classList.add('cell-correct');
+            });
+            showStatus('సమాధానాలు చూపించబడ్డాయి!', 'info');
+        }
+
+        function clearGrid() {
+            if (!currentGrid) return showStatus('ముందుగా రూపొందించండి', 'error');
+
+            document.querySelectorAll('.cell:not(.cell-black)').forEach(cell => {
+                const input = cell.querySelector('.cell-input');
+                if (input) input.textContent = '';
+                cell.classList.remove('cell-correct', 'cell-error', 'cell-empty-warning', 'cell-highlighted');
+            });
+            document.getElementById('status').className = 'status';
+        }
+    </script>
+</body>
+</html>

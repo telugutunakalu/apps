@@ -1,267 +1,204 @@
-<!DOCTYPE html>
-<html lang="te">
+<!doctype html>
+<html lang="te" data-theme="dark" data-accent="saffron">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>తెలుగు తునకలు-యాప్‌లు</title>
-    <style>
-        :root {
-            --bg-color: #121212; /* Very dark grey, not pure black */
-            --card-bg-color: #1e1e1e; /* Slightly lighter for cards */
-            --text-color: #e0e0e0; /* Light grey for general text */
-            --primary-accent-color: #00bcd4; /* A vibrant cyan/teal */
-            --secondary-accent-color: #ffeb3b; /* A warm yellow for highlights */
-            --card-hover-glow: rgba(0, 188, 212, 0.3);
-            --font-main: 'Noto Sans Telugu', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: var(--font-main);
-            line-height: 1.6;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            overflow-x: hidden; /* Prevent horizontal scroll */
-        }
-
-        .page-title {
-            font-size: clamp(2rem, 6vw, 3.5rem);
-            color: var(--primary-accent-color);
-            margin-bottom: 1rem;
-            text-align: center;
-            text-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
-        }
-
-        .page-subtitle {
-            font-size: clamp(1rem, 3vw, 1.3rem);
-            color: #b0b0b0;
-            margin-bottom: 3rem;
-            text-align: center;
-            max-width: 600px;
-        }
-
-        .app-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px; /* Increased gap */
-            width: 100%;
-            max-width: 1200px;
-        }
-
-        .app-card {
-            background-color: var(--card-bg-color);
-            border-radius: 15px; /* More rounded */
-            padding: 25px;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                        box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-            opacity: 0;
-            transform: translateY(30px);
-            animation: cardFadeIn 0.6s ease-out forwards;
-        }
-
-        /* Staggered animation delays */
-        .app-card:nth-child(1) { animation-delay: 0.1s; }
-        .app-card:nth-child(2) { animation-delay: 0.2s; }
-        .app-card:nth-child(3) { animation-delay: 0.3s; }
-        .app-card:nth-child(4) { animation-delay: 0.4s; }
-        /* Add more if you have more cards */
-
-
-        @keyframes cardFadeIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .app-card:hover,
-        .app-card:focus { /* Added focus for accessibility */
-            transform: translateY(-8px) scale(1.03);
-            box-shadow: 0 10px 30px var(--card-hover-glow), 0 0 15px var(--card-hover-glow);
-            outline: 2px solid var(--primary-accent-color); /* Focus outline */
-            outline-offset: 3px;
-        }
-
-        .app-icon {
-            width: 90px;
-            height: 90px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            object-fit: cover;
-            background-color: #333; /* Placeholder background */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2rem; /* For SVG text */
-            color: var(--primary-accent-color);
-        }
-        .app-icon svg {
-            width: 60%;
-            height: 60%;
-        }
-
-
-        .app-card h2 {
-            font-size: clamp(1.3rem, 4vw, 1.6rem);
-            color: #ffffff; /* Brighter for titles */
-            margin-bottom: 10px;
-        }
-
-        .app-card p {
-            font-size: clamp(0.9rem, 2.5vw, 1rem);
-            color: #c0c0c0; /* Slightly lighter than general text */
-            flex-grow: 1; /* Allows description to take space if titles are short */
-            margin-bottom: 15px;
-        }
-
-        .app-card .launch-text {
-            font-weight: bold;
-            color: var(--secondary-accent-color);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.9em;
-            margin-top: auto; /* Pushes it to the bottom if content above is short */
-        }
-
-        .page-footer {
-            margin-top: 4rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #333;
-            width: 100%;
-            max-width: 800px;
-            text-align: center;
-            font-size: 0.9em;
-            color: #777;
-        }
-
-        /* Optional: Add Noto Sans Telugu font if not system default */
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap');
-
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>తెలుగు తునకలు — యాప్‌లు</title>
+<meta name="description" content="తెలుగు నేర్చుకోవడానికి ఆటలు, పరికరాలు: కారుషికారు, ఫ్లాపీ 'క', తెలుగల్లిక, అక్షర యాత్ర మరియు మరిన్ని. ఫోన్‌లో, కంప్యూటర్‌లో ఉచితంగా.">
+<meta property="og:title" content="తెలుగు తునకలు — యాప్‌లు">
+<meta property="og:description" content="తెలుగు నేర్చుకోవడానికి ఆటలు, పరికరాలు — ఉచితంగా.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="thumbs/og.jpg">
+<meta name="theme-color" content="#0f0c16">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="lib/v1/tt.css">
+<style>
+  body { min-height: 100dvh; }
+  .hero { position: relative; height: clamp(230px, 42vh, 420px); overflow: hidden; }
+  .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero .fallback { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 0 16px; }
+  .hero .fallback h1 { margin: 0; font-family: var(--tt-font-display); font-weight: 400; font-size: clamp(40px, 11vw, 96px); color: var(--tt-accent); }
+  .hero .sub { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; color: var(--tt-muted); padding: 0 16px; font-size: clamp(15px, 2vw, 18px); }
+  .hero .hint { position: absolute; top: calc(10px + var(--tt-safe-t)); right: calc(12px + var(--tt-safe-r)); display: flex; gap: 8px; }
+  main { max-width: 1160px; margin: 0 auto; padding: 8px 14px 32px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 4px 0 18px; }
+  section h2 { font-family: var(--tt-font-display); font-weight: 400; font-size: 24px; margin: 18px 4px 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 14px; }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+  .card { position: relative; display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; text-decoration: none; color: inherit;
+          background: var(--tt-surface); border: 1px solid var(--tt-line); transition: transform .2s var(--tt-ease), box-shadow .2s, border-color .2s; }
+  @media (hover: hover) { .card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px color-mix(in srgb, var(--c) 28%, transparent); border-color: color-mix(in srgb, var(--c) 60%, transparent); } }
+  .card:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
+  .thumb { aspect-ratio: 16 / 10; background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--c) 55%, #000), #0f0c16); display: grid; place-items: center; overflow: hidden; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .glyph { font-family: var(--tt-font-display); font-size: 56px; color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.4); }
+  .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .body h3 { margin: 0; font-size: 19px; line-height: 1.3; }
+  .body p { margin: 0; color: var(--tt-muted); font-size: 14.5px; line-height: 1.5; flex: 1; }
+  .go { margin-top: 8px; color: var(--c); font-weight: 800; font-size: 14px; }
+  .badge { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--c); color: #160d00; }
+  @media (max-width: 520px) { .body h3 { font-size: 16px; } .body p { font-size: 13px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; } .thumb .glyph { font-size: 40px; } }
+  footer { text-align: center; color: var(--tt-faint); padding: 24px 16px calc(28px + var(--tt-safe-b)); font-size: 14px; line-height: 1.8; }
+  footer a { color: var(--tt-muted); }
+</style>
+<script type="importmap">{ "imports": { "three": "./lib/v1/vendor/three/three.module.min.js", "three/addons/": "./lib/v1/vendor/three/addons/", "tt/": "./lib/v1/" } }</script>
 </head>
 <body>
+<header class="hero" id="hero">
+  <div class="fallback" id="fallback"><h1>తెలుగు తునకలు</h1></div>
+  <p class="sub">తెలుగు నేర్చుకోవడానికి ఆటలు, పరికరాలు — ఫోన్‌లో, కంప్యూటర్‌లో, ఉచితంగా.</p>
+  <div class="hint" id="hint"></div>
+</header>
+<main id="main" aria-live="polite"></main>
+<footer>
+  తెలుగు తునకలు · ఈ యాప్‌లు <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.te" rel="noopener">CC0 1.0</a> కింద — ఎవరైనా ఉచితంగా వాడుకోవచ్చు, పంచుకోవచ్చు.<br>
+  <a href="https://github.com/telugutunakalu/apps" rel="noopener">GitHub</a> · <a href="next/">బీటా వెర్షన్లు</a>
+</footer>
+<script type="module">
+import { el, setChildren } from "tt/safe.js";
+import { prefersReducedMotion } from "tt/shell.js";
 
-    <header>
-        <h1 class="page-title"> తెలుగు తునకలు యాప్ గ్యాలరీ</h1>
-        <p class="page-subtitle"> తెలుగు తునకలు యాప్‌  గ్యాలరీకి స్వాగతం.</p>
-    </header>
+const ACCENTS = { saffron: "#ff8a3d", turmeric: "#ffc233", leaf: "#34d17e", peacock: "#22c3d6", lotus: "#ff5c93", indigo: "#8f80ff", gold: "#f2b544", chili: "#ff4f4f" };
+const CATS = [{ id: "games", te: "ఆటలు", go: "ఆడండి →" }, { id: "tools", te: "పరికరాలు", go: "తెరవండి →" }];
+const main = document.getElementById("main");
 
-    <main class="app-grid">
-        <a href="./ankelata.html" class="app-card" id="card-aksharanusarika">
-            <div class="app-icon">
-                <!-- Placeholder SVG Icon -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">అ</text></svg>
-            </div>
-            <h2>అంకెల ఆట</h2>
-            <p>తెలుగు అంకెలు నేర్చుకుందాం రండి!</p>
-            <span class="launch-text">ప్రారంభించండి →</span>
-        </a>
-        <a href="./tadaperata.html" class="app-card" id="card-aksharanusarika">
-            <div class="app-icon">
-                <!-- Placeholder SVG Icon -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">అ</text></svg>
-            </div>
-            <h2>తడపేరాట</h2>
-            <p>తెలుగు పదాలు మీకు ఎంత బాగా వొచ్చూనో ??!!!</p>
-            <span class="launch-text">ప్రారంభించండి →</span>
-        </a>
-        <a href="./aksharasangamam.html" class="app-card" id="card-aksharanusarika">
-            <div class="app-icon">
-                <!-- Placeholder SVG Icon -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">అ</text></svg>
-            </div>
-            <h2>అక్షర సంగమం</h2>
-            <p>తెలుగు అక్షరాల్ని గుంపులుగా చేసి పాయింట్లు కొట్టేయండి</p>
-            <span class="launch-text">ప్రారంభించండి →</span>
-        </a>
-        <a href="./aksharanusarika.html" class="app-card" id="card-aksharanusarika">
-            <div class="app-icon">
-                <!-- Placeholder SVG Icon -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">అ</text></svg>
-            </div>
-            <h2>అక్షరానుసారిక</h2>
-            <p>తెలుగు వచనాన్ని విశ్లేషించి, అక్షరాల వర్గీకరణ మరియు గణాంకాలను పొందండి.</p>
-            <span class="launch-text">ప్రారంభించండి →</span>
-        </a>
+/* ---------- cards from apps.json (single source of truth) ---------- */
+let data = { apps: [] };
+try { data = await fetch("./apps.json", { cache: "no-cache" }).then(r => r.json()); }
+catch { setChildren(main, el("p", { text: "యాప్‌ల జాబితా లోడ్ కాలేదు. దయచేసి మళ్ళీ ప్రయత్నించండి." })); }
+const apps = data.apps.filter(a => a.live);
+let filter = "all";
+function card(a) {
+  const c = ACCENTS[a.accent] ?? ACCENTS.saffron, cat = CATS.find(x => x.id === a.category) ?? CATS[0];
+  const img = el("img", { src: `thumbs/${a.slug}.jpg`, alt: "", loading: "lazy", decoding: "async" });
+  const thumb = el("div", { class: "thumb" }, img);
+  img.addEventListener("error", () => setChildren(thumb, el("span", { class: "glyph", text: [...a.te][0] })));
+  return el("a", { class: "card", href: `./${a.slug}.html`, style: { "--c": c } },
+    a.badge ? el("span", { class: "badge", text: a.badge }) : null,
+    thumb,
+    el("div", { class: "body" }, el("h3", { text: a.te }), el("p", { text: a.blurb_te }), el("span", { class: "go", text: cat.go })));
+}
+function render() {
+  const chips = el("div", { class: "filters", attrs: { role: "group", "aria-label": "వర్గం" } },
+    [{ id: "all", te: "అన్నీ" }, ...CATS].map(f => el("button", { type: "button", class: "tt-chip", text: f.te, attrs: { "aria-pressed": String(filter === f.id) },
+      on: { click: () => { filter = f.id; render(); } } })));
+  const sections = CATS.filter(cat => filter === "all" || filter === cat.id).map(cat => {
+    const list = apps.filter(a => a.category === cat.id);
+    return list.length ? el("section", {}, el("h2", { text: cat.te }), el("div", { class: "grid" }, list.map(card))) : null;
+  });
+  setChildren(main, chips, sections);
+}
+render();
 
-        <a href="./aksharaveta.html" class="app-card" id="card-aksharaveta">
-            <div class="app-icon">
-                 <!-- Placeholder SVG Icon -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">వే</text></svg>
-            </div>
-            <h2>అక్షరాల వేట</h2>
-            <p>ఈ సరదా పాక్‌మన్-శైలి గేమ్‌లో సరైన తెలుగు అక్షరాలను సేకరించండి!</p>
-            <span class="launch-text">ఆట ఆడండి →</span>
-        </a>
+/* ---------- install as app ---------- */
+let deferred = null;
+addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); deferred = e;
+  setChildren(document.getElementById("hint"), el("button", { type: "button", class: "tt-btn", text: "యాప్‌గా ఇన్‌స్టాల్ చేయండి",
+    on: { click: async () => { deferred.prompt(); await deferred.userChoice; deferred = null; document.getElementById("hint").replaceChildren(); } } }));
+});
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./sw.js").catch(() => {});
 
-        <a href="./carushikaru.html" class="app-card" id="card-carushikaru">
-             <div class="app-icon">
-                 <!-- Placeholder SVG Icon -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><path d="M20 80 L50 20 L80 80 Z M30 70 L70 70" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <h2>కారుషికారు</h2>
-            <p>కారు నడుపుతూ సరైన అక్షరాలను పట్టుకుని తెలుగు పదాలను పూర్తి చేయండి.</p>
-            <span class="launch-text">రేస్ చేయండి →</span>
-        </a>
-
-        <a href="./flappyka.html" class="app-card" id="card-flappyka">
-            <div class="app-icon">
-                <!-- Placeholder SVG Icon -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">క</text><path d="M70 40 Q80 50 70 60" stroke="currentColor" stroke-width="5" fill="none"/><path d="M30 40 Q20 50 30 60" stroke="currentColor" stroke-width="5" fill="none"/></svg>
-            </div>
-            <h2>ఫ్లాపీ 'క' (FlappyKa)</h2>
-            <p>ఫ్లాపీ బర్డ్ నుండి ప్రేరణ పొందిన ఈ గేమ్‌లో 'క' అక్షరంతో అడ్డంకులను దాటండి.</p>
-            <span class="launch-text">ఎగరండి →</span>
-        </a>
-        <a href="./telugallika.html" class="app-card" id="card-telugallika">
-            <div class="app-icon">
-                <!-- Placeholder SVG Icon -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="50" fill="currentColor">క</text><path d="M70 40 Q80 50 70 60" stroke="currentColor" stroke-width="5" fill="none"/><path d="M30 40 Q20 50 30 60" stroke="currentColor" stroke-width="5" fill="none"/></svg>
-            </div>
-            <h2>తెలుగల్లిక</h2>
-            <p>పదాల పజిళ్లు అల్లుదాం రండి</p>
-            <span class="launch-text">అల్లిక</span>
-        </a>
-        <a href="./aksharayatra.html" class="app-card" id="card-aksharayatra">
-            <div class="app-icon">
-                <!-- Brahmi 'ka' (+) evolving into Telugu క -->
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="#2a2a2a"/><path d="M25 32 V70 M14 45 H36" stroke="#9e9e9e" stroke-width="6" stroke-linecap="round"/><path d="M42 52 H54 M49 47 L54 52 L49 57" stroke="#9e9e9e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="75" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Noto Sans Telugu" font-size="44" fill="currentColor">క</text></svg>
-            </div>
-            <h2>అక్షర యాత్ర</h2>
-            <p>బ్రాహ్మీ నుండి నేటి తెలుగు దాకా — 2,300 ఏళ్లలో ప్రతి అక్షరం ఎలా మారిందో కణాల యానిమేషన్‌లో చూడండి.</p>
-            <span class="launch-text">యాత్ర ప్రారంభించండి →</span>
-        </a>
-    </main>
-
-    <footer class="page-footer">
-        <p>© <span id="currentYear"></span> తెలుగు తునకలు అసోసియేషన్కి. అన్ని హక్కులు ప్రవర్తిస్తాయి.</p>
-    </footer>
-
-    <script>
-        // Simple script to set the current year in the footer
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
-
-        // Optional: Add a little more dynamic feel to cards if desired
-        // For example, a slight parallax effect on mouse move (can be more complex)
-        // For "simple and standalone", CSS animations are often sufficient.
-        // The current CSS provides a fade-in and hover effect.
-    </script>
+/* ---------- particle title: "తెలుగు తునకలు" drawn by ~3000 glowing points; they scatter from your finger ---------- */
+const hero = document.getElementById("hero");
+(async () => {
+  let THREE;
+  try { THREE = await import("three"); } catch { return; }
+  const probe = document.createElement("canvas");
+  if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) return;
+  await document.fonts?.load("80px Ramabhadra", "తెలుగు").catch(() => {});
+  // sample points from the title rendered on a 2D canvas (the browser shapes Telugu correctly)
+  const W = 1200, H = 300, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle";
+  g.font = `190px Ramabhadra, "Noto Sans Telugu", sans-serif`;
+  const narrow = innerWidth < 640;
+  if (narrow) { g.font = `150px Ramabhadra, "Noto Sans Telugu", sans-serif`; g.fillText("తెలుగు", W / 2, H * 0.27); g.fillText("తునకలు", W / 2, H * 0.78); }
+  else g.fillText("తెలుగు తునకలు", W / 2, H / 2 + 6);
+  const px = g.getImageData(0, 0, W, H).data, pts = [];
+  let x0 = W, x1 = 0, y0 = H, y1 = 0;
+  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (px[(y * W + x) * 4 + 3] > 128) {
+    pts.push([x, y]); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+  }
+  // normalise the inked area to 10 world units wide (height keeps the text's aspect)
+  const S = 10 / Math.max(1, x1 - x0), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const titleW = 10, titleH = (y1 - y0) * S;
+  const N = Math.min(pts.length, matchMedia("(pointer: coarse)").matches ? 4400 : 5200);
+  const step = pts.length / N;
+  const target = new Float32Array(N * 3), pos = new Float32Array(N * 3), rnd = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const [x, y] = pts[Math.floor(i * step)];
+    target.set([(x - cx) * S, -(y - cy) * S + titleH * 0.08, (Math.random() - 0.5) * 0.15], i * 3);
+    pos.set([(Math.random() - 0.5) * 30, (Math.random() - 0.5) * 16, (Math.random() - 0.5) * 10], i * 3);
+    rnd[i] = Math.random();
+  }
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  hero.prepend(renderer.domElement);
+  document.getElementById("fallback").style.opacity = "0";
+  document.getElementById("fallback").style.transition = "opacity .8s";
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+  camera.position.z = 11;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("rnd", new THREE.BufferAttribute(rnd, 1));
+  const mat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { t: { value: 0 }, a: { value: new THREE.Color("#ff8a3d") }, b: { value: new THREE.Color("#ffd34d") }, pr: { value: renderer.getPixelRatio() }, px: { value: 1 } },
+    vertexShader: `attribute float rnd; uniform float t, pr, px; varying float vR;
+      void main(){ vR = rnd; vec3 p = position; p.y += sin(t*1.3 + p.x*0.9) * 0.05;
+        vec4 mv = modelViewMatrix * vec4(p,1.); gl_Position = projectionMatrix * mv;
+        gl_PointSize = (2.0 + rnd*2.6) * pr * px; }`,
+    fragmentShader: `uniform vec3 a, b; uniform float t; varying float vR;
+      void main(){ float d = length(gl_PointCoord-.5); if (d>.5) discard; float k = pow(1.-d*2., 1.6);
+        float tw = .65 + .35*sin(t*3. + vR*40.); gl_FragColor = vec4(mix(a,b,vR) * k * tw, k); }`,
+  });
+  scene.add(new THREE.Points(geo, mat));
+  const resize = () => {
+    const w = hero.clientWidth, h = hero.clientHeight;
+    renderer.setSize(w, h); camera.aspect = w / h;
+    // fit the title in both directions: ~88% of the width, and above the subtitle line
+    const tanV = Math.tan(THREE.MathUtils.degToRad(20)), tanH = tanV * camera.aspect;
+    const zW = (titleW / 0.88 / 2) / tanH, zH = (titleH / 0.62 / 2) / tanV;
+    camera.position.z = Math.max(zW, zH);
+    camera.updateProjectionMatrix();
+    // particle size in px grows with the rendered title so letters stay solid on big screens and crisp on phones
+    mat.uniforms.px.value = Math.min(2.2, Math.max(1.25, (w * 0.88 / titleW) / 55));
+  };
+  new ResizeObserver(resize).observe(hero); resize();
+  const mouse = new THREE.Vector3(99, 99, 0);
+  hero.addEventListener("pointermove", e => {
+    const r = hero.getBoundingClientRect();
+    mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, 0.5).unproject(camera);
+    mouse.sub(camera.position).normalize().multiplyScalar(camera.position.z).add(camera.position);
+  });
+  hero.addEventListener("pointerleave", () => mouse.set(99, 99, 0));
+  const reduce = prefersReducedMotion();
+  if (reduce) pos.set(target);
+  let last = performance.now(), visible = true, raf = 0;
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) raf = requestAnimationFrame(frame); }).observe(hero);
+  function frame(now) {
+    raf = 0;
+    if (!visible || document.hidden) return;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    mat.uniforms.t.value += dt;
+    const k = 1 - Math.exp(-dt * 2.2);
+    for (let i = 0; i < N; i++) {
+      const j = i * 3;
+      let tx = target[j], ty = target[j + 1];
+      const dx = pos[j] - mouse.x, dy = pos[j + 1] - mouse.y, d2 = dx * dx + dy * dy;
+      if (d2 < 1.2) { const f = (1.2 - d2) * 1.4; tx += dx * f; ty += dy * f; }   // scatter from the pointer
+      pos[j] += (tx - pos[j]) * k; pos[j + 1] += (ty - pos[j + 1]) * k; pos[j + 2] += (target[j + 2] - pos[j + 2]) * k;
+    }
+    geo.attributes.position.needsUpdate = true;
+    renderer.render(scene, camera);
+    if (!reduce) raf = requestAnimationFrame(frame);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !raf) { last = performance.now(); raf = requestAnimationFrame(frame); } });
+  raf = requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>

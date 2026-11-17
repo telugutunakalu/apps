@@ -1,791 +1,1058 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="te" data-theme="dark" data-accent="lotus">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>తెలుగు టెట్రిస్ (Telugu Tetris) - అక్షర సంగమం (5 అక్షరాల గొలుసు - అడ్డం/నిలువు)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Noto Sans Telugu', 'Inter', sans-serif;
-            touch-action: manipulation; /* Prevent zoom on touch devices */
-            overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
-            overflow: hidden; /* Prevent scrolling of the page itself */
-        }
-        .game-canvas {
-            border: 2px solid #333;
-            background-color: #f0f0f0;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            position: relative; 
-            /* Make canvas itself the touch target for gestures */
-            touch-action: none; /* Disable default browser gestures like pinch-zoom on the canvas */
-        }
-        .next-canvas {
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
-        }
-        .btn {
-            transition: background-color 0.3s ease, transform 0.1s ease;
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
-        }
-        .btn:active {
-            transform: scale(0.95);
-        }
-        /* Hide old touch controls if gesture controls are active */
-        /* #touchControls button {
-            width: 70px; 
-            height: 70px;
-            font-size: 28px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        } */
-        .game-container-parent {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-        }
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            width: 100%;
-            max-width: 600px; 
-        }
-        @media (min-width: 768px) { 
-            .game-container {
-                flex-direction: row;
-                align-items: flex-start;
-                max-width: none; 
-            }
-            .game-board-area {
-                flex-shrink: 0; 
-            }
-            .info-panel-area {
-                width: 250px; 
-                flex-shrink: 0;
-            }
-        }
-        #spotlightLetterContainer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: clamp(60px, 15vw, 100px); 
-            font-weight: bold;
-            color: rgba(255, 165, 0, 0.8); 
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            z-index: 100;
-            pointer-events: none; 
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-        }
-        #bonusMessageContainer {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: clamp(18px, 5vw, 24px); 
-            font-weight: bold;
-            color: #4CAF50; 
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            z-index: 100;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out, top 0.5s ease-in-out;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0c16">
+<title>అక్షర సంగమం — తెలుగు అక్షరాల టెట్రిస్</title>
+<meta name="description" content="3D వోక్సెల్ టెట్రిస్: ఒకేలాంటి తెలుగు అక్షరాలను అడ్డంగా లేదా నిలువుగా వరుసగా పేర్చి గొలుసులు తయారు చేయండి.">
+<meta property="og:title" content="అక్షర సంగమం — తెలుగు తునకలు">
+<meta property="og:description" content="ఒకేలాంటి తెలుగు అక్షరాలను వరుసగా పేర్చి గొలుసులు తయారు చేయండి.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff5c93'/%3E%3Crect x='9' y='35' width='15' height='15' rx='3' fill='%232a0013'/%3E%3Crect x='25' y='35' width='15' height='15' rx='3' fill='%232a0013'/%3E%3Crect x='41' y='35' width='15' height='15' rx='3' fill='%232a0013'/%3E%3Crect x='25' y='19' width='15' height='15' rx='3' fill='%23fff1c9'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./lib/v1/tt.css">
+<style>
+  /* the floating title must not swallow drags that start near the top of the board */
+  .tt-app--game .tt-topbar > .tt-topbar__title { pointer-events: none; }
+
+  /* ---------- layout: portrait phones = HUD above the board; wide screens = HUD beside it ---------- */
+  .layout { position: absolute; inset: 0; z-index: 10; display: grid; gap: 6px;
+    padding: calc(56px + var(--tt-safe-t)) calc(8px + var(--tt-safe-r)) calc(8px + var(--tt-safe-b)) calc(8px + var(--tt-safe-l));
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "hold stats next" "hold pool next" "well well well" "pads pads pads"; }
+  .holdbox { grid-area: hold; } .stats { grid-area: stats; } .nextbox { grid-area: next; } .pool { grid-area: pool; }
+  .well { grid-area: well; position: relative; min-height: 0; min-width: 0; }
+  .pads { grid-area: pads; } .keys { grid-area: pads; }
+
+  .box { background: rgba(20, 13, 30, .78); border: 1px solid var(--tt-glass-line); border-radius: 14px; color: var(--tt-ink); }
+  .pbox { display: flex; flex-direction: column; align-items: center; padding: 2px 6px 4px; margin: 0; font: inherit; }
+  button.pbox { cursor: pointer; transition: transform .12s var(--tt-ease); }
+  button.pbox:active { transform: scale(.96); }
+  .box__label { font-size: 11.5px; color: var(--tt-muted); line-height: 1.4; white-space: nowrap; }
+  .preview { width: 76px; height: 50px; display: block; }
+  .holdbox.is-used .preview { opacity: .4; }
+  .stats { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2px 6px; min-width: 0; }
+  .stat-score { display: flex; align-items: baseline; gap: 6px; }
+  .stat-score b { font-size: 22px; line-height: 1.2; color: var(--tt-accent); font-variant-numeric: tabular-nums; }
+  .stat-score b.pop { animation: pop .3s var(--tt-ease); }
+  @keyframes pop { 50% { transform: scale(1.18); } }
+  .stat-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 10px; font-size: 13px; line-height: 1.45; }
+  .stat-meta b { margin-left: 3px; font-variant-numeric: tabular-nums; }
+  .stats small, .pool small { color: var(--tt-muted); font-size: 11.5px; }
+  .stat-best { display: none; }
+  .pool { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px 4px; padding: 3px 6px; min-width: 0; }
+  .pool small { margin-right: 2px; }
+  .chip { min-width: 24px; height: 24px; padding: 0 4px; border-radius: 7px; display: inline-grid; place-items: center; font-weight: 800;
+          font-size: 14px; line-height: 1; background: var(--c); color: #1c0612; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .25); }
+  .no-colors .chip { background: #efe2c6; color: #3b1d12; }
+  /* portrait: previews fill their boxes; the pool label is implied (aria-label) to keep one row */
+  .layout:not(.is-wide) .pbox { justify-content: flex-start; }
+  .layout:not(.is-wide) .preview { flex: 1 1 0; height: 0; min-height: 38px; }
+  .layout:not(.is-wide) .pool small { display: none; }
+  @media (max-width: 360px) {
+    .layout:not(.is-wide) .preview { width: 62px; }
+    .layout:not(.is-wide) .pbox { padding: 2px 4px 3px; }
+    .chip { min-width: 21px; height: 22px; font-size: 13px; padding: 0 3px; }
+    .stat-meta { font-size: 12px; gap: 0 7px; }
+    .stat-score b { font-size: 20px; }
+  }
+
+  /* touch pad */
+  .pads { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .pads[hidden], .keys[hidden] { display: none !important; }
+  .pad { display: flex; gap: 6px; }
+  .padbtn { --pb: clamp(44px, 14vw, 58px); width: var(--pb); height: var(--pb); padding: 0; border-radius: 50%; display: grid; place-items: center;
+            border: 1px solid var(--tt-glass-line); background: rgba(20, 13, 30, .78); color: var(--tt-ink); cursor: pointer;
+            touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; font-weight: 800; font-size: 14px;
+            transition: transform .08s, background .12s; }
+  .padbtn .tt-icon { width: 26px; height: 26px; stroke-width: 2.6; }
+  .padbtn.is-down { background: var(--tt-accent); color: var(--tt-accent-ink); transform: scale(.93); }
+  .padbtn--rot { color: var(--tt-accent); }
+  .keys { align-self: end; justify-self: center; padding: 6px 12px; font-size: 13px; color: var(--tt-muted); line-height: 1.6; text-align: center; }
+  .keys b { color: var(--tt-ink); }
+
+  /* chain spotlight + bonus message (over the board) */
+  .spot { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 2; opacity: 0;
+          font-weight: 800; line-height: 1.2; color: #fff; font-size: clamp(84px, min(34vw, 30vh), 240px);
+          text-shadow: 0 0 22px var(--c, var(--tt-accent)), 0 0 60px var(--c, var(--tt-accent)), 0 6px 0 rgba(0, 0, 0, .35); }
+  .spot.on { animation: spot 1.5s var(--tt-ease) forwards; }
+  .spot.show, .bonus.show { opacity: 1; }
+  @keyframes spot { 0% { opacity: 0; transform: scale(.35); } 14% { opacity: 1; transform: scale(1.1); } 65% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.2); } }
+  .bonus { position: absolute; left: 50%; top: 8%; z-index: 3; width: max-content; max-width: min(94vw, 520px); transform: translateX(-50%);
+           display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; pointer-events: none; opacity: 0; }
+  .bonus .b1 { padding: 5px 14px; border-radius: var(--tt-pill); background: var(--tt-good); color: #00210f; font-weight: 800;
+               font-size: clamp(13px, 3.6vw, 18px); box-shadow: var(--tt-shadow); }
+  .bonus .b2 { font-family: var(--tt-font-display); font-size: clamp(20px, 5.4vw, 30px); line-height: 1.3; padding: 0 16px;
+               border-radius: var(--tt-pill); background: var(--tt-accent); color: var(--tt-accent-ink); box-shadow: 0 0 24px rgba(255, 92, 147, .55); }
+  .bonus .b3 { padding: 3px 12px; border-radius: var(--tt-pill); background: var(--tt-warn); color: #2a1d00; font-weight: 800; font-size: 14px; }
+  .bonus.on { animation: bonus 1.7s var(--tt-ease) forwards; }
+  @keyframes bonus { 0% { opacity: 0; transform: translate(-50%, 14px); } 12% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -16px); } }
+
+  .intro p { margin: 6px 0; }
+  .intro .lead { color: var(--tt-ink); font-weight: 700; font-size: 17px; }
+  .intro .ctl { color: var(--tt-ink); font-weight: 700; }
+  .intro small { display: block; margin-top: 10px; color: var(--tt-faint); }
+
+  /* ---------- wide (landscape phones, tablets, desktop) ---------- */
+  .layout.is-wide { padding-top: calc(8px + var(--tt-safe-t)); column-gap: 14px; row-gap: 8px;
+    grid-template-columns: minmax(0, 1fr) var(--well-w, 40%) minmax(0, 1fr);
+    grid-template-rows: 46px auto auto minmax(0, 1fr) auto;
+    grid-template-areas: ". well ." "hold well next" "stats well pool" ". well ." "padl well padr"; }
+  .is-wide .pads { display: contents; }
+  .is-wide .pad--l { grid-area: padl; justify-self: start; align-self: end; }
+  .is-wide .pad--r { grid-area: padr; justify-self: end; align-self: end; }
+  .is-wide .keys { grid-area: padl; justify-self: end; text-align: right; max-width: 260px; }
+  .is-wide .holdbox, .is-wide .stats { justify-self: end; }
+  .is-wide .nextbox, .is-wide .pool { justify-self: start; }
+  .is-wide .stats { align-self: start; align-items: stretch; padding: 8px 14px; min-width: 140px; }
+  .is-wide .stat-score { flex-direction: column; align-items: flex-start; gap: 0; }
+  .is-wide .stat-score b { font-size: 30px; }
+  .is-wide .stat-meta { flex-direction: column; align-items: flex-start; font-size: 15px; }
+  .is-wide .stat-best { display: inline; }
+  .is-wide .pool { align-self: start; max-width: 200px; justify-content: flex-start; padding: 6px 10px; }
+  .is-wide .chip { min-width: 30px; height: 30px; font-size: 17px; }
+  .is-wide .preview { width: 120px; height: 84px; }
+  .is-wide .pbox { padding: 4px 10px 8px; }
+  .is-wide .box__label { font-size: 13px; }
+  .is-wide .padbtn { --pb: 58px; }
+  @media (max-height: 500px) {
+    .layout.is-wide { row-gap: 5px; }
+    .is-wide .preview { width: 96px; height: 58px; }
+    .is-wide .stats { padding: 4px 10px; }
+    .is-wide .stat-score b { font-size: 24px; }
+    .is-wide .stat-meta { font-size: 13.5px; line-height: 1.35; }
+    .is-wide .stat-best { display: none; }
+    .is-wide .chip { min-width: 26px; height: 26px; font-size: 15px; }
+    .is-wide .padbtn { --pb: 54px; }
+    .bonus .b1 { font-size: 14px; padding: 4px 12px; }
+    .bonus .b2 { font-size: 24px; }
+  }
+</style>
+<script type="importmap">{ "imports": { "three": "./lib/v1/vendor/three/three.module.min.js", "three/addons/": "./lib/v1/vendor/three/addons/", "tt/": "./lib/v1/" } }</script>
 </head>
-<body class="bg-gradient-to-br from-orange-100 to-amber-200 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
-
-    <div class="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-5xl">
-        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-orange-600 mb-4 sm:mb-6">తెలుగు టెట్రిస్ - అక్షర సంగమం</h1>
-        <p class="text-center text-sm sm:text-base text-gray-600 mb-4">5+ ఒకేలాంటి అక్షరాలను అడ్డంగా లేదా నిలువుగా పేర్చండి!</p>
-
-
-        <div class="game-container-parent">
-            <div class="game-container">
-                <div class="relative game-board-area"> 
-                    <canvas id="tetrisCanvas" class="game-canvas rounded-lg"></canvas>
-                    <div id="spotlightLetterContainer"></div>
-                    <div id="bonusMessageContainer"></div>
-                    <div id="messageOverlay" class="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center text-white text-xl sm:text-2xl font-bold rounded-lg hidden p-4 text-center">
-                        <p id="messageText"></p>
-                        <button id="messageButton" class="mt-4 px-6 py-2 bg-orange-500 hover:bg-orange-600 rounded-md text-lg btn">OK</button>
-                    </div>
-                </div>
-
-                <div class="w-full md:w-auto info-panel-area space-y-3 sm:space-y-4 text-gray-700">
-                    <div class="bg-orange-50 p-3 sm:p-4 rounded-lg shadow">
-                        <h2 class="text-lg sm:text-xl font-semibold">Score: <span id="score" class="font-bold text-orange-600">0</span></h2>
-                    </div>
-                    <div class="bg-orange-50 p-3 sm:p-4 rounded-lg shadow">
-                        <h2 class="text-lg sm:text-xl font-semibold">Chains: <span id="chains" class="font-bold text-orange-600">0</span></h2>
-                    </div>
-                    <div class="bg-orange-50 p-3 sm:p-4 rounded-lg shadow">
-                        <h2 class="text-lg sm:text-xl font-semibold">Level: <span id="level" class="font-bold text-orange-600">1</span></h2>
-                    </div>
-                    
-                    <div class="bg-orange-50 p-3 sm:p-4 rounded-lg shadow">
-                        <h3 class="text-md sm:text-lg font-semibold mb-1 sm:mb-2">Next Piece:</h3>
-                        <canvas id="nextPieceCanvas" class="next-canvas rounded-md mx-auto"></canvas>
-                    </div>
-
-                    <button id="startButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 sm:py-3 px-4 rounded-lg shadow-md btn">Start Game</button>
-                    <button id="pauseButton" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 sm:py-3 px-4 rounded-lg shadow-md btn" disabled>Pause</button>
-                    
-                    <div id="gameOverMessage" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 sm:p-4 rounded-lg shadow hidden">
-                        <h2 class="text-xl sm:text-2xl font-bold mb-2">Game Over!</h2>
-                        <p>Final Score: <span id="finalScore" class="font-bold">0</span></p>
-                        <button id="restartButton" class="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow-md btn">Play Again</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-4 sm:mt-6 text-center text-gray-600">
-            <p class="mb-2 text-xs sm:text-sm md:text-base"><b>Keyboard:</b> Left/Right (Move), Up (Rotate), Down (Soft Drop), Space (Hard Drop)</p>
-            <p class="mb-2 text-xs sm:text-sm md:text-base"><b>Touch:</b> Swipe Left/Right (Move), Tap (Rotate), Swipe Down (Soft Drop), Quick Flick Down (Hard Drop)</p>
-            <div id="touchControls" class="md:hidden mt-3 sm:mt-4 space-y-2" style="display: none;"> 
-                <div class="flex justify-center space-x-2">
-                    <button id="touchRotate" class="bg-blue-500 text-white p-3 rounded-lg btn">⬆️</button>
-                </div>
-                <div class="flex justify-center space-x-2">
-                    <button id="touchLeft" class="bg-gray-500 text-white p-3 rounded-lg btn">⬅️</button>
-                    <button id="touchRight" class="bg-gray-500 text-white p-3 rounded-lg btn">➡️</button>
-                </div>
-                <div class="flex justify-center space-x-2">
-                     <button id="touchDown" class="bg-gray-500 text-white p-3 rounded-lg btn">⬇️</button>
-                     <button id="touchHardDrop" class="bg-red-500 text-white p-3 rounded-lg btn">💥</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('tetrisCanvas');
-        const ctx = canvas.getContext('2d');
-        const nextCanvas = document.getElementById('nextPieceCanvas');
-        const nextCtx = nextCanvas.getContext('2d');
-
-        const spotlightLetterContainer = document.getElementById('spotlightLetterContainer');
-        const bonusMessageContainer = document.getElementById('bonusMessageContainer');
-
-        const scoreElement = document.getElementById('score');
-        const chainsElement = document.getElementById('chains');
-        const levelElement = document.getElementById('level');
-        const startButton = document.getElementById('startButton');
-        const pauseButton = document.getElementById('pauseButton');
-        const gameOverMessage = document.getElementById('gameOverMessage');
-        const finalScoreElement = document.getElementById('finalScore');
-        const restartButton = document.getElementById('restartButton');
-        
-        const messageOverlay = document.getElementById('messageOverlay');
-        const messageTextElement = document.getElementById('messageText');
-        const messageButton = document.getElementById('messageButton');
-
-        const BLOCK_SIZE_DESKTOP = 30;
-        // Calculate mobile block size based on available width, ensuring it's not too small
-        const MOBILE_CANVAS_WIDTH_RATIO = 0.7; // Use 70% of screen width for canvas on mobile
-        const availableMobileWidth = window.innerWidth * MOBILE_CANVAS_WIDTH_RATIO;
-        const BLOCK_SIZE_MOBILE = Math.max(15, Math.floor(availableMobileWidth / 10)); // Min block size 15px
-        
-        const BLOCK_SIZE = window.innerWidth < 768 ? BLOCK_SIZE_MOBILE : BLOCK_SIZE_DESKTOP;
-
-        const BOARD_WIDTH = 10; 
-        const BOARD_HEIGHT = 20; 
-        const CHAIN_MATCH_LENGTH = 5; 
-        const CHAIN_BASE_SCORE = 100; 
-
-        canvas.width = BLOCK_SIZE * BOARD_WIDTH;
-        canvas.height = BLOCK_SIZE * BOARD_HEIGHT;
-        
-        nextCanvas.width = 4 * BLOCK_SIZE; 
-        nextCanvas.height = 4 * BLOCK_SIZE;
-
-
-        const TETROMINOES = {
-            'I': { shape: [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], color: '#00BCD4', letter: 'అ'},
-            'J': { shape: [[1,0,0], [1,1,1], [0,0,0]], color: '#2196F3', letter: 'ఆ'},
-            'L': { shape: [[0,0,1], [1,1,1], [0,0,0]], color: '#FF9800', letter: 'ఇ'},
-            'O': { shape: [[1,1], [1,1]], color: '#FFEB3B', letter: 'ఉ'},
-            'S': { shape: [[0,1,1], [1,1,0], [0,0,0]], color: '#4CAF50', letter: 'ఎ'},
-            'T': { shape: [[0,1,0], [1,1,1], [0,0,0]], color: '#9C27B0', letter: 'క'},
-            'Z': { shape: [[1,1,0], [0,1,1], [0,0,0]], color: '#F44336', letter: 'గ'}
-        };
-        const TETROMINO_KEYS = Object.keys(TETROMINOES);
-
-        let board; 
-        let currentPiece;
-        let nextPiece;
-        let score;
-        let chains; 
-        let level;
-        let dropCounter;
-        let dropInterval; 
-        let lastTime;
-        let animationFrameId;
-        let isGameOver;
-        let isPaused;
-        let spotlightTimeoutId = null; 
-        let bonusMessageTimeoutId = null; 
-
-        // Touch gesture state variables
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartTime = 0;
-        const SWIPE_THRESHOLD = 30; // Minimum distance for a swipe
-        const TAP_THRESHOLD_TIME = 200; // Max time for a tap (ms)
-        const TAP_THRESHOLD_DISTANCE = 10; // Max distance for a tap
-        const QUICK_FLICK_TIME = 250; // Max time for a quick flick down (hard drop)
-
-
-        function createBoard() {
-            return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
-        }
-
-        function getRandomPiece() {
-            const key = TETROMINO_KEYS[Math.floor(Math.random() * TETROMINO_KEYS.length)];
-            const tetromino = TETROMINOES[key];
-            const shapeCopy = tetromino.shape.map(row => [...row]);
-            return {
-                x: Math.floor(BOARD_WIDTH / 2) - Math.floor(shapeCopy[0].length / 2),
-                y: 0,
-                shape: shapeCopy,
-                color: tetromino.color,
-                letter: tetromino.letter
-            };
-        }
-        
-        function drawSquare(x, y, color, letter, context, currentBlockSize = BLOCK_SIZE) {
-            context.fillStyle = color;
-            context.fillRect(x * currentBlockSize, y * currentBlockSize, currentBlockSize, currentBlockSize);
-            context.strokeStyle = 'rgba(0,0,0,0.2)';
-            context.strokeRect(x * currentBlockSize, y * currentBlockSize, currentBlockSize, currentBlockSize);
-
-            if (letter) {
-                context.fillStyle = '#000000';
-                const fontSize = currentBlockSize * 0.60; 
-                context.font = `bold ${fontSize}px "Noto Sans Telugu", Arial, sans-serif`;
-                context.textAlign = 'center';
-                context.textBaseline = 'middle';
-                context.fillText(letter, x * currentBlockSize + currentBlockSize / 2, y * currentBlockSize + currentBlockSize / 2 + fontSize * 0.05);
-            }
-        }
-
-        function drawBoard() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (board) {
-                board.forEach((row, y) => {
-                    row.forEach((cell, x) => {
-                        if (cell) {
-                            drawSquare(x, y, cell.color, cell.letter, ctx);
-                        }
-                    });
-                });
-            }
-        }
-
-        function drawPiece(piece, context, offsetX = 0, offsetY = 0, customBlockSize = BLOCK_SIZE) {
-            if (!piece || !piece.shape) return; 
-            piece.shape.forEach((row, y) => {
-                row.forEach((value, x) => {
-                    if (value === 1) {
-                        drawSquare(piece.x + x + offsetX, piece.y + y + offsetY, piece.color, piece.letter, context, customBlockSize);
-                    }
-                });
-            });
-        }
-        
-        function drawNextPiece() {
-            nextCtx.fillStyle = '#f9f9f9'; 
-            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-            if (nextPiece) {
-                const shape = nextPiece.shape;
-                const shapeWidth = shape[0].length;
-                const shapeHeight = shape.reduce((h, row) => h + (row.some(cell => cell === 1) ? 1 : 0), 0);
-                
-                const offsetX = Math.floor((nextCanvas.width / BLOCK_SIZE - shapeWidth) / 2);
-                const offsetY = Math.floor((nextCanvas.height / BLOCK_SIZE - shapeHeight) / 2);
-                
-                const tempPiece = { ...nextPiece, x: 0, y: 0 }; 
-                drawPiece(tempPiece, nextCtx, offsetX, offsetY, BLOCK_SIZE); 
-            }
-        }
-
-
-        function isValidMove(piece, newX, newY, newShape) {
-            const shapeToTest = newShape || piece.shape;
-            for (let y = 0; y < shapeToTest.length; y++) {
-                for (let x = 0; x < shapeToTest[y].length; x++) {
-                    if (shapeToTest[y][x] === 1) {
-                        const boardX = newX + x;
-                        const boardY = newY + y;
-                        if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT || (boardY >= 0 && board[boardY] && board[boardY][boardX])) {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        }
-
-        function movePiece(dx, dy) {
-            if (isGameOver || isPaused) return false; 
-            if (!currentPiece) return false; 
-            if (isValidMove(currentPiece, currentPiece.x + dx, currentPiece.y + dy, currentPiece.shape)) {
-                currentPiece.x += dx;
-                currentPiece.y += dy;
-                if (dy > 0) { 
-                    dropCounter = 0; // Reset drop counter for soft/hard drops
-                }
-                return true; 
-            }
-            return false; 
-        }
-
-        function rotatePiece() {
-            if (isGameOver || isPaused) return;
-            if (!currentPiece) return; 
-            const shape = currentPiece.shape;
-            const N = shape.length;
-            const newShape = Array.from({ length: N }, () => Array(N).fill(0));
-
-            for (let y = 0; y < N; y++) {
-                for (let x = 0; x < N; x++) {
-                    newShape[x][N - 1 - y] = shape[y][x];
-                }
-            }
-            
-            let kickOffset = 0;
-            if (!isValidMove(currentPiece, currentPiece.x, currentPiece.y, newShape)) {
-                if (isValidMove(currentPiece, currentPiece.x - 1, currentPiece.y, newShape)) kickOffset = -1;
-                else if (isValidMove(currentPiece, currentPiece.x + 1, currentPiece.y, newShape)) kickOffset = 1;
-                else if (currentPiece.letter === 'అ' && isValidMove(currentPiece, currentPiece.x - 2, currentPiece.y, newShape)) kickOffset = -2;
-                else if (currentPiece.letter === 'అ' && isValidMove(currentPiece, currentPiece.x + 2, currentPiece.y, newShape)) kickOffset = 2;
-                else return; 
-            }
-            currentPiece.x += kickOffset;
-            currentPiece.shape = newShape;
-        }
-
-        function hardDrop() {
-            if (isGameOver || isPaused) return;
-            if (!currentPiece) return; 
-            while (movePiece(0, 1)) { /* Keep moving down */ }
-            lockPiece(); 
-        }
-
-        function showSpotlightLetter(letter) {
-            if (spotlightTimeoutId) clearTimeout(spotlightTimeoutId);
-            spotlightLetterContainer.textContent = letter;
-            spotlightLetterContainer.style.opacity = '1';
-            spotlightTimeoutId = setTimeout(() => {
-                spotlightLetterContainer.style.opacity = '0';
-            }, 1500); 
-        }
-        
-        function showBonusMessage(message) {
-            if (bonusMessageTimeoutId) clearTimeout(bonusMessageTimeoutId);
-            bonusMessageContainer.textContent = message;
-            bonusMessageContainer.style.top = '20%';
-            bonusMessageContainer.style.opacity = '1';
-            
-            bonusMessageTimeoutId = setTimeout(() => {
-                bonusMessageContainer.style.opacity = '0';
-                bonusMessageContainer.style.top = '15%'; 
-            }, 1500); 
-        }
-
-
-        function lockPiece() {
-            if (!currentPiece) return; 
-            currentPiece.shape.forEach((row, y) => {
-                row.forEach((value, x) => {
-                    if (value === 1) {
-                        const boardX = currentPiece.x + x;
-                        const boardY = currentPiece.y + y;
-                        if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >=0 && boardX < BOARD_WIDTH) {
-                           board[boardY][boardX] = { color: currentPiece.color, letter: currentPiece.letter };
-                        }
-                    }
-                });
-            });
-            processBoardForChains(); 
-            spawnNewPiece();
-        }
-
-        function processBoardForChains() {
-            let chainsFoundThisTurn = 0;
-            let lettersForSpotlight = [];
-            let totalChainScoreThisTurn = 0;
-            let blocksToClearSet = new Set(); 
-
-            // Horizontal chain check
-            for (let y = 0; y < BOARD_HEIGHT; y++) {
-                let currentLetter = null;
-                let currentStreak = 0;
-                let streakStartIndex = -1;
-                for (let x = 0; x <= BOARD_WIDTH; x++) { 
-                    const cell = (x < BOARD_WIDTH) ? board[y][x] : null; 
-                    
-                    if (cell && cell.letter === currentLetter) {
-                        currentStreak++;
-                    } else {
-                        if (currentStreak >= CHAIN_MATCH_LENGTH) {
-                            chainsFoundThisTurn++;
-                            lettersForSpotlight.push(currentLetter);
-                            totalChainScoreThisTurn += CHAIN_BASE_SCORE * currentStreak; 
-                            for (let k = 0; k < currentStreak; k++) {
-                                blocksToClearSet.add(JSON.stringify({x: streakStartIndex + k, y: y}));
-                            }
-                        }
-                        if (cell) {
-                            currentLetter = cell.letter;
-                            currentStreak = 1;
-                            streakStartIndex = x;
-                        } else {
-                            currentLetter = null;
-                            currentStreak = 0;
-                            streakStartIndex = -1;
-                        }
-                    }
-                }
-            }
-
-            // Vertical chain check
-            for (let x = 0; x < BOARD_WIDTH; x++) {
-                let currentLetter = null;
-                let currentStreak = 0;
-                let streakStartIndex = -1;
-                for (let y = 0; y <= BOARD_HEIGHT; y++) { 
-                    const cell = (y < BOARD_HEIGHT) ? board[y][x] : null;
-
-                    if (cell && cell.letter === currentLetter) {
-                        currentStreak++;
-                    } else {
-                        if (currentStreak >= CHAIN_MATCH_LENGTH) {
-                            chainsFoundThisTurn++; 
-                            lettersForSpotlight.push(currentLetter);
-                            totalChainScoreThisTurn += CHAIN_BASE_SCORE * currentStreak;
-                            for (let k = 0; k < currentStreak; k++) {
-                                blocksToClearSet.add(JSON.stringify({x: x, y: streakStartIndex + k}));
-                            }
-                        }
-                        if (cell) {
-                            currentLetter = cell.letter;
-                            currentStreak = 1;
-                            streakStartIndex = y;
-                        } else {
-                            currentLetter = null;
-                            currentStreak = 0;
-                            streakStartIndex = -1;
-                        }
-                    }
-                }
-            }
-            
-            const blocksToClear = Array.from(blocksToClearSet).map(str => JSON.parse(str));
-
-            if (blocksToClear.length > 0) {
-                blocksToClear.forEach(block => {
-                    board[block.y][block.x] = null;
-                });
-
-                applyGravity(); 
-                score += totalChainScoreThisTurn;
-                chains += chainsFoundThisTurn; 
-                
-                if (totalChainScoreThisTurn > 0) { 
-                    showBonusMessage(`+${totalChainScoreThisTurn} లతో అక్షరాల గొలుసు తయారయిందోచ్!`);
-                }
-
-                if (lettersForSpotlight.length > 0) {
-                    const uniqueLetters = [...new Set(lettersForSpotlight)];
-                    const randomLetterToSpotlight = uniqueLetters[Math.floor(Math.random() * uniqueLetters.length)];
-                    showSpotlightLetter(randomLetterToSpotlight);
-                }
-                
-                updateScoreDisplay();
-
-                if (chains >= level * 5) { 
-                    level++;
-                    dropInterval = Math.max(100, 1000 - (level - 1) * 60); 
-                    levelElement.textContent = level;
-                }
-            }
-        }
-
-        function applyGravity() {
-            for (let x = 0; x < BOARD_WIDTH; x++) { 
-                let emptyRowInCol = -1; 
-                for (let y = BOARD_HEIGHT - 1; y >= 0; y--) { 
-                    if (board[y][x] === null) { 
-                        if (emptyRowInCol === -1) { 
-                            emptyRowInCol = y; 
-                        }
-                    } else if (emptyRowInCol !== -1) { 
-                        board[emptyRowInCol][x] = board[y][x]; 
-                        board[y][x] = null; 
-                        emptyRowInCol--; 
-                    }
-                }
-            }
-        }
-
-
-        function spawnNewPiece() {
-            currentPiece = nextPiece;
-            nextPiece = getRandomPiece();
-            drawNextPiece();
-
-            if (currentPiece && !isValidMove(currentPiece, currentPiece.x, currentPiece.y, currentPiece.shape)) {
-                gameOver();
-            }
-        }
-        
-        function updateScoreDisplay() {
-            scoreElement.textContent = score;
-            chainsElement.textContent = chains;
-            levelElement.textContent = level;
-        }
-
-        function gameOver() {
-            isGameOver = true;
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            animationFrameId = null; 
-            gameOverMessage.style.display = 'block';
-            finalScoreElement.textContent = score;
-            startButton.disabled = false;
-            startButton.textContent = "Restart Game";
-            pauseButton.disabled = true;
-            pauseButton.textContent = "Pause";
-            showMessage("Game Over!", "Play Again?");
-            messageButton.onclick = resetGame;
-        }
-        
-        function showMessage(text, buttonText = "OK") {
-            messageTextElement.textContent = text;
-            messageButton.textContent = buttonText;
-            messageOverlay.style.display = 'flex';
-        }
-
-        messageButton.addEventListener('click', () => {
-            messageOverlay.style.display = 'none';
-        });
-
-
-        function gameLoop(timestamp) {
-            if (isGameOver) return;
-            if (isPaused) {
-                animationFrameId = requestAnimationFrame(gameLoop); 
-                return;
-            }
-
-            if (!lastTime) lastTime = timestamp;
-            const deltaTime = timestamp - lastTime;
-            lastTime = timestamp;
-
-            dropCounter += deltaTime;
-            if (dropCounter > dropInterval) {
-                if (currentPiece && !movePiece(0, 1)) { 
-                    lockPiece();
-                }
-                dropCounter = 0;
-            }
-
-            drawBoard();
-            if (currentPiece) {
-                drawPiece(currentPiece, ctx);
-            }
-            
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
-
-        function initGame() {
-            board = createBoard(); 
-            score = 0;
-            chains = 0; 
-            level = 1;
-            dropCounter = 0;
-            dropInterval = 1000; 
-            lastTime = 0;
-            isGameOver = false;
-            isPaused = false;
-
-            nextPiece = getRandomPiece(); 
-            spawnNewPiece(); 
-            
-            updateScoreDisplay();
-            drawNextPiece(); 
-
-            gameOverMessage.style.display = 'none';
-            startButton.disabled = true;
-            pauseButton.disabled = false;
-            pauseButton.textContent = "Pause";
-            messageOverlay.style.display = 'none'; 
-
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
-
-        function resetGame() {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            if (spotlightTimeoutId) clearTimeout(spotlightTimeoutId);
-            spotlightLetterContainer.style.opacity = '0';
-            if (bonusMessageTimeoutId) clearTimeout(bonusMessageTimeoutId);
-            bonusMessageContainer.style.opacity = '0';
-            initGame();
-        }
-        
-        function handleResize() {
-            // Recalculate block size and canvas dimensions for responsiveness
-            const newBlockSize = window.innerWidth < 768 ? 
-                                 Math.max(15, Math.floor((window.innerWidth * MOBILE_CANVAS_WIDTH_RATIO) / BOARD_WIDTH)) : 
-                                 BLOCK_SIZE_DESKTOP;
-
-            // Only update if block size actually changes significantly to avoid performance issues.
-            // This simple check might not be enough for perfect dynamic resizing during gameplay.
-            // A full redraw or game state adjustment would be needed.
-            // For now, we primarily set it on load and adjust next piece canvas.
-            if (Math.abs(BLOCK_SIZE - newBlockSize) > 1 || canvas.width !== newBlockSize * BOARD_WIDTH) {
-                // console.log("Resizing logic would go here if we dynamically change BLOCK_SIZE mid-game");
-                // To truly make BLOCK_SIZE dynamic mid-game, we'd need to update it globally
-                // and then call initGame() or a similar function to redraw everything based on new BLOCK_SIZE.
-                // This is complex, so we'll stick to the initial calculation for BLOCK_SIZE.
-            }
-            
-            // Update next piece canvas size based on the *current* BLOCK_SIZE (which is set on load)
-            nextCanvas.width = 4 * BLOCK_SIZE;
-            nextCanvas.height = 4 * BLOCK_SIZE;
-
-            if(!isGameOver && nextPiece) { 
-                 drawBoard(); // Redraw main board if needed
-                 if(currentPiece) drawPiece(currentPiece, ctx); // Redraw current piece
-                 drawNextPiece(); // Redraw next piece
-            }
-        }
-        window.addEventListener('resize', handleResize);
-
-
-        startButton.addEventListener('click', () => {
-            initGame();
-        });
-        
-        pauseButton.addEventListener('click', () => {
-            if (isGameOver) return;
-            isPaused = !isPaused;
-            if (isPaused) {
-                pauseButton.textContent = "Resume";
-                pauseButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-                pauseButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                showMessage("Paused", "Resume");
-                messageButton.onclick = () => { 
-                    isPaused = false; 
-                    pauseButton.textContent = "Pause";
-                    pauseButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                    pauseButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-                    messageOverlay.style.display = 'none';
-                    lastTime = performance.now(); 
-                    if (!animationFrameId && !isGameOver) {
-                         animationFrameId = requestAnimationFrame(gameLoop);
-                    }
-                };
-            } else {
-                pauseButton.textContent = "Pause";
-                pauseButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                pauseButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-                messageOverlay.style.display = 'none'; 
-                lastTime = performance.now(); 
-                if (!animationFrameId && !isGameOver) { 
-                     animationFrameId = requestAnimationFrame(gameLoop);
-                }
-            }
-        });
-
-        restartButton.addEventListener('click', resetGame);
-
-        // Keyboard Controls
-        document.addEventListener('keydown', event => {
-            if (isGameOver || isPaused) return;
-            if (!currentPiece) return; 
-
-            switch (event.key) {
-                case 'ArrowLeft': case 'a': movePiece(-1, 0); break;
-                case 'ArrowRight': case 'd': movePiece(1, 0); break;
-                case 'ArrowDown': case 's': if (movePiece(0, 1)) dropCounter = 0; break; // Soft drop
-                case 'ArrowUp': case 'w': rotatePiece(); break;
-                case ' ': event.preventDefault(); hardDrop(); break; // Hard drop
-            }
-        });
-
-        // Touch Gesture Controls
-        canvas.addEventListener('touchstart', (event) => {
-            if (isGameOver || isPaused || !currentPiece) return;
-            event.preventDefault(); // Prevent default touch actions like scrolling
-            touchStartX = event.touches[0].clientX;
-            touchStartY = event.touches[0].clientY;
-            touchStartTime = new Date().getTime();
-        }, { passive: false });
-
-        canvas.addEventListener('touchend', (event) => {
-            if (isGameOver || isPaused || !currentPiece) return;
-            event.preventDefault();
-            
-            const touchEndX = event.changedTouches[0].clientX;
-            const touchEndY = event.changedTouches[0].clientY;
-            const touchEndTime = new Date().getTime();
-
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-            const elapsedTime = touchEndTime - touchStartTime;
-
-            // Check for Tap (Rotate)
-            if (elapsedTime < TAP_THRESHOLD_TIME && Math.abs(deltaX) < TAP_THRESHOLD_DISTANCE && Math.abs(deltaY) < TAP_THRESHOLD_DISTANCE) {
-                rotatePiece();
-                return;
-            }
-
-            // Check for Swipes
-            if (Math.abs(deltaX) > Math.abs(deltaY)) { // Horizontal swipe
-                if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-                    if (deltaX > 0) {
-                        movePiece(1, 0); // Swipe Right
-                    } else {
-                        movePiece(-1, 0); // Swipe Left
-                    }
-                }
-            } else { // Vertical swipe
-                if (deltaY > SWIPE_THRESHOLD) { // Swipe Down
-                    if (elapsedTime < QUICK_FLICK_TIME && deltaY > SWIPE_THRESHOLD * 1.5) { // Quick Flick Down for Hard Drop
-                        hardDrop();
-                    } else { // Regular Swipe Down for Soft Drop
-                        if(movePiece(0, 1)) dropCounter = 0;
-                    }
-                }
-                // No swipe up action for now
-            }
-        }, { passive: false });
-
-
-        // --- Initial Setup ---
-        board = createBoard(); 
-        drawBoard(); 
-        nextPiece = getRandomPiece(); 
-        drawNextPiece(); 
-        handleResize(); // Call once on load to set initial sizes
-
-        showMessage("తెలుగు టెట్రిస్ కు స్వాగతం!", "Start Game");
-        messageButton.onclick = () => {
-            messageOverlay.style.display = 'none';
-            initGame(); 
-        };
-        
-    </script>
+<body>
+<noscript>ఈ ఆట ఆడటానికి JavaScript అవసరం.</noscript>
+<script type="module">
+import { createApp, createLoop, pointerControls, keyControls, fontsReady, haptic, isTouch, params, prefersReducedMotion } from "tt/shell.js";
+import { el, setChildren } from "tt/safe.js";
+import { sfx, speak } from "tt/sfx.js";
+import * as te from "tt/telugu.js";
+import { THREE, createRenderer, createComposer, autoResize, glyphTexture, glyphCanvas, Burst, skyDome, voxelMesh, qualityTier } from "tt/three-kit.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+/* ============================== tuning ============================== */
+const DEBUG = params().has("debug");
+const tier = qualityTier();
+const reduced = prefersReducedMotion();
+const rand = te.rng(params().has("seed") ? +params().get("seed") : Date.now() >>> 0);
+const touchy = isTouch() || (navigator.maxTouchPoints ?? 0) > 0;
+const CHAIN_BASE_SCORE = 100;                  // original: 100 × run length
+const dropFor = level => Math.max(100, 1000 - (level - 1) * 60);   // original drop interval (ms)
+const LOCK_DELAY = 0.5, LOCK_RESETS = 15;      // time a grounded piece waits before locking; moves that reset it
+const DAS = 0.16, ARR = 0.05, SOFT_STEP = 0.035;
+const POOL_SIZE = 5;                           // letters in play at once (bigger sets slide a window as levels rise)
+const MAIN_BIAS = 0.6;                         // chance a block repeats its piece's main letter (keeps runs reachable)
+const POP_T = reduced ? 0.12 : 0.34;
+const CAP = 10 * 20 + 8;                       // block instances: largest board + falling piece
+const BASE_YAW = 0.13, BASE_PITCH = 0.1;
+const SWAY_YAW = reduced ? 0 : 0.045, SWAY_PITCH = reduced ? 0 : 0.02;
+
+// The original seven shapes, each with its original fixed letter and colour ("పాత ఆట").
+const SHAPES = {
+  I: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
+  J: [[1, 0, 0], [1, 1, 1], [0, 0, 0]],
+  L: [[0, 0, 1], [1, 1, 1], [0, 0, 0]],
+  O: [[1, 1], [1, 1]],
+  S: [[0, 1, 1], [1, 1, 0], [0, 0, 0]],
+  T: [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
+  Z: [[1, 1, 0], [0, 1, 1], [0, 0, 0]],
+};
+const CLASSIC = {
+  I: { letter: "అ", color: "#00BCD4" }, J: { letter: "ఆ", color: "#2196F3" }, L: { letter: "ఇ", color: "#FF9800" },
+  O: { letter: "ఉ", color: "#FFEB3B" }, S: { letter: "ఎ", color: "#4CAF50" }, T: { letter: "క", color: "#9C27B0" }, Z: { letter: "గ", color: "#F44336" },
+};
+const CONSONANT_CHOICES = te.CONSONANTS.filter(c => !["ఙ", "ఞ", "ఱ"].includes(c));
+const SETS = {
+  achchulu:  { label: te.GROUPS.achchulu.te,  letters: () => [...te.GROUPS.achchulu.letters] },
+  ka:        { label: te.GROUPS.ka_vargam.te,  letters: () => [...te.GROUPS.ka_vargam.letters] },
+  cha:       { label: te.GROUPS.cha_vargam.te, letters: () => [...te.GROUPS.cha_vargam.letters] },
+  Ta:        { label: te.GROUPS.ta_vargam.te,  letters: () => [...te.GROUPS.ta_vargam.letters] },
+  tha:       { label: te.GROUPS.tha_vargam.te, letters: () => [...te.GROUPS.tha_vargam.letters] },
+  pa:        { label: te.GROUPS.pa_vargam.te,  letters: () => [...te.GROUPS.pa_vargam.letters] },
+  gunintham: { label: "గుణింతం", letters: c => te.gunintham(c) },
+  classic:   { label: "పాత ఆట", letters: () => Object.values(CLASSIC).map(v => v.letter) },
+};
+
+/* ============================== app shell ============================== */
+let ready = false;   // the top bar is live while fonts load; ignore it until the game exists
+const SETTINGS = [
+  { key: "letters", label: "అక్షరాలు", type: "segmented", default: "achchulu", restart: true,
+    options: Object.entries(SETS).map(([value, s]) => ({ value, label: s.label })),
+    help: "ప్రతి గడికి ఈ సమూహం నుండి ఒక అక్షరం వస్తుంది. పాత ఆట: ప్రతి ఆకారానికి ఎప్పుడూ ఒకే అక్షరం." },
+  { key: "consonant", label: "గుణింతం హల్లు", type: "segmented", default: "క", restart: true,
+    options: CONSONANT_CHOICES.map(c => ({ value: c, label: c })), help: "‘గుణింతం’ ఎంచుకుంటే: క కా కి కీ కు …" },
+  { key: "chain", label: "గొలుసు పొడవు", type: "segmented", default: 4, restart: true,
+    options: [3, 4, 5].map(n => ({ value: n, label: `${n} అక్షరాలు` })),
+    help: "ఇన్ని ఒకేలాంటి అక్షరాలు అడ్డంగా లేదా నిలువుగా వరుసగా వస్తే మాయమవుతాయి (పాత ఆటలో 5)." },
+  { key: "size", label: "బోర్డు పరిమాణం", type: "segmented", default: "10x20", restart: true,
+    options: [{ value: "8x16", label: "8 × 16" }, { value: "10x20", label: "10 × 20" }] },
+  { key: "startLevel", label: "మొదటి స్థాయి", type: "range", min: 1, max: 10, step: 1, default: 1, restart: true },
+  { key: "ghost", label: "నీడ ముక్క", type: "toggle", default: true, help: "ముక్క ఎక్కడ పడుతుందో పారదర్శకంగా చూపిస్తుంది" },
+  { key: "colors", label: "రంగుల సహాయం", type: "toggle", default: true, help: "ఆపితే గడులన్నీ ఒకే రంగులో ఉంటాయి — అక్షరాన్ని చదివే గుర్తించాలి!" },
+  { key: "sound", label: "శబ్దం", type: "toggle", default: true },
+  { key: "speak", label: "అక్షరాన్ని పలుకు", type: "toggle", default: true, help: "గొలుసు తయారైనప్పుడు ఆ అక్షరం వినిపిస్తుంది (పరికరంలో తెలుగు స్వరం ఉంటేనే)" },
+  { key: "buttons", label: "తెర బటన్లు", type: "toggle", default: touchy, help: "కదపడానికి, తిప్పడానికి, పడవేయడానికి తెరపై బటన్లు" },
+];
+const TOUCH_CTL = "అడ్డంగా లాగితే కదులుతుంది · తాకితే తిరుగుతుంది · కిందికి విసిరితే పడుతుంది";
+const KEY_CTL = "← → కదుపు · ↑ / X తిప్పు · ↓ మెల్లగా · Space పడవేయి · C దాచు · P ఆపు";
+const helpNode = () => el("div", { class: "intro" },
+  el("p", { text: "• పడే ప్రతి ముక్కలోని ప్రతి గడిలో ఒక తెలుగు అక్షరం ఉంటుంది." }),
+  el("p", { text: `• ఒకేలాంటి అక్షరం అడ్డంగా గానీ నిలువుగా గానీ వరుసగా ${app.settings.chain} లేదా అంతకంటే ఎక్కువ సార్లు వస్తే ఆ గొలుసు మాయమవుతుంది — గొలుసులోని ప్రతి అక్షరానికి 100 పాయింట్లు.` }),
+  el("p", { text: "• నిండిన అడ్డు వరుసలు తొలగిపోవు! గొలుసు మాయమయ్యాక పైన ఉన్న గడులు కిందికి జారతాయి. అప్పుడు కొత్త గొలుసులు ఏర్పడితే కాంబో ×2, ×3…" }),
+  el("p", { text: "• (స్థాయి × 5) గొలుసులు పూర్తయితే తదుపరి స్థాయి: ముక్కలు వేగంగా పడతాయి, కొత్త అక్షరాలు వస్తాయి." }),
+  el("p", { text: "• నీడ ముక్క ముక్క ఎక్కడ పడుతుందో చూపిస్తుంది. ‘దాచు’ తో ఒక ముక్కను తర్వాతకు దాచుకోవచ్చు." }),
+  el("p", { class: "ctl", text: "ఫోన్: " + TOUCH_CTL + " · పైకి విసిరితే దాచుతుంది." }),
+  el("p", { class: "ctl", text: "కీబోర్డ్: " + KEY_CTL }),
+);
+const app = createApp({ id: "aksharasangamam", title: "అక్షర సంగమం", accent: "lotus", game: true, settings: SETTINGS, help: helpNode,
+  onSettings: (v, key) => { if (ready) settingsChanged(v, key); } });
+app.addAction("pause", "ఆపు", () => { if (ready) togglePause(); });
+// Keep the "sound" setting and the top-bar sound button in step.
+const soundBtn = app.topbar.querySelector('button[aria-label="శబ్దం"]');
+// Opening help or settings mid-game pauses first (capture phase: before the sheet opens).
+app.topbar.addEventListener("click", e => {
+  const label = e.target instanceof Element ? e.target.closest("button")?.getAttribute("aria-label") : null;
+  if (ready && (label === "అమరికలు" || label === "ఎలా ఆడాలి?") && ["playing", "resolving"].includes(state.mode)) togglePause();
+}, true);
+app.settings.sound = !sfx.muted;
+soundBtn?.addEventListener("click", () => { app.settings.sound = !sfx.muted; app.store.set("setting:sound", !sfx.muted); });
+
+/* ---------- HUD (DOM) ---------- */
+const scoreB = el("b", { text: "0" }), levelB = el("b", { text: "1" }), chainsB = el("b", { text: "0" }), bestB = el("b", { text: "0" });
+const statsBox = el("div", { class: "box stats", attrs: { role: "status", "aria-live": "polite" } },
+  el("div", { class: "stat-score" }, el("small", { text: "స్కోరు" }), scoreB),
+  el("div", { class: "stat-meta" },
+    el("span", {}, el("small", { text: "స్థాయి" }), levelB),
+    el("span", {}, el("small", { text: "గొలుసులు" }), chainsB),
+    el("span", { class: "stat-best" }, el("small", { text: "ఉత్తమం" }), bestB)));
+const holdCv = el("canvas", { class: "preview", attrs: { "aria-hidden": "true" } });
+const nextCv = el("canvas", { class: "preview", attrs: { "aria-hidden": "true" } });
+const holdBox = el("button", { type: "button", class: "box pbox holdbox", attrs: { "aria-label": "దాచు — ఈ ముక్కను తర్వాతకు దాచుకోండి" },
+  on: { click: () => holdSwap() } }, el("span", { class: "box__label", text: "దాచినది" }), holdCv);
+const nextBox = el("div", { class: "box pbox nextbox" }, el("span", { class: "box__label", text: "తదుపరి" }), nextCv);
+const poolBox = el("div", { class: "box pool", attrs: { "aria-label": "ఆటలోని అక్షరాలు" } });
+const spotEl = el("div", { class: "spot", attrs: { "aria-hidden": "true" } });
+const bonusEl = el("div", { class: "bonus", attrs: { role: "status", "aria-live": "polite" } });
+const well = el("div", { class: "well" }, spotEl, bonusEl);
+
+const SVGNS = "http://www.w3.org/2000/svg";
+function padIcon(d) {   // static kit-style stroke icon (no markup strings)
+  const s = document.createElementNS(SVGNS, "svg");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); s.classList.add("tt-icon");
+  for (const part of d.split("|")) { const p = document.createElementNS(SVGNS, "path"); p.setAttribute("d", part); s.append(p); }
+  return s;
+}
+const ICONS = {
+  left: "M15 5l-7 7 7 7", right: "M9 5l7 7-7 7", soft: "M6 9l6 6 6-6",
+  hard: "M7 4l5 5 5-5|M7 11l5 5 5-5|M5 20h14", rotate: "M23 4v6h-6|M20.49 15a9 9 0 1 1-2.12-9.36L23 10",
+};
+function padButton(content, label, down, up = null, extra = "") {
+  const b = el("button", { type: "button", class: "padbtn" + extra, attrs: { "aria-label": label }, title: label },
+    typeof content === "string" ? content : content);
+  const release = () => { if (!b.classList.contains("is-down")) return; b.classList.remove("is-down"); up?.(); };
+  b.addEventListener("pointerdown", e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch { /* ignore */ } b.classList.add("is-down"); down(); });
+  b.addEventListener("pointerup", release); b.addEventListener("pointercancel", release); b.addEventListener("lostpointercapture", release);
+  b.addEventListener("click", e => { if (e.detail === 0) { down(); up?.(); } });   // keyboard activation only
+  b.addEventListener("contextmenu", e => e.preventDefault());
+  return b;
+}
+const padL = el("div", { class: "pad pad--l" },
+  padButton("దాచు", "దాచు", () => holdSwap()),
+  padButton(padIcon(ICONS.left), "ఎడమకు", () => press(-1), () => release(-1)),
+  padButton(padIcon(ICONS.right), "కుడికి", () => press(1), () => release(1)));
+const padR = el("div", { class: "pad pad--r" },
+  padButton(padIcon(ICONS.hard), "వెంటనే పడవేయి", () => hardDrop()),
+  padButton(padIcon(ICONS.soft), "మెల్లగా దించు", () => softOn(), () => softOff()),
+  padButton(padIcon(ICONS.rotate), "తిప్పు", () => rotate(1), null, " padbtn--rot"));
+const pads = el("div", { class: "pads" }, padL, padR);
+const keysHint = el("div", { class: "box keys", text: KEY_CTL });
+const layout = el("div", { class: "layout" }, holdBox, statsBox, nextBox, poolBox, well, pads, keysHint);
+app.stage.append(layout);
+
+/* ============================== 3D scene ============================== */
+await fontsReady();
+const renderer = createRenderer({ container: app.stage, tier, exposure: 1.05 });
+if (!renderer) throw new Error("WebGL unavailable");   // createRenderer already showed a Telugu message
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 900);
+scene.fog = new THREE.Fog(0x1c0f2c, 70, 260);
+scene.add(skyDome({ radius: 500, top: "#0e0820", horizon: "#3a1440", bottom: "#0b0812", exponent: 0.8 }));
+const hemi = new THREE.HemisphereLight(0xffe6f1, 0x2a1838, 1.25);
+const keyLight = new THREE.DirectionalLight(0xfff4ea, 2.1); keyLight.position.set(-9, 24, 20);
+const rimLight = new THREE.DirectionalLight(0xff5c93, 0.9); rimLight.position.set(12, 8, -4);
+scene.add(hemi, keyLight, rimLight);
+// threshold above the lit blocks: only flashing clears, sparks and the gold caps glow
+const { composer, bloomPass } = createComposer(renderer, scene, camera, { bloom: { strength: 0.75, radius: 0.5, threshold: 0.9 } });
+
+const boardGroup = new THREE.Group();
+boardGroup.rotation.x = -0.1;          // the well leans back a little
+scene.add(boardGroup);
+const WHITE = new THREE.Color(1, 1, 1), GREY = new THREE.Color(0.22, 0.2, 0.26);
+const tmpC = new THREE.Color(), _c1 = new THREE.Color(), _c2 = new THREE.Color();
+
+/* ---------- blocks: one instanced body mesh + one instanced face mesh per letter ---------- */
+const cubeGeo = tier === "low" ? new THREE.BoxGeometry(0.94, 0.94, 0.94) : new RoundedBoxGeometry(0.94, 0.94, 0.94, 2, 0.1);
+const body = new THREE.InstancedMesh(cubeGeo, new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.02 }), CAP);
+body.frustumCulled = false;
+for (let i = 0; i < CAP; i++) body.setColorAt(i, WHITE);
+boardGroup.add(body);
+const ghost = new THREE.InstancedMesh(cubeGeo, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.2, depthWrite: false }), 4);
+ghost.frustumCulled = false; ghost.renderOrder = 1;
+for (let i = 0; i < 4; i++) ghost.setColorAt(i, WHITE);
+boardGroup.add(ghost);
+const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.95, 0.95, 0.95));
+const ghostLines = Array.from({ length: 4 }, () => {
+  const l = new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ transparent: true, opacity: 0.75, depthWrite: false }));
+  l.visible = false; l.renderOrder = 1; boardGroup.add(l); return l;
+});
+
+const faceStyle = () => app.settings.colors
+  ? { height: 128, weight: 800, color: "#ffffff", stroke: "#2a0f22", strokeWidth: 9, padding: 0.08 }
+  : { height: 128, weight: 800, color: "#3b1d12", padding: 0.08 };
+const faces = new Map();   // letter → { mesh, n, sx, sy }
+function sizeFace(f, tex) {
+  const a = tex.userData.aspect; let h = 0.86, w = h * a;
+  if (w > 0.9) { w = 0.9; h = w / a; }
+  f.sx = w; f.sy = h;
+}
+function face(letter) {
+  let f = faces.get(letter);
+  if (!f) {
+    const tex = glyphTexture(letter, faceStyle());
+    const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, color: 0xe2e2e2 }), CAP);
+    mesh.frustumCulled = false; mesh.renderOrder = 2; mesh.count = 0; mesh.visible = false;
+    boardGroup.add(mesh);
+    f = { mesh, n: 0, sx: 1, sy: 1 }; sizeFace(f, tex); faces.set(letter, f);
+  }
+  return f;
+}
+function restyleFaces() {
+  for (const [letter, f] of faces) { const tex = glyphTexture(letter, faceStyle()); f.mesh.material.map = tex; f.mesh.material.needsUpdate = true; sizeFace(f, tex); }
+}
+
+/* ---------- the voxel well: back wall, side walls, floor, plinth (one instanced mesh) ---------- */
+const wellMat = new THREE.MeshLambertMaterial();
+let wellMesh = null;
+let W = 10, H = 20, board = [];
+const emptyBoard = () => Array.from({ length: H }, () => Array(W).fill(null));
+function buildWell() {
+  if (wellMesh) { boardGroup.remove(wellMesh); wellMesh.dispose(); }
+  const vox = [], ox = -(W - 1) / 2, odd = n => (n & 1) === 1;
+  const stone = (x, y) => ((x * 7 + y * 3) % 5 === 0 ? "#7a3a66" : odd(x + y) ? "#5c2a4e" : "#69325a");
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) vox.push({ x: ox + x, y, z: -1, color: odd(x + y) ? "#261b36" : "#1d152b" });
+  for (let y = -1; y <= H; y++) for (const x of [-1, W]) for (const z of [0, -1]) vox.push({ x: ox + x, y, z, color: y === H ? "#ffc845" : stone(x, y) });
+  for (let x = 0; x < W; x++) for (const z of [0, -1]) vox.push({ x: ox + x, y: -1, z, color: stone(x, -1) });
+  for (let x = -3; x <= W + 2; x++) for (let z = -2; z <= 1; z++) vox.push({ x: ox + x, y: -2, z, color: odd(x + z) ? "#3a2142" : "#311c39" });
+  wellMesh = voxelMesh(vox, { size: 1, material: wellMat });
+  wellMesh.frustumCulled = false;
+  boardGroup.add(wellMesh);
+}
+
+/* ---------- particles + backdrop (drifting voxels and faint letters) ---------- */
+const burst = new Burst({ max: 1600, size: 0.34 });
+boardGroup.add(burst);
+const floaters = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial(), 30);
+floaters.frustumCulled = false;
+const FLOAT = [], fr = te.rng(77), FL_COLORS = ["#ff5c93", "#ffc845", "#8f80ff", "#22c3d6", "#ff8a3d"];
+for (let i = 0; i < 30; i++) {
+  FLOAT.push({ x: (fr() - 0.5) * 120, y: -16 + fr() * 64, z: -28 - fr() * 80, s: 0.8 + fr() * 2.4, ax: fr() * 6, ay: fr() * 6, vr: (fr() - 0.5) * 0.5, ph: fr() * 6.28 });
+  floaters.setColorAt(i, tmpC.set(FL_COLORS[i % FL_COLORS.length]).multiplyScalar(0.4));
+}
+scene.add(floaters);
+const bgSprites = Array.from({ length: 8 }, () => {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, opacity: 0.06 + fr() * 0.07, color: 0xff5c93, fog: false }));
+  s.userData = { size: 5 + fr() * 7, x: (fr() - 0.5) * 140, y: -10 + fr() * 60, z: -60 - fr() * 90, vy: 0.3 + fr() * 0.5 };
+  s.position.set(s.userData.x, s.userData.y, s.userData.z); scene.add(s); return s;
+});
+function setBackdropLetters(letters) {
+  bgSprites.forEach((s, i) => {
+    const tex = glyphTexture(letters[(i * 3) % letters.length], { height: 128, weight: 800, color: "#ffffff" });
+    s.material.map = tex; s.material.needsUpdate = true;
+    s.scale.set(s.userData.size * tex.userData.aspect, s.userData.size, 1);
+  });
+}
+
+/* ============================== state ============================== */
+const state = {
+  mode: "menu",     // menu | playing | resolving | paused | over
+  cfg: null, piece: null, next: null, hold: null, canHold: true, isClassic: false, setLetters: [], pool: [],
+  score: 0, chains: 0, level: 1, combo: 0, maxCombo: 0, best: 0, dropInterval: 1000, gravT: 0,
+  resolve: null, shake: 0, vt: 0, gt: 0, overT: 0, pausedFrom: null, calls: 0,
+};
+const input = { left: false, right: false, dir: 0, das: 0, soft: false };
+const view = { slot: { x: 0, y: 0, w: 1, h: 1 }, d: 50, center: new THREE.Vector3(0, 10, 0), cellPx: 30 };
+
+/* ---------- letters & colours ---------- */
+let letterHex = {};
+function buildColors(letters, classic) {
+  letterHex = {};
+  if (classic) for (const v of Object.values(CLASSIC)) letterHex[v.letter] = v.color;
+  else letters.forEach((l, i) => { letterHex[l] = "#" + new THREE.Color().setHSL(((i * 137.508) % 360) / 360, 0.74, 0.6, THREE.SRGBColorSpace).getHexString(); });
+}
+const NEUTRAL = "#efe2c6";
+const rawHex = l => letterHex[l] ?? "#cccccc";
+const hexOf = l => (app.settings.colors ? rawHex(l) : NEUTRAL);
+const colCache = new Map();
+const colOf = l => { const h = hexOf(l); if (!colCache.has(h)) colCache.set(h, new THREE.Color(h)); return colCache.get(h); };
+function poolFor(level) {
+  const all = state.setLetters;
+  if (state.isClassic || all.length <= POOL_SIZE) return [...all];
+  const start = ((level - 1) * 2) % all.length;   // slide two letters per level so neighbours (ఇ/ఈ, కి/కీ) meet
+  return Array.from({ length: POOL_SIZE }, (_, i) => all[(start + i) % all.length]);
+}
+
+/* ---------- pieces ---------- */
+let bag = [];
+const nextShape = () => { if (!bag.length) bag = rand.shuffle(Object.keys(SHAPES)); return bag.pop(); };
+function makePiece(shape) {
+  let gen;
+  if (state.isClassic) gen = () => CLASSIC[shape].letter;
+  else { const main = rand.pick(state.pool); gen = () => (rand() < MAIN_BIAS ? main : rand.pick(state.pool)); }
+  return { shape, rot: 0, m: SHAPES[shape].map(row => row.map(v => (v ? gen() : null))) };
+}
+const rotCW = m => m.map((row, y) => row.map((_, x) => m[m.length - 1 - x][y]));
+const rotCCW = m => m.map((row, y) => row.map((_, x) => m[x][m.length - 1 - y]));
+function fits(m, x, y) {
+  for (let r = 0; r < m.length; r++) for (let c = 0; c < m[r].length; c++) {
+    if (!m[r][c]) continue;
+    const bx = x + c, by = y + r;
+    if (bx < 0 || bx >= W || by >= H) return false;
+    if (by >= 0 && board[by][bx]) return false;
+  }
+  return true;
+}
+const dropRow = p => { let y = p.y; while (fits(p.m, p.x, y + 1)) y++; return y; };
+function eachBlock(p, fn) { p.m.forEach((row, r) => row.forEach((l, c) => { if (l) fn(p.y + r, p.x + c, l, r, c); })); }
+
+/* ============================== HUD ============================== */
+const fmt = n => Number(n).toLocaleString("en-IN");
+function renderHud(popScore = false) {
+  scoreB.textContent = fmt(state.score);
+  levelB.textContent = String(state.level);
+  chainsB.textContent = String(state.chains);
+  bestB.textContent = fmt(Math.max(state.best, state.score));
+  if (popScore && !reduced) { scoreB.classList.remove("pop"); void scoreB.offsetWidth; scoreB.classList.add("pop"); }
+}
+function renderPool() {
+  setChildren(poolBox, el("small", { text: "అక్షరాలు" }), state.pool.map(l => el("span", { class: "chip", text: l, style: { "--c": rawHex(l) } })));
+}
+function flashEl(node, ms) {   // CSS animation, or a plain show/hide under reduced motion
+  clearTimeout(node._t);
+  if (reduced) { node.classList.add("show"); node._t = setTimeout(() => node.classList.remove("show"), ms); return; }
+  node.classList.remove("on"); void node.offsetWidth; node.classList.add("on");
+}
+function spotlight(letter) {
+  spotEl.textContent = letter;
+  spotEl.style.setProperty("--c", app.settings.colors ? rawHex(letter) : "#ff5c93");
+  flashEl(spotEl, 1200);
+}
+function bonus(lines) {
+  setChildren(bonusEl, lines.map(([cls, text]) => el("div", { class: cls, text })));
+  flashEl(bonusEl, 1500);
+}
+function clearFx() { for (const n of [spotEl, bonusEl]) { clearTimeout(n._t); n.classList.remove("on", "show"); } }
+
+/* ---------- next / hold previews: little voxel cubes drawn in 2D (crisp at any DPR) ---------- */
+const glyphImgs = new Map();
+function glyphImg(letter, ink) {
+  const k = letter + (ink ? "|ink" : "|w");
+  if (!glyphImgs.has(k)) glyphImgs.set(k, glyphCanvas(letter, ink
+    ? { height: 96, weight: 800, color: "#3b1d12", padding: 0.08 }
+    : { height: 96, weight: 800, color: "#ffffff", stroke: "#2a0f22", strokeWidth: 9, padding: 0.08 }));
+  return glyphImgs.get(k);
+}
+const shadeCss = (hex, k) => "#" + _c1.set(hex).lerp(_c2.set(k > 0 ? 0xffffff : 0x000000), Math.abs(k)).getHexString();
+function drawCube(g, x, y, s, d, letter) {
+  const col = hexOf(letter), i = s * 0.04, x0 = x + i, y0 = y + i, q = s - 2 * i;
+  g.fillStyle = shadeCss(col, 0.3);
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 + d, y0 - d); g.lineTo(x0 + q + d, y0 - d); g.lineTo(x0 + q, y0); g.closePath(); g.fill();
+  g.fillStyle = shadeCss(col, -0.45);
+  g.beginPath(); g.moveTo(x0 + q, y0); g.lineTo(x0 + q + d, y0 - d); g.lineTo(x0 + q + d, y0 + q - d); g.lineTo(x0 + q, y0 + q); g.closePath(); g.fill();
+  const grad = g.createLinearGradient(x0, y0, x0, y0 + q);
+  grad.addColorStop(0, shadeCss(col, 0.12)); grad.addColorStop(1, shadeCss(col, -0.18));
+  g.fillStyle = grad; g.beginPath();
+  if (g.roundRect) g.roundRect(x0, y0, q, q, q * 0.12); else g.rect(x0, y0, q, q);
+  g.fill();
+  const img = glyphImg(letter, !app.settings.colors), a = img.width / img.height;
+  let gh = q * 0.9, gw = gh * a;
+  if (gw > q * 0.94) { gw = q * 0.94; gh = gw / a; }
+  g.drawImage(img, x0 + (q - gw) / 2, y0 + (q - gh) / 2, gw, gh);
+}
+function drawPreview(cv, piece) {
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), pw = Math.round(w * dpr), ph = Math.round(h * dpr);
+  if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+  const g = cv.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  if (!piece) return;
+  const m = piece.m;
+  let r0 = 9, r1 = -1, c0 = 9, c1 = -1;
+  m.forEach((row, r) => row.forEach((l, c) => { if (l) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); c0 = Math.min(c0, c); c1 = Math.max(c1, c); } }));
+  const nr = r1 - r0 + 1, nc = c1 - c0 + 1, K = 0.28;
+  const s = Math.min((w - 6) / (nc + K), (h - 4) / (nr + K)), d = s * K;
+  const ox = (w - (nc * s + d)) / 2, oy = (h - (nr * s + d)) / 2 + d;
+  for (let r = r1; r >= r0; r--) for (let c = c0; c <= c1; c++) if (m[r][c]) drawCube(g, ox + (c - c0) * s, oy + (r - r0) * s, s, d, m[r][c]);
+}
+function drawPreviews() { drawPreview(nextCv, state.next); drawPreview(holdCv, state.hold); holdBox.classList.toggle("is-used", !state.canHold); }
+new ResizeObserver(drawPreviews).observe(nextCv);
+
+/* ============================== gameplay ============================== */
+function spawnPiece(p) {
+  const N = p.m.length, top = p.m.findIndex(r => r.some(Boolean));
+  const piece = { shape: p.shape, m: p.m, rot: p.rot ?? 0, x: Math.floor(W / 2) - Math.floor(N / 2), y: -top, lockT: 0, resets: 0, lowest: -top, spin: 0 };
+  piece.vx = piece.x; piece.vy = piece.y;
+  if (!fits(piece.m, piece.x, piece.y)) { state.piece = null; gameOver(); return false; }   // original rule: no room to spawn
+  state.piece = piece; state.mode = "playing"; state.gravT = 0;
+  return true;
+}
+function spawnNext() {
+  const p = state.next;
+  state.next = makePiece(nextShape());
+  drawPreviews();
+  spawnPiece(p);
+}
+function manipulated() { const p = state.piece; if (p.resets < LOCK_RESETS) { p.lockT = 0; p.resets++; } }
+function tryMove(dx, dy) {
+  const p = state.piece;
+  if (!p || state.mode !== "playing" || !fits(p.m, p.x + dx, p.y + dy)) return false;
+  p.x += dx; p.y += dy;
+  if (dy > 0) { if (p.y > p.lowest) { p.lowest = p.y; p.resets = 0; } p.lockT = 0; }
+  else manipulated();
+  return true;
+}
+const KICKS = [[0, 0], [-1, 0], [1, 0], [0, -1], [-1, -1], [1, -1], [-2, 0], [2, 0]];
+function rotate(dir = 1) {
+  const p = state.piece;
+  if (!p || state.mode !== "playing") return false;
+  const m = dir > 0 ? rotCW(p.m) : rotCCW(p.m);
+  for (const [kx, ky] of KICKS) {
+    if (Math.abs(kx) === 2 && p.shape !== "I") continue;
+    if (fits(m, p.x + kx, p.y + ky)) {
+      p.m = m; p.x += kx; p.y += ky; p.rot = (p.rot + (dir > 0 ? 1 : 3)) % 4;
+      if (!reduced) p.spin = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+      manipulated(); sfx.play("tap");
+      return true;
+    }
+  }
+  return false;
+}
+function press(dir) {
+  if (dir < 0) input.left = true; else input.right = true;
+  input.dir = dir; input.das = DAS;
+  if (tryMove(dir, 0)) sfx.tone({ freq: 620, dur: 0.03, gain: 0.04, type: "square" });
+}
+function release(dir) {
+  if (dir < 0) input.left = false; else input.right = false;
+  if (input.dir === dir) { input.dir = input.left ? -1 : input.right ? 1 : 0; input.das = DAS; }
+}
+function softOn() { input.soft = true; if (tryMove(0, 1)) state.gravT = 0; }
+function softOff() { input.soft = false; }
+function releaseAll() { input.left = input.right = input.soft = false; input.dir = 0; }
+function hardDrop() {
+  const p = state.piece;
+  if (!p || state.mode !== "playing") return;
+  const y = dropRow(p), ox = -(W - 1) / 2;
+  if (y > p.y && !reduced) eachBlock(p, (r, c, l) => {   // a short streak down the column the piece falls through
+    for (let k = 0; k < Math.min(6, y - p.y); k += 2) burst.emit(new THREE.Vector3(ox + c, H - 1 - (y - p.y + r - k) + 0.5, 0.3), { count: 1, color: rawHex(l), speed: 0.6, gravity: 0, life: 0.35 });
+  });
+  p.y = y; p.vy = y;
+  sfx.play("whoosh"); haptic(8);
+  lock();
+}
+function holdSwap() {
+  const p = state.piece;
+  if (state.mode !== "playing" || !p) return;
+  if (!state.canHold) { sfx.play("bad"); return; }
+  let m = p.m;
+  for (let i = 0; i < p.rot; i++) m = rotCCW(m);   // back to spawn orientation, letters kept
+  const held = state.hold;
+  state.hold = { shape: p.shape, m, rot: 0 };
+  state.canHold = false;
+  sfx.play("pop");
+  if (held) spawnPiece(held); else spawnNext();
+  drawPreviews();
+}
+function lock() {
+  const p = state.piece;
+  if (!p) return;
+  state.piece = null;
+  let out = false;
+  const ox = -(W - 1) / 2;
+  eachBlock(p, (r, c, letter) => {
+    if (r < 0) { out = true; return; }
+    board[r][c] = { letter, fall: 0, land: 1, clear: false };
+    if (!reduced) burst.emit(new THREE.Vector3(ox + c, H - 1 - r, 0.4), { count: 3, color: 0xcdb8d8, speed: 1.6, gravity: -4, life: 0.35 });
+  });
+  sfx.tone({ freq: 170, to: 90, type: "triangle", dur: 0.09, gain: 0.14 });
+  state.canHold = true; state.combo = 0;
+  drawPreviews();
+  if (out) { gameOver(); return; }   // locked above the top
+  resolveStep();
+}
+
+/* ---------- chains: the original run-of-N rule, then gravity, then check again (cascade) ---------- */
+function findRuns() {
+  const N = state.cfg.chain, runs = [];
+  for (let r = 0; r < H; r++) for (let c = 0; c < W;) {
+    const L = board[r][c]?.letter; let e = c + 1;
+    if (L) { while (e < W && board[r][e]?.letter === L) e++; if (e - c >= N) runs.push({ letter: L, cells: Array.from({ length: e - c }, (_, k) => [r, c + k]) }); }
+    c = e;
+  }
+  for (let c = 0; c < W; c++) for (let r = 0; r < H;) {
+    const L = board[r][c]?.letter; let e = r + 1;
+    if (L) { while (e < H && board[e][c]?.letter === L) e++; if (e - r >= N) runs.push({ letter: L, cells: Array.from({ length: e - r }, (_, k) => [r + k, c]) }); }
+    r = e;
+  }
+  return runs;
+}
+function resolveStep() {
+  const runs = findRuns();
+  if (!runs.length) { state.resolve = null; if (state.mode !== "over") spawnNext(); return; }
+  state.mode = "resolving";
+  state.combo++; state.maxCombo = Math.max(state.maxCombo, state.combo);
+  const base = runs.reduce((a, run) => a + CHAIN_BASE_SCORE * run.cells.length, 0);
+  const gained = base * state.combo;
+  state.score += gained;
+  state.chains += runs.length;
+  const cells = new Map();
+  for (const run of runs) for (const [r, c] of run.cells) cells.set(r * 100 + c, [r, c]);
+  const ox = -(W - 1) / 2;
+  for (const [r, c] of cells.values()) {
+    const cell = board[r][c]; cell.clear = true;
+    const at = new THREE.Vector3(ox + c, H - 1 - r + 0.5, 0.5);
+    burst.emit(at, { count: reduced ? 5 : 12, color: rawHex(cell.letter), speed: 4.5, gravity: -7, life: 0.9 });
+    if (!reduced) burst.emit(at, { count: 4, color: 0xffffff, speed: 3, gravity: -5, life: 0.6 });
+  }
+  state.resolve = { phase: "pop", t: 0, cells: [...cells.values()] };
+  const letters = [...new Set(runs.map(r => r.letter))];
+  const star = letters[Math.floor(rand() * letters.length)];
+  spotlight(star);
+  const lines = [["b1", `+${gained} లతో అక్షరాల గొలుసు తయారయిందోచ్!`]];   // the original game's message
+  if (state.combo > 1) lines.push(["b2", `కాంబో ×${state.combo}!`]);
+  if (state.chains >= state.level * 5) {   // original: level rises when chains ≥ level × 5
+    state.level++;
+    state.dropInterval = dropFor(state.level);
+    const old = state.pool;
+    state.pool = poolFor(state.level);
+    const fresh = state.pool.filter(l => !old.includes(l));
+    lines.push(["b3", fresh.length ? `స్థాయి ${state.level}! కొత్త అక్షరాలు: ${fresh.join(" ")}` : `స్థాయి ${state.level}!`]);
+    renderPool();
+    sfx.play("level");
+  }
+  bonus(lines);
+  renderHud(true);
+  state.shake = Math.min(1, 0.35 + 0.15 * state.combo + 0.04 * cells.size) * (reduced ? 0 : 1);
+  sfx.play(state.combo > 1 ? "win" : "good");
+  sfx.tone({ freq: 440 * Math.pow(1.26, Math.min(state.combo, 6) - 1), dur: 0.25, type: "triangle", gain: 0.12, delay: 0.12 });
+  haptic(state.combo > 1 ? [15, 30, 25] : 15);
+  if (app.settings.speak) setTimeout(() => speak(star, { rate: 0.8 }), 200);
+}
+function gravity() {   // original column-wise gravity: every block drops to fill the gaps below it
+  for (let c = 0; c < W; c++) {
+    let write = H - 1;
+    for (let r = H - 1; r >= 0; r--) {
+      const cell = board[r][c];
+      if (!cell) continue;
+      if (r !== write) { board[write][c] = cell; board[r][c] = null; cell.fall += write - r; }
+      write--;
+    }
+  }
+}
+function stepResolve(dt) {
+  const R = state.resolve;
+  if (!R) return;
+  R.t += dt;
+  if (R.phase === "pop") {
+    if (R.t < POP_T) return;
+    for (const [r, c] of R.cells) board[r][c] = null;
+    gravity();
+    R.phase = "fall"; R.t = 0;
+    return;
+  }
+  let moving = false;
+  const v = reduced ? 60 : 9 + R.t * 70;
+  for (const row of board) for (const cell of row) if (cell && cell.fall > 0) {
+    cell.fall = Math.max(0, cell.fall - v * dt);
+    if (cell.fall === 0) cell.land = 0.7; else moving = true;
+  }
+  if (!moving && R.t > 0.04) resolveStep();
+}
+
+/* ---------- per-step simulation ---------- */
+function stepPlaying(dt) {
+  const p = state.piece;
+  if (!p) return;
+  if (input.dir) { input.das -= dt; while (input.das <= 0 && state.piece) { tryMove(input.dir, 0); input.das += ARR; } }
+  const g = state.dropInterval / 1000, interval = input.soft ? Math.min(SOFT_STEP, g) : g;
+  state.gravT += dt;
+  while (state.gravT >= interval) { state.gravT -= interval; if (!tryMove(0, 1)) { state.gravT = 0; break; } }
+  if (!fits(p.m, p.x, p.y + 1)) { p.lockT += dt; if (p.lockT >= LOCK_DELAY) lock(); }
+  else p.lockT = 0;
+}
+function update(dt) {
+  if (state.mode === "paused") return;
+  state.gt += dt;
+  if (state.mode === "playing") stepPlaying(dt);
+  else if (state.mode === "resolving") stepResolve(dt);
+  else if (state.mode === "over") state.overT += dt;
+  for (const row of board) for (const cell of row) if (cell && cell.land > 0) cell.land = Math.max(0, cell.land - dt * 5);
+  state.shake = Math.max(0, state.shake - dt * 2.4);
+  burst.update(dt);
+}
+
+/* ============================== drawing ============================== */
+const m4 = new THREE.Matrix4(), qz = new THREE.Quaternion(), v3 = new THREE.Vector3(), s3 = new THREE.Vector3();
+const Z_AXIS = new THREE.Vector3(0, 0, 1), euler = new THREE.Euler();
+function putBlock(letter, x, y, s, sy, flash, rotZ, grey) {
+  const i = body.count++;
+  qz.setFromAxisAngle(Z_AXIS, rotZ);
+  m4.compose(v3.set(x, y, 0), qz, s3.set(s, sy, s)); body.setMatrixAt(i, m4);
+  tmpC.copy(colOf(letter));
+  if (flash) tmpC.lerp(WHITE, flash);
+  if (grey) tmpC.lerp(GREY, grey);
+  body.setColorAt(i, tmpC);
+  const f = face(letter);
+  m4.compose(v3.set(x, y, 0.47 * s + 0.012), qz, s3.set(f.sx * s, f.sy * sy, 1));
+  f.mesh.setMatrixAt(f.n++, m4);
+}
+function drawBlocks(dt) {
+  body.count = 0;
+  for (const f of faces.values()) f.n = 0;
+  const ox = -(W - 1) / 2;
+  const grey = state.mode === "over" ? Math.min(0.75, state.overT * 1.5) : 0;
+  const R = state.resolve, popK = R && R.phase === "pop" ? Math.min(1, R.t / POP_T) : 0;
+  for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
+    const cell = board[r]?.[c];
+    if (!cell) continue;
+    let s = 1, sy = 1, flash = 0, y = H - 1 - r + 0.5 + cell.fall;
+    if (cell.clear) {
+      s = sy = popK < 0.4 ? 1 + 0.32 * (popK / 0.4) : 1.32 * Math.max(0.001, 1 - (popK - 0.4) / 0.6);
+      flash = Math.min(1, popK * 2.5) * 0.8;
+    } else if (cell.land > 0) { sy = 1 - 0.14 * cell.land; s = 1 + 0.05 * cell.land; y -= 0.47 * (1 - sy); }
+    putBlock(cell.letter, ox + c, y, s, sy, flash, 0, grey);
+  }
+  let gi = 0;
+  const p = state.piece;
+  if (p) {
+    const k = reduced ? 1 : 1 - Math.exp(-dt * 32);
+    p.vx += (p.x - p.vx) * k; p.vy += (p.y - p.vy) * k;
+    p.spin *= reduced ? 0 : Math.exp(-dt * 24);
+    if (Math.abs(p.spin) < 0.002) p.spin = 0;
+    const N = p.m.length, h = (N - 1) / 2, cos = Math.cos(p.spin), sin = Math.sin(p.spin);
+    const cx = ox + p.vx + h, cy = H - 1 - (p.vy + h) + 0.5;
+    const gy = app.settings.ghost ? dropRow(p) : p.y;
+    p.m.forEach((row, r) => row.forEach((l, c) => {
+      if (!l) return;
+      const rx = c - h, ry = -(r - h);
+      putBlock(l, cx + rx * cos - ry * sin, cy + rx * sin + ry * cos, 1, 1, 0, p.spin, 0);
+      if (gy > p.y && gi < 4) {
+        const gx = ox + p.x + c, gyw = H - 1 - (gy + r) + 0.5;
+        m4.makeTranslation(gx, gyw, 0); ghost.setMatrixAt(gi, m4);
+        tmpC.copy(colOf(l)); ghost.setColorAt(gi, tmpC);
+        const line = ghostLines[gi]; line.position.set(gx, gyw, 0); line.material.color.copy(colOf(l)); line.visible = true;
+        gi++;
+      }
+    }));
+  }
+  ghost.count = gi; ghost.visible = gi > 0;
+  for (let i = gi; i < 4; i++) ghostLines[i].visible = false;
+  ghost.instanceMatrix.needsUpdate = true; if (ghost.instanceColor) ghost.instanceColor.needsUpdate = true;
+  body.instanceMatrix.needsUpdate = true; body.instanceColor.needsUpdate = true;
+  for (const f of faces.values()) { f.mesh.count = f.n; f.mesh.visible = f.n > 0; f.mesh.instanceMatrix.needsUpdate = true; }
+}
+function drawBackdrop(dt) {
+  const t = reduced ? 0 : state.vt;
+  FLOAT.forEach((f, i) => {
+    euler.set(f.ax + t * f.vr, f.ay + t * f.vr * 0.7, 0);
+    qz.setFromEuler(euler);
+    m4.compose(v3.set(f.x, f.y + Math.sin(t * 0.3 + f.ph) * 0.9, f.z), qz, s3.setScalar(f.s));
+    floaters.setMatrixAt(i, m4);
+  });
+  floaters.instanceMatrix.needsUpdate = true;
+  if (!reduced) for (const s of bgSprites) { s.position.y += s.userData.vy * dt; if (s.position.y > 55) s.position.y = -14; }
+}
+function placeCamera(yaw, pitch, d) {
+  camera.position.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).multiplyScalar(d).add(view.center);
+  camera.lookAt(view.center);
+  camera.updateMatrixWorld();
+}
+function render(dt) {
+  state.vt += dt;
+  placeCamera(BASE_YAW + SWAY_YAW * Math.sin(state.vt * 0.21), BASE_PITCH + SWAY_PITCH * Math.sin(state.vt * 0.16 + 1.3), view.d);
+  if (state.shake > 0) {
+    const s = state.shake * state.shake * 0.5;
+    camera.position.x += (Math.random() - 0.5) * s; camera.position.y += (Math.random() - 0.5) * s;
+  }
+  drawBlocks(dt);
+  drawBackdrop(dt);
+  if (DEBUG) { renderer.info.autoReset = false; renderer.info.reset(); }
+  composer.render();
+  if (DEBUG) state.calls = renderer.info.render.calls;
+}
+
+/* ============================== layout + camera fit ============================== */
+function relayout() {
+  const w = app.stage.clientWidth, h = app.stage.clientHeight;
+  if (!w || !h) return;
+  const wide = w / h >= 0.8 && w >= 480;
+  layout.classList.toggle("is-wide", wide);
+  if (wide) {
+    const ratio = (W + 2.8) / (H + 2.4);   // the well's on-screen aspect incl. frame and camera yaw
+    const ww = Math.max(150, Math.min((h - 16) * ratio, w - 2 * 190));
+    layout.style.setProperty("--well-w", Math.round(ww) + "px");
+  }
+}
+const corners = Array.from({ length: 8 }, () => new THREE.Vector3()), _v = new THREE.Vector3();
+function fitsAt(d) {
+  for (const yaw of [BASE_YAW - SWAY_YAW, BASE_YAW + SWAY_YAW]) for (const pitch of [BASE_PITCH - SWAY_PITCH, BASE_PITCH + SWAY_PITCH]) {
+    placeCamera(yaw, pitch, d);
+    for (const c of corners) { _v.copy(c).project(camera); if (Math.abs(_v.x) > 0.97 || Math.abs(_v.y) > 0.97 || _v.z > 1) return false; }
+  }
+  return true;
+}
+/** Fit the well into the DOM slot, then shift the projection so the full-screen canvas shows it there. */
+function fit() {
+  const st = app.stage.getBoundingClientRect(), wr = well.getBoundingClientRect();
+  if (!st.width || !st.height || wr.width < 20 || wr.height < 20) return;
+  const slot = { x: wr.left - st.left, y: wr.top - st.top, w: wr.width, h: wr.height };
+  view.slot = slot;
+  camera.clearViewOffset(); camera.aspect = slot.w / slot.h; camera.updateProjectionMatrix();
+  boardGroup.updateMatrixWorld(true);
+  let i = 0;
+  for (const x of [-W / 2 - 1, W / 2 + 1]) for (const y of [-1, H + 1]) for (const z of [-1.5, 0.5]) corners[i++].set(x, y, z).applyMatrix4(boardGroup.matrixWorld);
+  view.center.set(0, 0, 0); corners.forEach(c => view.center.add(c)); view.center.multiplyScalar(1 / 8);
+  let lo = 4, hi = 800;
+  for (let k = 0; k < 28; k++) { const d = (lo + hi) / 2; if (fitsAt(d)) hi = d; else lo = d; }
+  view.d = hi;
+  placeCamera(BASE_YAW, BASE_PITCH, view.d);
+  const a = _v.set(0, H / 2, 0.47).applyMatrix4(boardGroup.matrixWorld).project(camera).x;
+  const b = _v.set(1, H / 2, 0.47).applyMatrix4(boardGroup.matrixWorld).project(camera).x;
+  view.cellPx = Math.max(10, Math.abs(b - a) * slot.w / 2);
+  camera.setViewOffset(slot.w, slot.h, -slot.x, -slot.y, st.width, st.height);
+  scene.fog.near = view.d + 25; scene.fog.far = view.d + 200;
+}
+
+/* ============================== flow ============================== */
+const bestKey = cfg => `${cfg.letters}${cfg.letters === "gunintham" ? "-" + cfg.consonant : ""}-${cfg.chain}-${cfg.size}`;
+function applyConfig(cfg) {
+  const [w, h] = cfg.size.split("x").map(Number);
+  if (w !== W || h !== H || !wellMesh) { W = w; H = h; buildWell(); relayout(); fit(); }
+  board = emptyBoard();
+  state.isClassic = cfg.letters === "classic";
+  state.setLetters = SETS[cfg.letters].letters(cfg.consonant);
+  buildColors(state.setLetters, state.isClassic);
+  state.level = cfg.startLevel;
+  state.dropInterval = dropFor(state.level);
+  state.pool = poolFor(state.level);
+  Object.assign(state, { score: 0, chains: 0, combo: 0, maxCombo: 0, hold: null, next: null, piece: null, canHold: true, resolve: null, overT: 0, shake: 0 });
+  state.best = app.best(bestKey(cfg)).get();
+  setBackdropLetters(state.setLetters);
+}
+function demoBoard() {   // a few settled blocks behind the menu card (no runs)
+  for (let c = 0; c < W; c++) {
+    const hgt = Math.floor(rand() * 4);
+    for (let k = 0; k < hgt; k++) {
+      const r = H - 1 - k;
+      let l, tries = 0;
+      do { l = rand.pick(state.pool); tries++; } while (tries < 20 && (board[r][c - 1]?.letter === l || board[r + 1]?.[c]?.letter === l));
+      board[r][c] = { letter: l, fall: 0, land: 0, clear: false };
+    }
+  }
+}
+const summary = (cfg, level = cfg.startLevel) => `${SETS[cfg.letters].label}${cfg.letters === "gunintham" ? " (" + cfg.consonant + ")" : ""} · గొలుసు ${cfg.chain} · ${cfg.size.replace("x", " × ")} · స్థాయి ${level}`;
+function showMenu() {
+  state.mode = "menu";
+  state.cfg = { ...app.settings };
+  applyConfig(state.cfg);
+  demoBoard();
+  clearFx(); renderHud(); renderPool(); drawPreviews();
+  app.overlay({
+    title: "అక్షర సంగమం",
+    body: el("div", { class: "intro" },
+      el("p", { class: "lead", text: "తెలుగు టెట్రిస్ కు స్వాగతం!" }),
+      el("p", { text: `${state.cfg.chain}+ ఒకేలాంటి అక్షరాలను అడ్డంగా లేదా నిలువుగా పేర్చండి!` }),
+      el("p", { class: "ctl", text: app.settings.buttons || touchy ? TOUCH_CTL : KEY_CTL }),
+      el("small", { text: summary(state.cfg) })),
+    actions: [{ label: "ఆట ప్రారంభించు", onClick: startGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+  });
+}
+function startGame() {
+  state.cfg = { ...app.settings };
+  applyConfig(state.cfg);
+  bag = [];
+  releaseAll();
+  app.hideOverlay(); clearFx();
+  state.next = makePiece(nextShape());
+  renderHud(); renderPool();
+  spawnNext();
+  loop.start();
+}
+function gameOver() {
+  if (state.mode === "over") return;
+  state.mode = "over"; state.piece = null; state.overT = 0; state.resolve = null;
+  releaseAll();
+  state.shake = reduced ? 0 : 0.7;
+  sfx.play("crash"); haptic([40, 30, 80]);
+  const { best, isNew } = app.best(bestKey(state.cfg)).submit(state.score);
+  state.best = best; renderHud();
+  setTimeout(() => {
+    if (state.mode !== "over") return;
+    app.overlay({
+      title: "ఆట ముగిసింది!",
+      body: isNew ? "కొత్త రికార్డు! 🎉" : `స్థాయి ${state.level} · గరిష్ఠ కాంబో ×${Math.max(1, state.maxCombo)}`,
+      stats: [{ label: "స్కోరు", value: fmt(state.score) }, { label: "ఉత్తమం", value: fmt(best) }, { label: "గొలుసులు", value: String(state.chains) }],
+      actions: [{ label: "మళ్ళీ ఆడు", onClick: startGame }, { label: "అమరికలు", ghost: true, onClick: app.openSettings }],
+    });
+  }, reduced ? 250 : 900);
+}
+function togglePause() {
+  if (state.mode === "paused") return resume();
+  if (!["playing", "resolving"].includes(state.mode)) return;
+  state.pausedFrom = state.mode; state.mode = "paused";
+  releaseAll();
+  app.overlay({ title: "ఆట ఆగింది", body: summary(state.cfg, state.level), actions: [
+    { label: "కొనసాగించు", onClick: resume },
+    { label: "మళ్ళీ మొదలు", ghost: true, onClick: startGame },
+    { label: "అమరికలు", ghost: true, onClick: app.openSettings },
+  ] });
+}
+function resume() { if (state.mode !== "paused") return; state.mode = state.pausedFrom; app.hideOverlay(); loop.start(); }
+
+function applyPads() {
+  pads.hidden = !app.settings.buttons;
+  keysHint.hidden = app.settings.buttons || touchy;
+}
+function applyColors() {
+  layout.classList.toggle("no-colors", !app.settings.colors);
+  restyleFaces(); drawPreviews(); renderPool();
+}
+function settingsChanged(v, key) {
+  if ((key === "sound" || key === null) && soundBtn && v.sound === sfx.muted) soundBtn.click();
+  if (key === "buttons" || key === null) applyPads();
+  if (key === "colors" || key === null) applyColors();
+  if (state.mode === "menu" && (key === null || ["letters", "consonant", "chain", "size", "startLevel", "buttons"].includes(key))) showMenu();
+}
+
+/* ============================== loop ============================== */
+const loop = createLoop({ update, render, onHidden: () => { if (["playing", "resolving"].includes(state.mode)) togglePause(); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && state.mode !== "paused") loop.start(); });
+
+/* ============================== input ============================== */
+let drag = null;
+pointerControls(app.stage, {
+  ignore: "button, a, input, select, textarea, label, dialog, .tt-overlay, .pads",
+  onDragStart: () => { const t = performance.now(); drag = { t, axis: null, cells: 0, rows: 0, trail: [{ t, dy: 0 }] }; },
+  onDrag: ({ dx, dy }) => {
+    if (!drag) return;
+    drag.trail.push({ t: performance.now(), dy });
+    if (drag.trail.length > 8) drag.trail.shift();
+    if (state.mode !== "playing") return;
+    if (!drag.axis && Math.hypot(dx, dy) > 12) drag.axis = Math.abs(dx) > Math.abs(dy) ? "x" : dy > 0 ? "down" : "up";
+    const cell = view.cellPx;
+    if (drag.axis === "x") {   // one cell per cell-width dragged
+      const target = Math.sign(dx) * Math.floor(Math.abs(dx) / cell + 0.35);
+      while (drag.cells < target) { tryMove(1, 0); drag.cells++; }
+      while (drag.cells > target) { tryMove(-1, 0); drag.cells--; }
+    } else if (drag.axis === "down") {   // slow drag down follows the finger (soft drop)
+      const target = Math.floor(dy / cell);
+      while (drag.rows < target) { if (!tryMove(0, 1)) { drag.rows = target; break; } drag.rows++; state.gravT = 0; }
+    }
+  },
+  onDragEnd: ({ dy }) => {
+    if (!drag) return;
+    const now = performance.now(), axis = drag.axis;
+    // speed over the last ~120 ms, so a slow drag that ends in a flick still counts
+    const ref = drag.trail.find(s => now - s.t <= 120) ?? drag.trail[drag.trail.length - 1];
+    const recent = (dy - ref.dy) / Math.max(16, now - ref.t), overall = dy / Math.max(1, now - drag.t);
+    drag = null;
+    if (DEBUG) window.__lastGesture = { axis, dy, recent, overall };
+    if (state.mode !== "playing") return;
+    const fast = v => Math.abs(v) > 0.3;
+    if (axis === "down" && dy > Math.max(36, view.cellPx * 1.4) && (fast(recent) || fast(overall))) hardDrop();   // flick down
+    else if (axis === "up" && -dy > 40 && (fast(recent) || fast(overall))) holdSwap();                            // flick up
+  },
+  onTap: () => { if (state.mode === "playing") rotate(1); },
+});
+keyControls({
+  ArrowLeft: () => press(-1), KeyA: () => press(-1),
+  ArrowRight: () => press(1), KeyD: () => press(1),
+  ArrowUp: () => rotate(1), KeyX: () => rotate(1), KeyW: () => rotate(1), KeyZ: () => rotate(-1),
+  ArrowDown: () => softOn(), KeyS: () => softOn(),
+  " ": () => hardDrop(),
+  KeyC: () => holdSwap(),
+  KeyP: () => togglePause(), Escape: () => togglePause(),
+});
+window.addEventListener("keyup", e => {
+  if (e.code === "ArrowLeft" || e.code === "KeyA") release(-1);
+  if (e.code === "ArrowRight" || e.code === "KeyD") release(1);
+  if (e.code === "ArrowDown" || e.code === "KeyS") softOff();
+});
+window.addEventListener("blur", releaseAll);
+
+/* ============================== boot ============================== */
+applyPads();
+layout.classList.toggle("no-colors", !app.settings.colors);
+state.cfg = { ...app.settings };
+applyConfig(state.cfg);
+autoResize({ renderer, camera, composer, bloomPass, container: app.stage, onResize: () => { relayout(); fit(); } });
+new ResizeObserver(() => fit()).observe(well);
+// Compile the ghost and outline shaders now (out of sight) so the first falling piece doesn't hitch.
+m4.makeTranslation(0, 5, -1.2); ghost.setMatrixAt(0, m4); ghost.count = 1; ghost.visible = true;   // buried in the back wall
+ghostLines[0].position.set(0, 5, -1.2); ghostLines[0].visible = true;
+composer.render();
+ghost.visible = false; ghostLines[0].visible = false;
+ready = true;
+showMenu();
+loop.start();
+
+if (DEBUG) {
+  const L = v => (typeof v === "number" ? state.pool[v] : v);
+  window.__game = {
+    state, view, input,
+    get board() { return board; },
+    /** rows: strings (top → bottom) placed at the bottom of the board; '.' empty, 0-9a-z = index into `letters` (default: the pool). */
+    setBoard(rows, letters = state.pool) {
+      board = emptyBoard();
+      rows.forEach((row, i) => { const r = H - rows.length + i; [...row].forEach((ch, c) => { if (ch !== "." && c < W) board[r][c] = { letter: letters[parseInt(ch, 36)], fall: 0, land: 0, clear: false }; }); });
+    },
+    setLetters: () => state.setLetters,
+    /** Fill all but the top `free` rows with two alternating letters (no runs). */
+    fillJunk(free = 2) {
+      for (let r = free; r < H; r++) for (let c = 0; c < W; c++) board[r][c] = { letter: state.pool[(r + c) % 2], fall: 0, land: 0, clear: false };
+    },
+    /** Replace the falling piece: letters fill its blocks in reading order (numbers = pool index). */
+    setPiece(shape, letters, { x = null, rot = 0 } = {}) {
+      let k = 0;
+      let m = SHAPES[shape].map(row => row.map(v => (v ? L(letters[k++ % letters.length]) : null)));
+      for (let i = 0; i < rot; i++) m = rotCW(m);
+      const top = m.findIndex(r => r.some(Boolean));
+      const p = { shape, m, rot, x: x ?? Math.floor(W / 2) - Math.floor(m.length / 2), y: -top, lockT: 0, resets: 0, lowest: -top, spin: 0 };
+      p.vx = p.x; p.vy = p.y;
+      state.piece = p; state.mode = "playing";
+    },
+    setChains(n) { state.chains = n; renderHud(); },
+    info: () => ({
+      mode: state.mode, score: state.score, chains: state.chains, level: state.level, combo: state.combo, maxCombo: state.maxCombo,
+      dropInterval: state.dropInterval, pool: state.pool, W, H, cellPx: view.cellPx, slot: view.slot, hold: state.hold?.shape ?? null,
+      next: state.next?.shape ?? null, canHold: state.canHold,
+      piece: state.piece && { shape: state.piece.shape, x: state.piece.x, y: state.piece.y, rot: state.piece.rot, m: state.piece.m },
+      rows: board.map(row => row.map(c => (c ? (state.pool.includes(c.letter) ? String(state.pool.indexOf(c.letter)) : "?") : ".")).join("")),
+      calls: state.calls, gt: state.gt,
+    }),
+  };
+}
+</script>
 </body>
 </html>

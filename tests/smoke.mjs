@@ -26,7 +26,8 @@ const upgraded = new Set(manifest.apps.filter(a => a.upgraded).map(a => `${a.slu
 const nextPages = fs.existsSync(path.join(ROOT, "next")) ? fs.readdirSync(path.join(ROOT, "next")).filter(f => f.endsWith(".html")).map(f => `next/${f}`) : [];
 const livePages = manifest.apps.filter(a => a.live).map(a => `${a.slug}.html`);
 const only = process.argv.slice(2);
-const pages = (only.length ? only : [...nextPages, ...livePages]).map(p => ({ page: p, strict: p.startsWith("next/") || upgraded.has(p) }));
+upgraded.add("index.html");   // the gallery is always held to the strict bar
+const pages = (only.length ? only : ["index.html", ...nextPages, ...livePages]).map(p => ({ page: p, strict: p.startsWith("next/") || upgraded.has(p) }));
 
 const PORT = 8090 + Math.floor(Math.random() * 500);
 const server = await startServer(PORT);

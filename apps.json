@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Single source of truth for the Telugu app gallery. 'next': an upgraded build is in next/ for testing. 'upgraded': the live file is on the shared lib/v1 kit.",
+  "note": "Single source of truth for the Telugu app gallery. 'next': an upgraded build is in next/ for testing. 'upgraded': the live file is on the shared lib/v1 kit. 'badge': label on the gallery card. Previous versions live in legacy/.",
   "apps": [
     {
       "slug": "carushikaru",
@@ -9,9 +9,10 @@
       "category": "games",
       "accent": "saffron",
       "live": true,
-      "next": true,
-      "upgraded": false,
-      "blurb_te": "కారు నడుపుతూ సరైన అక్షరాలను పట్టుకుని తెలుగు పదాలను పూర్తి చేయండి."
+      "next": false,
+      "upgraded": true,
+      "blurb_te": "కారు నడుపుతూ సరైన అక్షరాలను పట్టుకుని తెలుగు పదాలను పూర్తి చేయండి.",
+      "badge": "కొత్త రూపం"
     },
     {
       "slug": "flappyka",
@@ -20,9 +21,10 @@
       "category": "games",
       "accent": "chili",
       "live": true,
-      "next": true,
-      "upgraded": false,
-      "blurb_te": "ఫ్లాపీ బర్డ్ నుండి ప్రేరణ పొందిన ఈ గేమ్‌లో 'క' అక్షరంతో అడ్డంకులను దాటండి."
+      "next": false,
+      "upgraded": true,
+      "blurb_te": "ఫ్లాపీ బర్డ్ నుండి ప్రేరణ పొందిన ఈ గేమ్‌లో 'క' అక్షరంతో అడ్డంకులను దాటండి.",
+      "badge": "కొత్త రూపం"
     },
     {
       "slug": "telugallika",
@@ -31,9 +33,10 @@
       "category": "games",
       "accent": "gold",
       "live": true,
-      "next": true,
-      "upgraded": false,
-      "blurb_te": "పదాల పజిళ్లు అల్లుదాం రండి"
+      "next": false,
+      "upgraded": true,
+      "blurb_te": "పదాల పజిళ్లు అల్లుదాం రండి",
+      "badge": "కొత్త రూపం"
     },
     {
       "slug": "tadaperata",
@@ -43,8 +46,9 @@
       "accent": "turmeric",
       "live": true,
       "next": false,
-      "upgraded": false,
-      "blurb_te": "తెలుగు పదాలు మీకు ఎంత బాగా వొచ్చూనో ??!!!"
+      "upgraded": true,
+      "blurb_te": "తెలుగు పదాలు మీకు ఎంత బాగా వొచ్చూనో ??!!!",
+      "badge": "కొత్త రూపం"
     },
     {
       "slug": "ankelata",
@@ -54,8 +58,9 @@
       "accent": "peacock",
       "live": true,
       "next": false,
-      "upgraded": false,
-      "blurb_te": "తెలుగు అంకెలు నేర్చుకుందాం రండి!"
+      "upgraded": true,
+      "blurb_te": "తెలుగు అంకెలు నేర్చుకుందాం రండి!",
+      "badge": "కొత్త రూపం"
     },
     {
       "slug": "aksharasangamam",
@@ -65,8 +70,9 @@
       "accent": "lotus",
       "live": true,
       "next": false,
-      "upgraded": false,
-      "blurb_te": "తెలుగు అక్షరాల్ని గుంపులుగా చేసి పాయింట్లు కొట్టేయండి"
+      "upgraded": true,
+      "blurb_te": "తెలుగు అక్షరాల్ని గుంపులుగా చేసి పాయింట్లు కొట్టేయండి",
+      "badge": "కొత్త రూపం"
     },
     {
       "slug": "aksharaveta",
@@ -76,8 +82,9 @@
       "accent": "leaf",
       "live": true,
       "next": false,
-      "upgraded": false,
-      "blurb_te": "ఈ సరదా పాక్‌మన్-శైలి గేమ్‌లో సరైన తెలుగు అక్షరాలను సేకరించండి!"
+      "upgraded": true,
+      "blurb_te": "ఈ సరదా పాక్‌మన్-శైలి గేమ్‌లో సరైన తెలుగు అక్షరాలను సేకరించండి!",
+      "badge": "కొత్త రూపం"
     },
     {
       "slug": "aksharanusarika",
@@ -87,8 +94,9 @@
       "accent": "indigo",
       "live": true,
       "next": false,
-      "upgraded": false,
-      "blurb_te": "తెలుగు వచనాన్ని విశ్లేషించి, అక్షరాల వర్గీకరణ మరియు గణాంకాలను పొందండి."
+      "upgraded": true,
+      "blurb_te": "తెలుగు వచనాన్ని విశ్లేషించి, అక్షరాల వర్గీకరణ మరియు గణాంకాలను పొందండి.",
+      "badge": "కొత్త రూపం"
     },
     {
       "slug": "aksharayatra",
@@ -99,7 +107,8 @@
       "live": true,
       "next": false,
       "upgraded": false,
-      "blurb_te": "బ్రాహ్మీ నుండి నేటి తెలుగు దాకా — 2,300 ఏళ్లలో ప్రతి అక్షరం ఎలా మారిందో కణాల యానిమేషన్‌లో చూడండి."
+      "blurb_te": "బ్రాహ్మీ నుండి నేటి తెలుగు దాకా — 2,300 ఏళ్లలో ప్రతి అక్షరం ఎలా మారిందో కణాల యానిమేషన్‌లో చూడండి.",
+      "badge": "కొత్తది"
     },
     {
       "slug": "telugusampada",
@@ -107,10 +116,11 @@
       "en": "Telugu Sampada",
       "category": "tools",
       "accent": "peacock",
-      "live": false,
+      "live": true,
       "next": false,
-      "upgraded": false,
-      "blurb_te": "పద్యార్చన, పదార్చన ప్రాజెక్టుల ప్రగతి — కొత్త వెర్షన్ (v2)"
+      "upgraded": true,
+      "blurb_te": "పద్యార్చన, పదార్చన ప్రాజెక్టుల ప్రగతి — కొత్త వెర్షన్ (v2)",
+      "badge": "కొత్తది"
     }
   ]
 }

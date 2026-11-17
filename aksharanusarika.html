@@ -1,1454 +1,1157 @@
-<!DOCTYPE html>
-<html lang="te">
+<!doctype html>
+<html lang="te" data-theme="auto" data-accent="indigo">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>aksharanusarika v0.0.7a అక్షరానుసారిక v0.0.7a</title>
-  
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <style>
-    /* General Body and Font Styling */
-    body {
-      margin: 0;
-      padding: 0.5rem;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background-color: #f8f9fa;
-    }
-    .container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 0 1rem;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>అక్షరానుసారిక — తెలుగు అక్షర, గురు లఘు విశ్లేషణ</title>
+<meta name="description" content="అక్షరానుసారిక: తెలుగు పాఠ్యాన్ని అక్షరాలుగా విడదీసి వర్గాలు, ఉచ్చారణ స్థానాలు, గురు లఘువులు, గణ విభజనలు చూపిస్తుంది. రెండు పాఠ్యాలను పోల్చవచ్చు.">
+<meta property="og:title" content="అక్షరానుసారిక — తెలుగు అక్షర విశ్లేషణ">
+<meta property="og:description" content="పద్యపు గురు లఘువులు, గణాలు, అక్షర వర్గాలు ఒక్క చూపులో">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%238f80ff'/%3E%3Cpath d='M13 18v13a10 10 0 0 0 20 0V18' fill='none' stroke='%230d0630' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M47 18v28' stroke='%230d0630' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./lib/v1/tt.css">
+<style>
+  /* chart series (validated with the dataviz palette checker: light + dark) */
+  :root { --sA: #9085e9; --onA: #10131a; --sB: #d95926; --sC: #199e70; --grid: rgba(255, 255, 255, .14); --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+  @media (prefers-color-scheme: light) { :root[data-theme="auto"] { --sA: #6250d6; --onA: #fff; --sB: #eb6834; --sC: #1baf7a; --grid: rgba(29, 22, 38, .14); } }
+  :root[data-theme="light"] { --sA: #6250d6; --onA: #fff; --sB: #eb6834; --sC: #1baf7a; --grid: rgba(29, 22, 38, .14); }
 
-    /* Main Heading */
-    .main-banner {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-size: 1.8rem; /* Adjusted for mobile */
-      color: #1971c2;
-      border-bottom: 2px solid #4dabf7;
-      padding-bottom: 0.5rem;
-    }
+  .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 12px 40px; display: grid; gap: 12px; min-width: 0; }
+  @media (max-width: 399px) { .page { padding: 0 10px 32px; } }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: var(--tt-pill); background: var(--tt-surface-2);
+          border: 1px solid var(--tt-line); width: 100%; max-width: 420px; }
+  .tabs button { min-height: 44px; border: 0; border-radius: var(--tt-pill); background: transparent; font-weight: 700; font-size: 16px;
+                 cursor: pointer; white-space: nowrap; color: var(--tt-muted); }
+  .tabs button[aria-selected="true"] { background: var(--tt-accent); color: var(--tt-accent-ink); }
+  .panel { display: grid; gap: 12px; min-width: 0; }
+  .panel[hidden], [hidden] { display: none !important; }
+  .card { background: var(--tt-surface); border: 1px solid var(--tt-line); border-radius: var(--tt-radius); padding: 14px; min-width: 0; }
+  .lbl { display: block; font-weight: 700; margin: 0 0 6px; }
+  .lbl small { font-weight: 500; color: var(--tt-muted); }
+  textarea.txt { display: block; width: 100%; min-height: 132px; resize: vertical; border-radius: 12px; border: 1px solid var(--tt-line);
+                 background: var(--tt-surface-2); padding: 10px 12px; font-size: 18px; line-height: 1.7; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+  .row .tt-btn { min-height: 44px; padding: 8px 16px; font-size: 15.5px; }
+  .hint { color: var(--tt-muted); font-size: 13.5px; margin: 0; }
+  .pair { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 720px) { .pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
-    /* Tab Navigation */
-    .tab-nav {
-      display: flex;
-      border-bottom: 2px solid #dee2e6;
-      margin-bottom: 1.5rem;
-    }
-    .tab-btn {
-      padding: 0.75rem 1rem;
-      cursor: pointer;
-      border: none;
-      background-color: transparent;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #495057;
-      border-bottom: 3px solid transparent;
-      transition: color 0.2s, border-color 0.2s;
-      flex-grow: 1; /* Allow buttons to share space */
-      text-align: center;
-    }
-    .tab-btn:hover {
-      color: #1971c2;
-    }
-    .tab-btn.active {
-      color: #1c7ed6;
-      border-bottom-color: #1c7ed6;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    
-    /* Input and Buttons */
-    .input-group {
-        margin-bottom: 1rem;
-    }
-    textarea {
-      width: 100%;
-      min-height: 120px;
-      font-size: 1.1rem;
-      padding: 0.75rem;
-      box-sizing: border-box;
-      border-radius: 8px;
-      border: 1px solid #ced4da;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    textarea:focus {
-      outline: none;
-      border-color: #228be6;
-      box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.2);
-    }
-    button.analyze-btn {
-      display: block;
-      width: 100%;
-      max-width: 250px;
-      margin: 1rem auto 0;
-      padding: 0.75rem 1.5rem;
-      font-size: 1.1rem;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      background-color: #228be6;
-      color: white;
-      transition: background-color 0.2s;
-    }
-    button.analyze-btn:hover {
-      background-color: #1c7ed6;
-    }
-    button.download-btn {
-      display: block;
-      width: 100%;
-      max-width: 250px;
-      margin: 1rem auto 0;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 2px solid #228be6;
-      border-radius: 8px;
-      background-color: white;
-      color: #228be6;
-      transition: all 0.2s;
-    }
-    button.download-btn:hover {
-      background-color: #228be6;
-      color: white;
-    }
-    .download-container {
-      text-align: center;
-      margin-top: 0.5rem;
-    }
-    
-    /* Results Area */
-    .results-area {
-      margin-top: 2rem;
-    }
-    .analysis-heading {
-      text-align: center;
-      margin-top: 2.5rem;
-      font-weight: bold;
-      font-size: 1.3rem;
-      color: #343a40;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    th, td {
-      border: 1px solid #dee2e6;
-      padding: 8px;
-      text-align: left;
-      word-break: break-word; /* Ensure long content wraps */
-    }
-    th {
-      background-color: #f1f3f5;
-      font-weight: 600;
-    }
-    td:first-child {
-      font-weight: bold;
-      font-size: 1.1rem;
-    }
-    
-    /* Responsive Flex Layout for Summaries */
-    .summary-flex {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      align-items: stretch; /* Changed to stretch for equal height columns */
-      margin-top: 1.5rem;
-    }
-    .summary-col {
-      flex: 1 1 100%; /* Default to full width on mobile */
-      display: flex; /* Enable flex for children */
-      flex-direction: column; /* Stack children vertically */
-    }
-    .summary-box {
-      padding: 1rem 1.5rem;
-      border: 1px solid #e9ecef;
-      border-radius: 8px;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      width: 100%;
-      box-sizing: border-box;
-      flex-grow: 1; /* Allow box to grow */
-    }
-    .summary-box h2 {
-      margin-top: 0;
-      color: #1971c2;
-      border-bottom: 1px solid #f1f3f5;
-      padding-bottom: 0.5rem;
-      font-size: 1.2rem;
-    }
-    pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      background-color: #f8f9fa;
-      padding: 1rem;
-      border-radius: 4px;
-      border: 1px solid #e9ecef;
-    }
-    .chart-container {
-      position: relative;
-      height: 300px; /* Adjusted height for mobile */
-      width: 100%;
-    }
-    .score-box {
-        text-align: center;
-        padding: 1rem;
-    }
-    .score-box .score-value {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #1c7ed6;
-    }
-    .score-box .score-label {
-        font-size: 0.9rem;
-        color: #495057;
-    }
-    
-    /* Comparison Specific Styles */
-    .comparison-grid {
-        display: grid;
-        grid-template-columns: 1fr; /* Default to single column */
-        gap: 1.5rem;
-    }
-    .comparison-features ul {
-        padding-left: 20px;
-        margin: 0;
-    }
-    
-    /* LCS Panel Styling */
-    .lcs-panel {
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 1rem;
-        line-height: 1.8;
-    }
-    .lcs-panel .lcs-label {
-        font-weight: bold;
-        color: #555;
-    }
-    .lcs-panel .lcs-sequence {
-        letter-spacing: 2px;
-        padding: 0.5rem;
-        border-radius: 4px;
-        background-color: #e9ecef;
-        display: block;
-        margin-bottom: 1rem;
-        word-break: break-all; /* Ensure long sequences wrap */
-    }
-    .lcs-panel .lcs-result {
-        font-weight: bold;
-        letter-spacing: 2px;
-        padding: 0.75rem;
-        border-radius: 4px;
-        background-color: #d0ebff;
-        color: #1864ab;
-        border: 1px solid #a5d8ff;
-        text-align: center;
-        word-break: break-all;
-    }
-    
-    /* Gana Combination Styles */
-    .gana-combinations-list {
-        padding-left: 0;
-        list-style: none;
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 1rem;
-        max-height: 400px; /* Add scroll for very long lists */
-        overflow-y: auto;
-    }
-    .gana-combinations-list li {
-        background-color: #f8f9fa;
-        padding: 0.75rem 1rem;
-        border-radius: 4px;
-        margin-bottom: 0.5rem;
-        border: 1px solid #e9ecef;
-    }
-    .gana-combinations-list .gana-part {
-        display: inline-block;
-    }
-    .gana-combinations-list .syllable {
-        color: #d9480f; /* Orange color for syllables */
-        font-weight: bold;
-    }
-    .gana-combinations-list .gana-name {
-        color: #1864ab; /* Blue color for Gana name */
-    }
+  .empty { position: relative; overflow: hidden; text-align: center; padding: 28px 16px; }
+  .empty > :not([aria-hidden]) { position: relative; z-index: 1; }
+  .empty h2 { margin: 0 0 6px; font-family: var(--tt-font-display); font-weight: 400; font-size: 24px; }
+  .empty p { margin: 4px auto; color: var(--tt-muted); max-width: 520px; }
+  .empty .row { justify-content: center; }
+  .legend-ui { display: inline-flex; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; color: var(--tt-muted); font-size: 14px; flex-wrap: wrap; }
 
-    /* Desktop and Tablet Responsiveness */
-    @media (min-width: 600px) {
-        body {
-            padding: 1rem;
-        }
-        .main-banner {
-            font-size: 2.2rem;
-        }
-        .tab-btn {
-            font-size: 1.1rem;
-            flex-grow: 0; /* Let buttons take their natural width */
-        }
-        .summary-col {
-            flex-basis: 0; /* Allow columns to grow/shrink equally */
-            flex-grow: 1;
-        }
-        .comparison-grid {
-            grid-template-columns: 1fr 1fr; /* Two columns on larger screens */
-        }
-        .chart-container {
-            height: 350px;
-        }
-    }
-  </style>
+  .results { display: grid; gap: 12px; min-width: 0; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .actions .tt-btn { min-height: 44px; padding: 8px 14px; font-size: 15px; }
+  @media (max-width: 480px) { .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .actions .tt-btn { padding: 8px 6px; } }
+
+  /* sticky summary bar */
+  .sumbar { position: sticky; top: 0; z-index: 12; margin: 0 -12px; padding: 6px 12px; background: var(--tt-glass);
+            border-bottom: 1px solid var(--tt-glass-line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  @media (max-width: 399px) { .sumbar { margin: 0 -10px; padding: 6px 10px; } }
+  .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; max-width: 720px; margin: 0 auto; }
+  .stat { text-align: center; min-width: 0; }
+  .stat b { display: block; font-size: 20px; line-height: 1.2; }
+  .stat > span { display: block; font-size: 12px; color: var(--tt-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .mk { font-family: var(--mono); font-weight: 800; color: var(--tt-ink); }
+
+  /* collapsible sections */
+  details.sec { background: var(--tt-surface); border: 1px solid var(--tt-line); border-radius: var(--tt-radius); min-width: 0; }
+  details.sec > summary { list-style: none; cursor: pointer; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+                          font-weight: 700; font-size: 17px; border-radius: var(--tt-radius); }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec > summary::after { content: ""; margin-left: auto; flex-shrink: 0; width: 9px; height: 9px; border-right: 2px solid var(--tt-muted);
+                                 border-bottom: 2px solid var(--tt-muted); transform: rotate(45deg); transition: transform .2s; }
+  details.sec[open] > summary::after { transform: rotate(-135deg); }
+  .badge { font-size: 13px; font-weight: 700; color: var(--tt-muted); background: var(--tt-surface-2); border-radius: var(--tt-pill); padding: 2px 10px; white-space: nowrap; }
+  .sec__body { padding: 0 14px 14px; min-width: 0; }
+  @media (max-width: 399px) { .sec__body { padding: 0 10px 12px; } details.sec > summary { padding: 8px 10px; } }
+  .sec__body h3 { font-size: 15px; margin: 14px 0 6px; color: var(--tt-muted); }
+  .sec__body h3:first-child { margin-top: 2px; }
+  .note { color: var(--tt-muted); font-size: 13.5px; margin: 6px 0 0; }
+
+  /* per-line (పాదం) cards with syllable chips */
+  .line { padding: 12px 0; border-top: 1px solid var(--tt-line); min-width: 0; }
+  .line:first-child { border-top: 0; padding-top: 0; }
+  .line__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+  .line__no { font-weight: 800; }
+  .line__meta { color: var(--tt-muted); font-size: 13.5px; }
+  .line__meta .mk { font-family: var(--mono); font-weight: 800; color: var(--tt-ink); }
+  .line__src { color: var(--tt-muted); font-size: 15px; margin: 2px 0 8px; overflow-wrap: anywhere; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px 5px; align-items: flex-start; }
+  .chips--flat { gap: 4px 2px; }
+  .grp { display: inline-flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 100%; --gc: var(--sA); }
+  .grp:nth-child(even) { --gc: var(--tt-faint); }
+  .grp__chips { display: flex; flex-wrap: wrap; gap: 2px; }
+  .grp__lab { width: 0; min-width: 100%; border-top: 3px solid var(--gc); padding-top: 1px; text-align: center; font-size: 12px; line-height: 1.35;
+              color: var(--tt-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grp__lab b { color: var(--tt-ink); font-size: 14px; }
+  .grp__lab i { font-style: normal; font-family: var(--mono); }
+  .chip { min-width: 44px; min-height: 48px; padding: 3px 5px 2px; border-radius: 10px; border: 1px solid var(--tt-line); background: transparent;
+          display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; cursor: pointer; line-height: 1.2; }
+  .chip .ak { font-size: 19px; font-weight: 600; white-space: nowrap; }
+  .chip .mk { font-family: var(--mono); font-size: 12px; font-weight: 800; color: var(--tt-muted); }
+  .chip.U { background: color-mix(in srgb, var(--tt-accent) 26%, var(--tt-surface)); border-color: color-mix(in srgb, var(--tt-accent) 75%, transparent); }
+  .chip.U .mk { color: var(--tt-ink); }
+  @media (hover: hover) { .chip:hover { border-color: var(--tt-accent); } }
+  .warn { color: var(--tt-warn); font-size: 14px; margin: 8px 0 0; }
+  details.more { margin-top: 6px; }
+  details.more > summary { min-height: 44px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--tt-muted); font-size: 14.5px; font-weight: 700; }
+  .combos { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+  @media (min-width: 720px) { .combos { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); } }
+  .combos li { background: var(--tt-surface-2); border-radius: 10px; padding: 6px 10px; font-size: 15px; overflow-wrap: anywhere; display: grid; grid-template-columns: auto 1fr; gap: 0 8px; }
+  .combos li .n { color: var(--tt-faint); font-size: 12.5px; font-variant-numeric: tabular-nums; grid-row: span 2; padding-top: 2px; }
+  .combos .pat { font-family: var(--mono); font-size: 12.5px; color: var(--tt-muted); }
+  .more-btn { margin-top: 10px; }
+
+  /* akshara table → cards on phones */
+  .aktable { width: 100%; border-collapse: collapse; }
+  .aktable th, .aktable td { text-align: left; padding: 8px; border-bottom: 1px solid var(--tt-line); vertical-align: top; }
+  .aktable th { font-size: 13.5px; color: var(--tt-muted); font-weight: 700; white-space: nowrap; }
+  .aktable td.ak { font-size: 22px; font-weight: 700; white-space: nowrap; }
+  .aktable td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .aktable .mk { font-family: var(--mono); font-weight: 800; }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 12.5px; padding: 2px 8px; border-radius: var(--tt-pill); background: var(--tt-surface-2); border: 1px solid var(--tt-line); white-space: nowrap; }
+  @media (max-width: 640px) {
+    .aktable thead { display: none; }
+    .aktable, .aktable tbody { display: block; }
+    .aktable tr { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 4px 10px; padding: 10px 0; border-bottom: 1px solid var(--tt-line); }
+    .aktable td { border: 0; padding: 0; }
+    .aktable td.ak { grid-row: span 3; font-size: 26px; text-align: center; align-self: center; }
+    .aktable td[data-label]::before { content: attr(data-label) " · "; color: var(--tt-muted); font-size: 13px; }
+  }
+
+  /* SVG charts */
+  .chart { width: 100%; max-width: 860px; min-height: 20px; }
+  .chart svg { display: block; overflow: visible; }
+  .c-lab { fill: var(--tt-ink); }
+  .c-val { fill: var(--tt-muted); font-variant-numeric: tabular-nums; }
+  .c-axis { stroke: var(--grid); stroke-width: 1; }
+  .c-bar.sA, .sw.sA { fill: var(--sA); background: var(--sA); }
+  .c-bar.sB, .sw.sB { fill: var(--sB); background: var(--sB); }
+  .sw.sC { background: var(--sC); }
+  .c-hit { fill: transparent; }
+  .c-row:hover .c-hit { fill: color-mix(in srgb, var(--tt-ink) 6%, transparent); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; color: var(--tt-muted); margin: 4px 0 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  /* mouth (places of articulation) */
+  .mouthwrap { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @media (min-width: 900px) { .mouthwrap { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } }
+  svg.mouth { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 auto; }
+  .m-line { fill: none; stroke: var(--tt-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .m-cav { fill: color-mix(in srgb, var(--tt-ink) 5%, transparent); stroke: var(--tt-muted); stroke-width: 1.5; }
+  .m-tongue { fill: color-mix(in srgb, var(--tt-ink) 9%, transparent); stroke: var(--tt-muted); stroke-width: 1.5; }
+  .m-tooth { fill: var(--tt-surface); stroke: var(--tt-muted); stroke-width: 1.5; }
+  .m-lead { stroke: var(--tt-faint); stroke-width: 1; }
+  .m-dot { fill: var(--sA); stroke: var(--tt-surface); stroke-width: 2; }
+  .m-dot--0 { fill: var(--tt-surface); stroke: var(--tt-faint); stroke-width: 1.5; }
+  .m-lab { fill: var(--tt-ink); font-size: 14px; }
+  .m-lab tspan.c { font-weight: 800; }
+  .m-cap { fill: var(--tt-faint); font-size: 11px; }
+  .places { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .places li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; padding: 6px 10px; border-radius: 10px; background: var(--tt-surface-2); }
+  .places b { font-size: 15px; }
+  .places .cnt { font-weight: 800; font-variant-numeric: tabular-nums; align-self: center; grid-row: span 2; }
+  .places small { color: var(--tt-muted); font-size: 13px; overflow-wrap: anywhere; }
+
+  /* info */
+  .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 6px 14px; margin: 0; }
+  .kv div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--tt-line); padding: 6px 0; min-width: 0; }
+  .kv dt { color: var(--tt-muted); font-size: 14px; }
+  .kv dd { margin: 0; font-weight: 700; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+  pre.raw { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--tt-surface-2); border-radius: 10px; padding: 10px; margin: 6px 0 0; font: inherit; font-size: 15px; max-height: 260px; overflow: auto; }
+
+  /* compare */
+  .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  @media (min-width: 760px) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .tile { background: var(--tt-surface); border: 1px solid var(--tt-line); border-radius: 14px; padding: 12px; min-width: 0; }
+  .tile b { display: block; font-size: 28px; line-height: 1.2; }
+  .tile span { color: var(--tt-muted); font-size: 13px; display: block; }
+  .seqs { display: grid; gap: 12px; }
+  .who { font-weight: 700; font-size: 14.5px; margin-bottom: 4px; overflow-wrap: anywhere; }
+  .cells { display: flex; flex-wrap: wrap; gap: 2px; }
+  .cells span { width: 22px; height: 26px; display: grid; place-items: center; border-radius: 5px; font-family: var(--mono); font-size: 12.5px; font-weight: 800;
+                background: var(--tt-surface-2); color: var(--tt-muted); }
+  .cells span.U { color: var(--tt-ink); background: color-mix(in srgb, var(--tt-accent) 24%, var(--tt-surface)); }
+  .cells span.lcs { box-shadow: inset 0 -4px 0 var(--sB); }
+  .lcsbox { margin-top: 4px; padding: 10px 12px; border-radius: 12px; background: var(--tt-surface-2); }
+  .lcsbox .mono { font-family: var(--mono); font-weight: 800; letter-spacing: .06em; overflow-wrap: anywhere; }
+  .segbar { display: flex; gap: 2px; height: 28px; margin: 6px 0 4px; }
+  .segbar div { height: 100%; border-radius: 4px; min-width: 0; font-size: 13px; font-weight: 700; display: flex; align-items: center; padding-left: 8px; white-space: nowrap; }
+  .seg-sA { background: var(--sA); color: var(--onA); } .seg-sB { background: var(--sB); color: #10131a; } .seg-sC { background: var(--sC); color: #10131a; }
+  .cols2 { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 760px) { .cols2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .sub { font-size: 15px; margin: 10px 0 6px; }
+
+  /* akshara detail sheet */
+  .akd { display: flex; gap: 14px; align-items: center; margin: 4px 0 10px; }
+  .akd .big { font-size: 54px; font-weight: 700; line-height: 1.1; min-width: 72px; text-align: center; padding: 6px 10px; border-radius: 14px; border: 1px solid var(--tt-line); }
+  .akd .big.U { background: color-mix(in srgb, var(--tt-accent) 26%, var(--tt-surface)); border-color: var(--tt-accent); }
+  .akd p { margin: 2px 0; }
+  .reasons { margin: 4px 0 8px; padding-left: 20px; }
+  .copybox { width: 100%; min-height: 220px; font: inherit; font-size: 14px; border-radius: 10px; border: 1px solid var(--tt-line); background: var(--tt-surface-2); padding: 10px; }
+  .help p { margin: 6px 0; } .help h3 { font-size: 16px; margin: 14px 0 4px; } .help ul { margin: 4px 0; padding-left: 20px; }
+  footer.foot { text-align: center; color: var(--tt-faint); font-size: 12.5px; padding: 8px 0 0; }
+  @media print { .tt-topbar, .tabs, .actions, .input, .tt-toasts { display: none !important; } .sumbar { position: static; } details.sec { break-inside: avoid; } }
+</style>
+<script type="importmap">{ "imports": { "three": "./lib/v1/vendor/three/three.module.min.js", "three/addons/": "./lib/v1/vendor/three/addons/", "tt/": "./lib/v1/" } }</script>
 </head>
 <body>
+<noscript>అక్షరానుసారిక పనిచేయడానికి JavaScript అవసరం.</noscript>
+<script type="module">
+import { createApp, params, share, prefersReducedMotion } from "tt/shell.js";
+import { el, setChildren } from "tt/safe.js";
+import * as te from "tt/telugu.js";
 
-<div class="container">
-  <h1 class="main-banner">అక్షరానుసారిక v0.0.6a</h1>
+const VERSION = "0.1.0";
+const DEBUG = params().get("debug") === "1";
 
-  <nav class="tab-nav">
-    <button class="tab-btn active" onclick="openTab(event, 'singleAnalysis')">అక్షర విశ్లేషణ (Single Analysis)</button>
-    <button class="tab-btn" onclick="openTab(event, 'comparativeAnalysis')">తులనాత్మక విశ్లేషణ (Comparative Analysis)</button>
-  </nav>
+/* =====================================================================================
+   LINGUISTIC TABLES — copied verbatim from the original aksharanusarika.html (v0.0.7a).
+   Only the audited fixes are applied (each marked FIX). Do not change a rule here without
+   a scholar's review; chandassu (metre) detection is deliberately not implemented.
+   ===================================================================================== */
+const dependentToIndependent = {
+  "ా": "ఆ", "ి": "ఇ", "ీ": "ఈ", "ు": "ఉ", "ూ": "ఊ", "ృ": "ఋ",
+  "ౄ": "ౠ", "ె": "ఎ", "ే": "ఏ", "ై": "ఐ", "ొ": "ఒ", "ో": "ఓ", "ౌ": "ఔ",
+};
+const halant = "్";
+const teluguConsonants = new Set([
+  "క", "ఖ", "గ", "ఘ", "ఙ", "చ", "ఛ", "జ", "ఝ", "ఞ", "ట", "ఠ", "డ", "ఢ", "ణ",
+  "త", "థ", "ద", "ధ", "న", "ప", "ఫ", "బ", "భ", "మ", "య", "ర", "ల", "వ",
+  "శ", "ష", "స", "హ", "ళ", "ఱ",
+  "ౘ", "ౙ",                         // FIX: tagged in చ వర్గము / దంత్యములు below but were not recognised as consonants
+]);
+const longVowels = new Set(["ా", "ీ", "ూ", "ే", "ో", "ౌ", "ౄ"]);
+const independentVowels = new Set([
+  "అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఋ", "ౠ", "ఎ", "ఏ", "ఐ", "ఒ", "ఓ", "ఔ",
+  "ఌ", "ౡ",                         // FIX: tagged in దంత్యములు below but were not recognised as vowels
+]);
+const diacritics = new Set(["ం", "ః"]);
+const ARASUNNA = "ఁ";               // the original treats ఁ as ignorable (not a syllable, no effect on guru/laghu)
 
-  <div id="singleAnalysis" class="tab-content active">
-    <div class="input-group">
-      <textarea id="singleInput" placeholder="మీ తెలుగు వాక్యాన్ని ఇక్కడ ఉంచండి..."></textarea>
-    </div>
-    <button id="analyzeSingleBtn" class="analyze-btn">విశ్లేషించు (Analyze)</button>
-    <div class="download-container" id="downloadContainer" style="display: none;">
-      <button id="downloadJsonBtn" class="download-btn">📥 Download JSON</button>
-    </div>
-    <div class="results-area" id="singleResultContainer"></div>
-  </div>
+const PLUTAMULU = new Set(["ఐ", "ఔ"]);
+const SARALAMULU = new Set(["గ", "జ", "డ", "ద", "బ"]);
+const PARUSHAMULU = new Set(["క", "చ", "ట", "త", "ప"]);
+const STHIRAMULU = new Set([
+  "ఖ", "ఘ", "ఙ", "ఛ", "ఝ", "ఞ", "ఠ", "ఢ", "ణ", "థ", "ధ", "న",
+  "ఫ", "భ", "మ", "య", "ర", "ఱ", "ల", "ళ", "వ", "శ", "ష", "స", "హ",
+]);
+const KA_VARGAMU = new Set(["క", "ఖ", "గ", "ఘ", "ఙ"]);
+const CHA_VARGAMU = new Set(["చ", "ౘ", "ఛ", "జ", "ౙ", "ఝ", "ఞ"]);
+const TA_VARGAMU = new Set(["ట", "ఠ", "డ", "ఢ", "ణ"]);
+const THA_VARGAMU = new Set(["త", "థ", "ద", "ధ", "న"]);
+const PA_VARGAMU = new Set(["ప", "ఫ", "బ", "భ", "మ"]);
+const SPARSHA_MULU = new Set([...KA_VARGAMU, ...CHA_VARGAMU, ...TA_VARGAMU, ...THA_VARGAMU, ...PA_VARGAMU]);
+const OOSHMA_MULU = new Set(["శ", "స", "ష", "హ"]);
+const ANTASTA_MULU = new Set(["య", "ర", "ఱ", "ల", "ళ", "వ"]);
+const KANTHYAMULU = new Set(["అ", "ఆ", "క", "ఖ", "గ", "ఘ", "ఙ", "హ"]);
+const TAALAVYAMULU = new Set(["ఇ", "ఈ", "చ", "ఛ", "జ", "ఝ", "య", "శ"]);
+const MOORDHANYAMULU = new Set(["ఋ", "ౠ", "ట", "ఠ", "డ", "ఢ", "ణ", "ష", "ఱ", "ర"]);
+const DANTYAMULU = new Set(["ఌ", "ౡ", "త", "థ", "ద", "ధ", "ౘ", "ౙ", "ల", "స"]);
+const OOSHTYAMULU = new Set(["ఉ", "ఊ", "ప", "ఫ", "బ", "భ", "మ"]);
+const ANUNAASIKA_MULU = new Set(["ఙ", "ఞ", "ణ", "న", "మ"]);
+const KANTHATAALAVYA_MULU = new Set(["ఎ", "ఏ", "ఐ"]);
+const KANTHOSH_TYAMULU = new Set(["ఒ", "ఓ", "ఔ"]);
+const DANTYOSH_TYAMULU = new Set(["వ"]);
 
-  <div id="comparativeAnalysis" class="tab-content">
-    <div class="comparison-grid">
-      <div class="input-group">
-        <textarea id="compareInput1" placeholder="మొదటి పదం/వాక్యం..."></textarea>
-      </div>
-      <div class="input-group">
-        <textarea id="compareInput2" placeholder="రెండవ పదం/వాక్యం..."></textarea>
-      </div>
-    </div>
-    <button id="analyzeCompareBtn" class="analyze-btn">పోల్చు (Compare)</button>
-    <div class="results-area" id="compareResultContainer"></div>
-  </div>
-</div>
+const GANA_DEFINITIONS = {
+  "Ekaakshara Ganas (1-Syllable)": { "U": "Guru", "I": "Laghu" },
+  "Rendakshara Ganas (2-Syllable)": { "II": "Lalamu", "IU": "Lagamu (Va)", "UI": "Galamu (Ha)", "UU": "Gagamu" },
+  "Moodakshara Ganas (3-Syllable)": { "IUU": "Ya", "UUU": "Ma", "UUI": "Ta", "UIU": "Ra", "IUI": "Ja", "UII": "Bha", "III": "Na", "IIU": "Sa" },
+  "Surya Ganas": { "III": "Na", "UI": "Ha" },
+  "Indra Ganas": { "IIIU": "Naga", "IIUI": "Sala", "IIII": "Nala", "UII": "Bha", "UIU": "Ra", "UUI": "Ta" },
+  "Chandra Ganas": { "UIII": "Bhala", "UIIU": "Bhagaru", "UUII": "Tala", "UUIU": "Taga", "UUUI": "Malagha", "IIIII": "Nalala", "IIIUU": "Nagaga", "IIIIU": "Nava", "IIUUI": "Saha", "IIUIU": "Sava", "IIUUU": "Sagaga", "IIIUI": "Naha", "UIUU": "Raguru", "IIII": "Nala" },
+};
 
-  <script>
-    //////////////////////////////////////////////////////////////////////////
-    // LINGUISTIC DATA AND CONSTANTS (v0.0.6a)
-    //////////////////////////////////////////////////////////////////////////
-    const dependentToIndependent = {
-        "ా": "ఆ", "ి": "ఇ", "ీ": "ఈ", "ు": "ఉ", "ూ": "ఊ", "ృ": "ఋ",
-        "ౄ": "ౠ", "ె": "ఎ", "ే": "ఏ", "ై": "ఐ", "ొ": "ఒ", "ో": "ఓ", "ౌ": "ఔ"
-    };
-    const halant = "్";
-    const teluguConsonants = new Set([
-        "క", "ఖ", "గ", "ఘ", "ఙ", "చ", "ఛ", "జ", "ఝ", "ఞ", "ట", "ఠ", "డ", "ఢ", "ణ",
-        "త", "థ", "ద", "ధ", "న", "ప", "ఫ", "బ", "భ", "మ", "య", "ర", "ల", "వ",
-        "శ", "ష", "స", "హ", "ళ", "ఱ"
-    ]);
-    const longVowels = new Set(["ా", "ీ", "ూ", "ే", "ో", "ౌ", "ౄ"]);
-    const independentVowels = new Set([
-        "అ", "ఆ", "ఇ", "ఈ", "ఉ", "ఊ", "ఋ", "ౠ", "ఎ", "ఏ", "ఐ", "ఒ", "ఓ", "ఔ"
-    ]);
-    const diacritics = new Set(["ం", "ః"]);
-    const dependentVowels = new Set(Object.keys(dependentToIndependent));
-    const ignorable_chars = new Set([' ', '\n', 'ఁ', '​']);
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
+  return "id-" + (hash >>> 0).toString(16);
+}
 
-    const PLUTAMULU = new Set(["ఐ", "ఔ"]);
-    const SARALAMULU = new Set(["గ", "జ", "డ", "ద", "బ"]);
-    const PARUSHAMULU = new Set(["క", "చ", "ట", "త", "ప"]);
-    const STHIRAMULU = new Set([
-        "ఖ", "ఘ", "ఙ", "ఛ", "ఝ", "ఞ", "ఠ", "ఢ", "ణ", "థ", "ధ", "న",
-        "ఫ", "భ", "మ", "య", "ర", "ఱ", "ల", "ళ", "వ", "శ", "ష", "స", "హ"
-    ]);
-    const KA_VARGAMU = new Set(["క", "ఖ", "గ", "ఘ", "ఙ"]);
-    const CHA_VARGAMU = new Set(["చ", "ౘ", "ఛ", "జ", "ౙ", "ఝ", "ఞ"]);
-    const TA_VARGAMU = new Set(["ట", "ఠ", "డ", "ఢ", "ణ"]);
-    const THA_VARGAMU = new Set(["త", "థ", "ద", "ధ", "న"]);
-    const PA_VARGAMU = new Set(["ప", "ఫ", "బ", "భ", "మ"]);
-    const SPARSHA_MULU = new Set([...KA_VARGAMU, ...CHA_VARGAMU, ...TA_VARGAMU, ...THA_VARGAMU, ...PA_VARGAMU]);
-    const OOSHMA_MULU = new Set(["శ", "స", "ష", "హ"]);
-    const ANTASTA_MULU = new Set(["య", "ర", "ఱ", "ల", "ళ", "వ"]);
-    const KANTHYAMULU = new Set(["అ", "ఆ", "క", "ఖ", "గ", "ఘ", "ఙ", "హ"]);
-    const TAALAVYAMULU = new Set(["ఇ", "ఈ", "చ", "ఛ", "జ", "ఝ", "య", "శ"]);
-    const MOORDHANYAMULU = new Set(["ఋ", "ౠ", "ట", "ఠ", "డ", "ఢ", "ణ", "ష", "ఱ", "ర"]);
-    const DANTYAMULU = new Set(["ఌ", "ౡ", "త", "థ", "ద", "ధ", "ౘ", "ౙ", "ల", "స"]);
-    const OOSHTYAMULU = new Set(["ఉ", "ఊ", "ప", "ఫ", "బ", "భ", "మ"]);
-    const ANUNAASIKA_MULU = new Set(["ఙ", "ఞ", "ణ", "న", "మ"]);
-    const KANTHATAALAVYA_MULU = new Set(["ఎ", "ఏ", "ఐ"]);
-    const KANTHOSH_TYAMULU = new Set(["ఒ", "ఓ", "ఔ"]);
-    const DANTYOSH_TYAMULU = new Set(["వ"]);
-    
-    const GANA_DEFINITIONS = {
-        "Ekaakshara Ganas (1-Syllable)": {"U": "Guru", "I": "Laghu"},
-        "Rendakshara Ganas (2-Syllable)": {"II": "Lalamu", "IU": "Lagamu (Va)", "UI": "Galamu (Ha)", "UU": "Gagamu"},
-        "Moodakshara Ganas (3-Syllable)": {"IUU": "Ya", "UUU": "Ma", "UUI": "Ta", "UIU": "Ra", "IUI": "Ja", "UII": "Bha", "III": "Na", "IIU": "Sa"},
-        "Surya Ganas": {"III": "Na", "UI": "Ha"},
-        "Indra Ganas": {"IIIU": "Naga", "IIUI": "Sala", "IIII": "Nala", "UII": "Bha", "UIU": "Ra", "UUI": "Ta"},
-        "Chandra Ganas": {"UIII": "Bhala", "UIIU": "Bhagaru", "UUII": "Tala", "UUIU": "Taga", "UUUI": "Malagha", "IIIII": "Nalala", "IIIUU": "Nagaga", "IIIIU": "Nava", "IIUUI": "Saha", "IIUIU": "Sava", "IIUUU": "Sagaga", "IIIUI": "Naha", "UIUU": "Raguru", "IIII": "Nala"}
-    };
+function addLetterCategories(ch, categories) {
+  if (PLUTAMULU.has(ch)) categories.add("ప్లుతములు");
+  if (SARALAMULU.has(ch)) categories.add("సరళములు");
+  if (PARUSHAMULU.has(ch)) categories.add("పరుషములు");
+  if (STHIRAMULU.has(ch)) categories.add("స్థిరములు");
+  if (KA_VARGAMU.has(ch)) categories.add("క వర్గము");
+  if (CHA_VARGAMU.has(ch)) categories.add("చ వర్గము");
+  if (TA_VARGAMU.has(ch)) categories.add("ట వర్గము");
+  if (THA_VARGAMU.has(ch)) categories.add("త వర్గము");
+  if (PA_VARGAMU.has(ch)) categories.add("ప వర్గము");
+  if (SPARSHA_MULU.has(ch)) categories.add("స్పర్శములు");
+  if (OOSHMA_MULU.has(ch)) categories.add("ఊష్మాలు");
+  if (ANTASTA_MULU.has(ch)) categories.add("అంతస్తములు");
+  if (KANTHYAMULU.has(ch)) categories.add("కంఠ్యములు");
+  if (TAALAVYAMULU.has(ch)) categories.add("తాలవ్యములు");
+  if (MOORDHANYAMULU.has(ch)) categories.add("మూర్ధన్యములు");
+  if (DANTYAMULU.has(ch)) categories.add("దంత్యములు");
+  if (OOSHTYAMULU.has(ch)) categories.add("ఓష్ఠ్యములు");
+  if (ANUNAASIKA_MULU.has(ch)) categories.add("అనునాసికములు");
+  if (KANTHATAALAVYA_MULU.has(ch)) categories.add("కంఠతాలవ్యములు");
+  if (KANTHOSH_TYAMULU.has(ch)) categories.add("కంఠోష్ఠ్యములు");
+  if (DANTYOSH_TYAMULU.has(ch)) categories.add("దంత్యోష్ఠ్యములు");
+}
 
-    //////////////////////////////////////////////////////////////////////////
-    // CORE LOGIC FUNCTIONS (v0.0.6a)
-    //////////////////////////////////////////////////////////////////////////
+/** Verbatim rules of the original categorizeAksharam(). */
+function categorizeAksharam(aksharam) {
+  const categories = new Set();
+  const independentLongVowels = new Set(["ఆ", "ఈ", "ఊ", "ౠ", "ఏ", "ఓ"]);
+  if (independentVowels.has(aksharam[0])) categories.add("అచ్చు");
+  else if (diacritics.has(aksharam)) categories.add("అచ్చు");
+  if ([...aksharam].some(c => teluguConsonants.has(c))) categories.add("హల్లు");
+  if ([...aksharam].some(c => longVowels.has(c)) || independentLongVowels.has(aksharam)) categories.add("దీర్ఘ");
+  if (aksharam.includes("ః")) categories.add("విసర్గ అక్షరం");
+  if (aksharam.includes("ం")) categories.add("అనుస్వారం");
+  let foundConjunct = false, foundDouble = false;
+  for (let i = 0; i < aksharam.length - 2; i++) {
+    if (teluguConsonants.has(aksharam[i]) && aksharam[i + 1] === halant && teluguConsonants.has(aksharam[i + 2])) {
+      if (aksharam[i] === aksharam[i + 2]) foundDouble = true; else foundConjunct = true;
+    }
+  }
+  if (foundConjunct) categories.add("సంయుక్తాక్షరం");
+  if (foundDouble) categories.add("ద్విత్వాక్షరం");
+  if ((categories.has("హల్లు") || categories.has("అచ్చు")) && !categories.has("దీర్ఘ") && !categories.has("అనుస్వారం") && !categories.has("విసర్గ అక్షరం")) {
+    categories.add("హ్రస్వాక్షరం");
+  }
+  for (const ch of aksharam) addLetterCategories(ch, categories);
+  let foundDependentVowel = false;
+  for (const dvSign in dependentToIndependent) {
+    if (aksharam.includes(dvSign)) { foundDependentVowel = true; addLetterCategories(dependentToIndependent[dvSign], categories); }
+  }
+  if ([...aksharam].some(c => teluguConsonants.has(c)) && !foundDependentVowel && !aksharam.endsWith(halant)) addLetterCategories("అ", categories);
+  return Array.from(categories).sort();
+}
+const tagCache = new Map();
+const tagsOf = k => { let t = tagCache.get(k); if (!t) { t = categorizeAksharam(k); tagCache.set(k, t); } return t; };
 
-    function simpleHash(str) {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        const chr = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + chr;
-        hash |= 0;
+/* ---------- display groups for the 29 categories (display only; never changes a tag) ---------- */
+const GROUPS = [
+  { key: "akshara", te: "అక్షర లక్షణాలు", cats: ["అచ్చు", "హల్లు", "హ్రస్వాక్షరం", "దీర్ఘ", "అనుస్వారం", "విసర్గ అక్షరం", "సంయుక్తాక్షరం", "ద్విత్వాక్షరం"] },
+  { key: "varga", te: "వర్గాలు", cats: ["క వర్గము", "చ వర్గము", "ట వర్గము", "త వర్గము", "ప వర్గము", "స్పర్శములు", "ఊష్మాలు", "అంతస్తములు"] },
+  { key: "dhvani", te: "ధ్వని స్వభావం", cats: ["పరుషములు", "సరళములు", "స్థిరములు", "ప్లుతములు"] },
+  { key: "sthana", te: "ఉచ్చారణ స్థానాలు", cats: ["కంఠ్యములు", "తాలవ్యములు", "మూర్ధన్యములు", "దంత్యములు", "ఓష్ఠ్యములు", "అనునాసికములు", "కంఠతాలవ్యములు", "కంఠోష్ఠ్యములు", "దంత్యోష్ఠ్యములు"] },
+];
+const GROUP_OF = Object.fromEntries(GROUPS.flatMap(g => g.cats.map(c => [c, g.key])));
+
+/* ---------- gana families (all (family, pattern, name) entries are kept — FIX for the old flattening) ---------- */
+const FAMILIES = [
+  { key: "eka", def: "Ekaakshara Ganas (1-Syllable)", te: "ఏకాక్షర గణాలు", on: true },
+  { key: "rendu", def: "Rendakshara Ganas (2-Syllable)", te: "రెండక్షరాల గణాలు", on: true },
+  { key: "moodu", def: "Moodakshara Ganas (3-Syllable)", te: "మూడక్షరాల గణాలు", on: true },
+  // All six on by default, as in the original app (which family set to show is a prosody choice
+  // awaiting scholar review; users can switch to the classic 1–3-syllable set in settings).
+  { key: "surya", def: "Surya Ganas", te: "సూర్య గణాలు", on: true },
+  { key: "indra", def: "Indra Ganas", te: "ఇంద్ర గణాలు", on: true },
+  { key: "chandra", def: "Chandra Ganas", te: "చంద్ర గణాలు", on: true },
+];
+const FAMILY_TE = Object.fromEntries(FAMILIES.map(f => [f.def, f.te]));
+/** Telugu display names (full, short) for the original English gana names. */
+const GANA_TE = {
+  Guru: ["గురువు", "గ"], Laghu: ["లఘువు", "ల"],
+  Lalamu: ["లలము", "లల"], "Lagamu (Va)": ["లగము (వ)", "వ"], "Galamu (Ha)": ["గలము (హ)", "హ"], Gagamu: ["గగము", "గగ"],
+  Ya: ["య గణం", "య"], Ma: ["మ గణం", "మ"], Ta: ["త గణం", "త"], Ra: ["ర గణం", "ర"], Ja: ["జ గణం", "జ"], Bha: ["భ గణం", "భ"], Na: ["న గణం", "న"], Sa: ["స గణం", "స"],
+  Ha: ["హ గణం", "హ"], Naga: ["నగ", "నగ"], Sala: ["సల", "సల"], Nala: ["నల", "నల"],
+  Bhala: ["భల", "భల"], Bhagaru: ["భగరు", "భగరు"], Tala: ["తల", "తల"], Taga: ["తగ", "తగ"], Malagha: ["మలఘ", "మలఘ"], Nalala: ["నలల", "నలల"],
+  Nagaga: ["నగగ", "నగగ"], Nava: ["నవ", "నవ"], Saha: ["సహ", "సహ"], Sava: ["సవ", "సవ"], Sagaga: ["సగగ", "సగగ"], Naha: ["నహ", "నహ"], Raguru: ["రగురు", "రగురు"],
+};
+const uniq = a => [...new Set(a)];
+const shortName = labels => uniq(labels.map(l => GANA_TE[l.name]?.[1] ?? l.name)).join("/");
+const fullNames = labels => labels.map(l => `${GANA_TE[l.name]?.[0] ?? l.name} — ${FAMILY_TE[l.family]}`).join("; ");
+const englishName = labels => uniq(labels.map(l => l.name)).join(" / ");
+
+function ganaIndex(famKeys) {
+  const map = new Map(); let maxLen = 0;
+  for (const f of FAMILIES) {
+    if (!famKeys.includes(f.key)) continue;
+    for (const [pattern, name] of Object.entries(GANA_DEFINITIONS[f.def])) {
+      if (!map.has(pattern)) map.set(pattern, []);
+      map.get(pattern).push({ family: f.def, name });
+      maxLen = Math.max(maxLen, pattern.length);
+    }
+  }
+  return { map, maxLen, families: famKeys };
+}
+/** f[i] = number of ways (BigInt) to split seq[i..] into patterns of the index. f[0] is the total. */
+function countTable(seq, gi) {
+  const n = seq.length, f = new Array(n + 1).fill(0n);
+  f[n] = 1n;
+  for (let i = n - 1; i >= 0; i--) {
+    let sum = 0n;
+    for (let L = 1; L <= gi.maxLen && i + L <= n; L++) if (gi.map.has(seq.slice(i, i + L))) sum += f[i + L];
+    f[i] = sum;
+  }
+  return f;
+}
+/** The first `cap` partitions, longest gana first; dead ends are pruned with the count table (O(cap·n)). */
+function listPartitions(seq, gi, cap, f = countTable(seq, gi)) {
+  const n = seq.length, out = [];
+  if (!n || f[0] === 0n || cap < 1) return out;
+  const stack = [{ i: 0, next: Math.min(gi.maxLen, n), L: 0 }];
+  while (stack.length && out.length < cap) {
+    const top = stack[stack.length - 1];
+    if (top.i === n) {
+      out.push(stack.slice(0, -1).map(e => { const pattern = seq.slice(e.i, e.i + e.L); return { start: e.i, len: e.L, pattern, labels: gi.map.get(pattern) }; }));
+      stack.pop(); continue;
+    }
+    let pushed = false;
+    while (top.next >= 1) {
+      const L = top.next--, j = top.i + L;
+      if (f[j] > 0n && gi.map.has(seq.slice(top.i, j))) { top.L = L; stack.push({ i: j, next: Math.min(gi.maxLen, n - j), L: 0 }); pushed = true; break; }
+    }
+    if (!pushed) stack.pop();
+  }
+  return out;
+}
+
+/* ---------- comparison metrics (verbatim from the original) ---------- */
+function calculateGanaJaccard(markers1, markers2) {
+  const getBigrams = markers => {
+    const bigrams = new Set(), pure = markers.filter(m => m);
+    if (pure.length < 2) return bigrams;
+    for (let i = 0; i < pure.length - 1; i++) bigrams.add(pure[i] + pure[i + 1]);
+    return bigrams;
+  };
+  const b1 = getBigrams(markers1), b2 = getBigrams(markers2);
+  const inter = new Set([...b1].filter(x => b2.has(x))), union = new Set([...b1, ...b2]);
+  const similarity = union.size > 0 ? inter.size / union.size : 1;
+  return { similarity, distance: 1.0 - similarity };
+}
+function findLongestCommonSubstring(seq1, seq2) {
+  const m = seq1.length, n = seq2.length;
+  let prev = new Array(n + 1).fill(0), maxLength = 0, endIndex = 0, endIndex2 = 0;
+  for (let i = 1; i <= m; i++) {
+    const row = new Array(n + 1).fill(0);
+    for (let j = 1; j <= n; j++) {
+      if (seq1[i - 1] === seq2[j - 1]) {
+        row[j] = prev[j - 1] + 1;
+        if (row[j] > maxLength) { maxLength = row[j]; endIndex = i; endIndex2 = j; }
       }
-      return 'id-' + (hash >>> 0).toString(16);
     }
-
-    function addLetterCategories(ch, categories) {
-        if (PLUTAMULU.has(ch)) categories.add("ప్లుతములు");
-        if (SARALAMULU.has(ch)) categories.add("సరళములు");
-        if (PARUSHAMULU.has(ch)) categories.add("పరుషములు");
-        if (STHIRAMULU.has(ch)) categories.add("స్థిరములు");
-        if (KA_VARGAMU.has(ch)) categories.add("క వర్గము");
-        if (CHA_VARGAMU.has(ch)) categories.add("చ వర్గము");
-        if (TA_VARGAMU.has(ch)) categories.add("ట వర్గము");
-        if (THA_VARGAMU.has(ch)) categories.add("త వర్గము");
-        if (PA_VARGAMU.has(ch)) categories.add("ప వర్గము");
-        if (SPARSHA_MULU.has(ch)) categories.add("స్పర్శములు");
-        if (OOSHMA_MULU.has(ch)) categories.add("ఊష్మాలు");
-        if (ANTASTA_MULU.has(ch)) categories.add("అంతస్తములు");
-        if (KANTHYAMULU.has(ch)) categories.add("కంఠ్యములు");
-        if (TAALAVYAMULU.has(ch)) categories.add("తాలవ్యములు");
-        if (MOORDHANYAMULU.has(ch)) categories.add("మూర్ధన్యములు");
-        if (DANTYAMULU.has(ch)) categories.add("దంత్యములు");
-        if (OOSHTYAMULU.has(ch)) categories.add("ఓష్ఠ్యములు");
-        if (ANUNAASIKA_MULU.has(ch)) categories.add("అనునాసికములు");
-        if (KANTHATAALAVYA_MULU.has(ch)) categories.add("కంఠతాలవ్యములు");
-        if (KANTHOSH_TYAMULU.has(ch)) categories.add("కంఠోష్ఠ్యములు");
-        if (DANTYOSH_TYAMULU.has(ch)) categories.add("దంత్యోష్ఠ్యములు");
-    }
-
-    function categorizeAksharam(aksharam) {
-        const categories = new Set();
-        const independentLongVowels = new Set(["ఆ", "ఈ", "ఊ", "ౠ", "ఏ", "ఓ"]);
-
-        if (independentVowels.has(aksharam[0])) categories.add("అచ్చు");
-        else if (diacritics.has(aksharam)) categories.add("అచ్చు");
-        
-        if ([...aksharam].some(c => teluguConsonants.has(c))) categories.add("హల్లు");
-        
-        if ([...aksharam].some(c => longVowels.has(c)) || independentLongVowels.has(aksharam)) {
-            categories.add("దీర్ఘ");
-        }
-        
-        if (aksharam.includes("ః")) categories.add("విసర్గ అక్షరం");
-        if (aksharam.includes("ం")) categories.add("అనుస్వారం");
-
-        let foundConjunct = false, foundDouble = false;
-        for (let i = 0; i < aksharam.length - 2; i++) {
-            if (teluguConsonants.has(aksharam[i]) && aksharam[i+1] === halant && teluguConsonants.has(aksharam[i+2])) {
-                if (aksharam[i] === aksharam[i+2]) foundDouble = true;
-                else foundConjunct = true;
-            }
-        }
-        if (foundConjunct) categories.add("సంయుక్తాక్షరం");
-        if (foundDouble) categories.add("ద్విత్వాక్షరం");
-
-        if ((categories.has("హల్లు") || categories.has("అచ్చు")) && !categories.has("దీర్ఘ") && !categories.has("అనుస్వారం") && !categories.has("విసర్గ అక్షరం")) {
-            categories.add("హ్రస్వాక్షరం");
-        }
-
-        for (const ch of aksharam) addLetterCategories(ch, categories);
-
-        let foundDependentVowel = false;
-        for (const dvSign in dependentToIndependent) {
-            if (aksharam.includes(dvSign)) {
-                foundDependentVowel = true;
-                addLetterCategories(dependentToIndependent[dvSign], categories);
-            }
-        }
-
-        if ([...aksharam].some(c => teluguConsonants.has(c)) && !foundDependentVowel && !aksharam.endsWith(halant)) {
-             addLetterCategories("అ", categories);
-        }
-
-        return Array.from(categories).sort();
-    }
-    
-    function splitAksharalu(word) {
-        const coarseSplit = [];
-        let i = 0;
-        while (i < word.length) {
-            if (ignorable_chars.has(word[i])) {
-                coarseSplit.push(word[i]);
-                i++;
-                continue;
-            }
-            let current = "";
-            if (teluguConsonants.has(word[i])) {
-                current += word[i++];
-                while (i < word.length && word[i] === halant) {
-                    current += word[i++];
-                    if (i < word.length && teluguConsonants.has(word[i])) {
-                        current += word[i++];
-                    } else break;
-                }
-                while (i < word.length && (dependentVowels.has(word[i]) || diacritics.has(word[i]))) {
-                    current += word[i++];
-                }
-            } else {
-                let char = word[i++];
-                current += char;
-                if (independentVowels.has(char) && i < word.length && diacritics.has(word[i])) {
-                    current += word[i++];
-                }
-            }
-            coarseSplit.push(current);
-        }
-
-        if (coarseSplit.length === 0) return [];
-        const finalAksharalu = [];
-        for (const chunk of coarseSplit) {
-            const isPolluHallu = chunk.length === 2 && teluguConsonants.has(chunk[0]) && chunk[1] === halant;
-            if (isPolluHallu && finalAksharalu.length > 0 && !ignorable_chars.has(finalAksharalu[finalAksharalu.length - 1])) {
-                finalAksharalu[finalAksharalu.length - 1] += chunk;
-            } else {
-                finalAksharalu.push(chunk);
-            }
-        }
-        return finalAksharalu.filter(ak => ak);
-    }
-    
-    function aksharaGanaVibhajana(aksharaluList) {
-        if (!aksharaluList || aksharaluList.length === 0) return [];
-        
-        const ganamMarkers = new Array(aksharaluList.length).fill(null);
-
-        for (let i = 0; i < aksharaluList.length; i++) {
-            const aksharam = aksharaluList[i];
-            if (ignorable_chars.has(aksharam)) {
-                ganamMarkers[i] = "";
-                continue;
-            }
-            
-            ganamMarkers[i] = "I"; // Default to Laghu
-            const tags = new Set(categorizeAksharam(aksharam));
-            
-            let isGuru = false;
-            if (tags.has('దీర్ఘ')) isGuru = true;
-            if (aksharam.includes('ఐ') || aksharam.includes('ఔ') || aksharam.includes('ై') || aksharam.includes('ౌ')) isGuru = true;
-            if (tags.has('అనుస్వారం') || tags.has('విసర్గ అక్షరం')) isGuru = true;
-            if (aksharam.endsWith(halant)) isGuru = true;
-            if (isGuru) ganamMarkers[i] = "U";
-        }
-
-        for (let i = 0; i < aksharaluList.length; i++) {
-            if (ganamMarkers[i] === "") continue;
-
-            let nextSyllableIndex = -1;
-            for (let j = i + 1; j < aksharaluList.length; j++) {
-                if (!ignorable_chars.has(aksharaluList[j])) {
-                    nextSyllableIndex = j;
-                    break;
-                }
-            }
-            
-            if (nextSyllableIndex !== -1) {
-                const nextAksharamTags = new Set(categorizeAksharam(aksharaluList[nextSyllableIndex]));
-                if (nextAksharamTags.has('సంయుక్తాక్షరం') || nextAksharamTags.has('ద్విత్వాక్షరం')) {
-                    ganamMarkers[i] = "U";
-                }
-            }
-        }
-        return ganamMarkers;
-    }
-
-    class GanaAnalyzer {
-        constructor(definitions) {
-            this.definitions = definitions;
-            this.flatGanas = this._flattenDefinitions(definitions);
-            this.memo = {};
-            this.maxCombinations = 100; // Limit total combinations
-            this.foundCombinations = 0;
-        }
-
-        _flattenDefinitions(definitions) {
-            const flatMap = {};
-            for (const category in definitions) {
-                for (const pattern in definitions[category]) {
-                    flatMap[pattern] = definitions[category][pattern];
-                }
-            }
-            return flatMap;
-        }
-
-        findSequentialCombinations(syllables, maxCombinations = 100) {
-            this.memo = {}; // Reset memo for each new analysis
-            this.maxCombinations = maxCombinations;
-            this.foundCombinations = 0;
-            return this._findCombinationsRecursiveMemoized(syllables);
-        }
-
-        _findCombinationsRecursiveMemoized(remainingSyllables) {
-            // Early termination if we found enough combinations
-            if (this.foundCombinations >= this.maxCombinations) {
-                return [];
-            }
-
-            const key = remainingSyllables.join(',');
-            if (key in this.memo) {
-                return this.memo[key];
-            }
-            if (remainingSyllables.length === 0) {
-                return [[]];
-            }
-
-            const allPossiblePartitions = [];
-            for (let i = 1; i <= remainingSyllables.length; i++) {
-                // Check limit during iteration
-                if (this.foundCombinations >= this.maxCombinations) {
-                    break;
-                }
-
-                const prefix = remainingSyllables.slice(0, i).join('');
-                if (prefix in this.flatGanas) {
-                    const ganaInfo = { name: this.flatGanas[prefix], pattern: prefix };
-                    const suffix = remainingSyllables.slice(i);
-                    const suffixCombinations = this._findCombinationsRecursiveMemoized(suffix);
-
-                    for (const combo of suffixCombinations) {
-                        if (this.foundCombinations >= this.maxCombinations) {
-                            break;
-                        }
-                        allPossiblePartitions.push([ganaInfo, ...combo]);
-                        this.foundCombinations++;
-                    }
-                }
-            }
-            this.memo[key] = allPossiblePartitions;
-            return allPossiblePartitions;
-        }
-    }
-    
-    function mapSyllablesToPartition(partition, syllables) {
-        const mappedPartition = [];
-        let syllableIndex = 0;
-        for (const gana of partition) {
-            const patternLen = gana.pattern.length;
-            const syllableSlice = syllables.slice(syllableIndex, syllableIndex + patternLen);
-            const syllableText = syllableSlice.join('');
-            
-            mappedPartition.push({
-                syllable_text: syllableText,
-                name: gana.name,
-                pattern: gana.pattern
-            });
-            syllableIndex += patternLen;
-        }
-        return mappedPartition;
-    }
-
-
-    function calculateGanaJaccard(markers1, markers2) {
-        const getBigrams = (markers) => {
-            const bigrams = new Set();
-            const pureMarkers = markers.filter(m => m);
-            if (pureMarkers.length < 2) return bigrams;
-            for (let i = 0; i < pureMarkers.length - 1; i++) {
-                bigrams.add(pureMarkers[i] + pureMarkers[i+1]);
-            }
-            return bigrams;
-        };
-
-        const bigrams1 = getBigrams(markers1);
-        const bigrams2 = getBigrams(markers2);
-        
-        const intersection = new Set([...bigrams1].filter(x => bigrams2.has(x)));
-        const union = new Set([...bigrams1, ...bigrams2]);
-
-        const similarity = union.size > 0 ? intersection.size / union.size : 1;
-        const distance = 1.0 - similarity;
-
-        return { similarity, distance };
-    }
-
-    function findLongestCommonSubstring(seq1, seq2) {
-        const m = seq1.length;
-        const n = seq2.length;
-        const dp = Array(m + 1).fill(0).map(() => Array(n + 1).fill(0));
-        let maxLength = 0;
-        let endIndex = 0;
-
-        for (let i = 1; i <= m; i++) {
-            for (let j = 1; j <= n; j++) {
-                if (seq1[i - 1] === seq2[j - 1]) {
-                    dp[i][j] = dp[i - 1][j - 1] + 1;
-                    if (dp[i][j] > maxLength) {
-                        maxLength = dp[i][j];
-                        endIndex = i; // end index in seq1
-                    }
-                } else {
-                    dp[i][j] = 0;
-                }
-            }
-        }
-
-        if (maxLength === 0) {
-            return []; // No common substring
-        }
-
-        return seq1.slice(endIndex - maxLength, endIndex);
-    }
-
-    function analyzeTeluguWord(word) {
-        const sanitized = word.replace(/[^\u0C00-\u0C7F\s\u0C01\u200B]+/g, "");
-        const aksharaluList = splitAksharalu(sanitized);
-        const analysis = {};
-        const categoryCounts = {};
-        let allTags = new Set();
-
-        for (const aksharam of aksharaluList) {
-            if (ignorable_chars.has(aksharam)) continue;
-            const tags = categorizeAksharam(aksharam);
-            const key = aksharam;
-            if (!analysis[key]) {
-                analysis[key] = { tags, count: 0 };
-            }
-            analysis[key].count++;
-        }
-        
-        for (const key in analysis) {
-            const info = analysis[key];
-            for (const cat of info.tags) {
-                categoryCounts[cat] = (categoryCounts[cat] || 0) + info.count;
-                allTags.add(cat);
-            }
-        }
-
-        return {
-            word: sanitized,
-            uniqueId: simpleHash(sanitized),
-            aksharalu: Object.entries(analysis).map(([aksharam, data]) => ({ aksharam, ...data })),
-            aksharaluList,
-            categoryCounts,
-            tags: allTags
-        };
-    }
-    
-    function compareTeluguWords(word1, word2) {
-        const analysis1 = analyzeTeluguWord(word1);
-        const analysis2 = analyzeTeluguWord(word2);
-
-        const tags1 = analysis1.tags;
-        const tags2 = analysis2.tags;
-
-        const commonTags = new Set([...tags1].filter(tag => tags2.has(tag)));
-        const allTagsUnion = new Set([...tags1, ...tags2]);
-        const uniqueToWord1 = new Set([...tags1].filter(tag => !tags2.has(tag)));
-        const uniqueToWord2 = new Set([...tags2].filter(tag => !tags1.has(tag)));
-
-        const jaccardSimilarity = allTagsUnion.size > 0 ? commonTags.size / allTagsUnion.size : 0;
-        const jaccardDistance = 1.0 - jaccardSimilarity;
-
-        const ganaMarkers1 = aksharaGanaVibhajana(analysis1.aksharaluList);
-        const ganaMarkers2 = aksharaGanaVibhajana(analysis2.aksharaluList);
-        const ganaJaccard = calculateGanaJaccard(ganaMarkers1, ganaMarkers2);
-        
-        const pureGana1 = ganaMarkers1.filter(m => m);
-        const pureGana2 = ganaMarkers2.filter(m => m);
-        const lcsResult = findLongestCommonSubstring(pureGana1, pureGana2);
-
-        return {
-            word1Analysis: { ...analysis1, ganaMarkers: ganaMarkers1 },
-            word2Analysis: { ...analysis2, ganaMarkers: ganaMarkers2 },
-            comparison: {
-                commonTags: Array.from(commonTags).sort(),
-                uniqueToWord1: Array.from(uniqueToWord1).sort(),
-                uniqueToWord2: Array.from(uniqueToWord2).sort(),
-                jaccardSimilarity,
-                jaccardDistance,
-                ganaJaccard,
-                lcs: lcsResult
-            }
-        };
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    // JSON OUTPUT HELPER FUNCTIONS (v0.0.6a+)
-    //////////////////////////////////////////////////////////////////////////
-
-    function calculateLinguisticStatistics(analysis) {
-        const categoryCounts = analysis.categoryCounts;
-        const pureAksharalu = analysis.aksharaluList.filter(ak => !ignorable_chars.has(ak));
-
-        const vowelCount = categoryCounts["అచ్చు"] || 0;
-        const consonantCount = categoryCounts["హల్లు"] || 0;
-        const longVowelCount = categoryCounts["దీర్ఘ"] || 0;
-        const shortVowelCount = categoryCounts["హ్రస్వాక్షరం"] || 0;
-        const conjunctCount = categoryCounts["సంయుక్తాక్షరం"] || 0;
-        const doubletCount = categoryCounts["ద్విత్వాక్షరం"] || 0;
-        const anusvaaramCount = categoryCounts["అనుస్వారం"] || 0;
-        const visargaCount = categoryCounts["విసర్గ అక్షరం"] || 0;
-
-        const totalAksharas = pureAksharalu.length;
-        const uniqueAksharas = analysis.aksharalu.length;
-
-        return {
-            totalAksharas,
-            uniqueAksharas,
-            vowelCount,
-            consonantCount,
-            vowelToConsonantRatio: consonantCount > 0 ? (vowelCount / consonantCount).toFixed(3) : 0,
-            longVowelCount,
-            shortVowelCount,
-            conjunctCount,
-            doubletCount,
-            anusvaaramCount,
-            visargaCount,
-            complexityScore: totalAksharas > 0 ? ((conjunctCount + doubletCount) / totalAksharas * 100).toFixed(2) : 0
-        };
-    }
-
-    function calculateVargamDistribution(categoryCounts) {
-        return {
-            "క వర్గము": categoryCounts["క వర్గము"] || 0,
-            "చ వర్గము": categoryCounts["చ వర్గము"] || 0,
-            "ట వర్గము": categoryCounts["ట వర్గము"] || 0,
-            "త వర్గము": categoryCounts["త వర్గము"] || 0,
-            "ప వర్గము": categoryCounts["ప వర్గము"] || 0,
-            "స్పర్శములు": categoryCounts["స్పర్శములు"] || 0,
-            "ఊష్మాలు": categoryCounts["ఊష్మాలు"] || 0,
-            "అంతస్తములు": categoryCounts["అంతస్తములు"] || 0
-        };
-    }
-
-    function calculateArticulationDistribution(categoryCounts) {
-        return {
-            "కంఠ్యములు": categoryCounts["కంఠ్యములు"] || 0,
-            "తాలవ్యములు": categoryCounts["తాలవ్యములు"] || 0,
-            "మూర్ధన్యములు": categoryCounts["మూర్ధన్యములు"] || 0,
-            "దంత్యములు": categoryCounts["దంత్యములు"] || 0,
-            "ఓష్ఠ్యములు": categoryCounts["ఓష్ఠ్యములు"] || 0,
-            "అనునాసికములు": categoryCounts["అనునాసికములు"] || 0,
-            "కంఠతాలవ్యములు": categoryCounts["కంఠతాలవ్యములు"] || 0,
-            "కంఠోష్ఠ్యములు": categoryCounts["కంఠోష్ఠ్యములు"] || 0,
-            "దంత్యోష్ఠ్యములు": categoryCounts["దంత్యోష్ఠ్యములు"] || 0
-        };
-    }
-
-    function calculateProsodyStatistics(ganaMarkers, ganaCombinations) {
-        const pureGanas = ganaMarkers.filter(m => m !== "");
-
-        if (pureGanas.length === 0) {
-            return {
-                totalSyllables: 0,
-                guruCount: 0,
-                laghuCount: 0,
-                guruToLaghuRatio: 0,
-                guruPercentage: 0,
-                laghuPercentage: 0,
-                mostCommonGana: null,
-                ganaVariety: 0
-            };
-        }
-
-        const guruCount = pureGanas.filter(m => m === 'U').length;
-        const laghuCount = pureGanas.filter(m => m === 'I').length;
-        const totalSyllables = pureGanas.length;
-
-        // Find most common gana pattern
-        let mostCommonGana = null;
-        let ganaVariety = 0;
-
-        if (ganaCombinations && ganaCombinations.length > 0) {
-            const ganaNames = {};
-            ganaCombinations.forEach(combo => {
-                combo.forEach(gana => {
-                    const name = gana.name;
-                    ganaNames[name] = (ganaNames[name] || 0) + 1;
-                });
-            });
-
-            if (Object.keys(ganaNames).length > 0) {
-                mostCommonGana = Object.entries(ganaNames).sort((a, b) => b[1] - a[1])[0][0];
-                ganaVariety = Object.keys(ganaNames).length;
-            }
-        }
-
-        return {
-            totalSyllables,
-            guruCount,
-            laghuCount,
-            guruToLaghuRatio: laghuCount > 0 ? (guruCount / laghuCount).toFixed(3) : 0,
-            guruPercentage: (guruCount / totalSyllables * 100).toFixed(2),
-            laghuPercentage: (laghuCount / totalSyllables * 100).toFixed(2),
-            mostCommonGana,
-            ganaVariety
-        };
-    }
-
-    function generateComprehensiveJSON(text) {
-        const startTime = performance.now();
-
-        // Sanitize input
-        const sanitized = text.replace(/[^\u0C00-\u0C7F\s\u0C01\u200B\n]+/g, "");
-
-        // Generate unique hash
-        const textHash = simpleHash(sanitized);
-
-        // Basic input statistics
-        const charCount = sanitized.length;
-        const wordCount = sanitized.split(/\s+/).filter(w => w.trim()).length;
-        const sentenceCount = sanitized.split(/[।॥\.\?\!]/).filter(s => s.trim()).length;
-        const paragraphCount = sanitized.split('\n').filter(p => p.trim()).length;
-
-        // Detect invalid characters
-        const removedChars = Array.from(new Set(
-            [...text].filter(ch => !sanitized.includes(ch) && ch !== '\r')
-        )).sort();
-
-        // Perform core analysis
-        const analysis = analyzeTeluguWord(sanitized);
-        const ganaMarkers = aksharaGanaVibhajana(analysis.aksharaluList);
-
-        // Add positional information to aksharalu
-        const aksharamPositions = {};
-        let position = 0;
-
-        analysis.aksharaluList.forEach(aksharam => {
-            if (!ignorable_chars.has(aksharam)) {
-                if (!aksharamPositions[aksharam]) {
-                    aksharamPositions[aksharam] = [];
-                }
-                aksharamPositions[aksharam].push(position);
-                position++;
-            }
-        });
-
-        const aksharaluWithPositions = analysis.aksharalu.map(akData => ({
-            aksharam: akData.aksharam,
-            categories: akData.tags,
-            count: akData.count,
-            positions: aksharamPositions[akData.aksharam] || []
-        }));
-
-        // Gana marker details - properly map aksharas to their gana markers
-        const pureAksharalu = analysis.aksharaluList.filter(ak => !ignorable_chars.has(ak));
-        const ganaMarkerDetails = [];
-
-        let pureIdx = 0;
-        for (let i = 0; i < analysis.aksharaluList.length; i++) {
-            const aksharam = analysis.aksharaluList[i];
-            if (!ignorable_chars.has(aksharam)) {
-                if (i < ganaMarkers.length && ganaMarkers[i]) {
-                    ganaMarkerDetails.push({
-                        aksharam,
-                        marker: ganaMarkers[i],
-                        position: pureIdx
-                    });
-                }
-                pureIdx++;
-            }
-        }
-
-        // Gana combinations analysis
-        const pureGanas = ganaMarkers.filter(m => m !== "");
-        let ganaCombinationsList = [];
-        let combinationsLimited = false;
-
-        if (pureGanas.length > 0) {
-            // Limit to 20 combinations for performance (early termination in recursion)
-            const MAX_COMBINATIONS = 20;
-            const combinations = ganaAnalyzer.findSequentialCombinations(pureGanas, MAX_COMBINATIONS);
-
-            // Check if we hit the limit
-            combinationsLimited = combinations.length >= MAX_COMBINATIONS;
-
-            ganaCombinationsList = combinations.map(combo =>
-                mapSyllablesToPartition(combo, pureAksharalu)
-            );
-        }
-
-        // Calculate statistics
-        const linguisticStats = calculateLinguisticStatistics(analysis);
-        const vargamDist = calculateVargamDistribution(analysis.categoryCounts);
-        const articulationDist = calculateArticulationDistribution(analysis.categoryCounts);
-        const prosodyStats = calculateProsodyStatistics(ganaMarkers, ganaCombinationsList);
-
-        // Generate summary
-        const sortedCats = Object.entries(analysis.categoryCounts).sort((a, b) => b[1] - a[1]);
-        const dominantCategories = sortedCats.slice(0, 3).map(cat => cat[0]);
-
-        let linguisticProfile = `Text with ${linguisticStats.totalAksharas} aksharas, ${linguisticStats.vowelCount} vowels, ${linguisticStats.consonantCount} consonants`;
-        if (linguisticStats.conjunctCount > 0) {
-            linguisticProfile += `, ${linguisticStats.conjunctCount} conjuncts`;
-        }
-
-        let prosodicProfile = `Prosodic pattern: ${prosodyStats.guruPercentage}% Guru, ${prosodyStats.laghuPercentage}% Laghu`;
-        if (prosodyStats.mostCommonGana) {
-            prosodicProfile += `, dominant Gana: ${prosodyStats.mostCommonGana}`;
-        }
-
-        const processingTime = (performance.now() - startTime).toFixed(2);
-
-        // Build comprehensive JSON structure
-        return {
-            metadata: {
-                schemaVersion: "1.0.0",
-                analysisTimestamp: new Date().toISOString(),
-                analyzerVersion: "0.0.6a+",
-                inputHash: textHash,
-                processingTimeMs: parseFloat(processingTime)
-            },
-
-            input: {
-                rawText: text,
-                sanitizedText: sanitized,
-                characterCount: charCount,
-                wordCount,
-                sentenceCount,
-                paragraphCount,
-                language: "Telugu",
-                scriptValidation: {
-                    isValid: removedChars.length === 0,
-                    invalidCharacters: removedChars,
-                    warnings: removedChars.length > 0 ? ["Non-Telugu characters removed"] : []
-                }
-            },
-
-            linguistic: {
-                aksharalu: aksharaluWithPositions,
-                aksharaluList: analysis.aksharaluList,
-                categoryCounts: analysis.categoryCounts,
-                statistics: linguisticStats,
-                vargamDistribution: vargamDist,
-                articulationDistribution: articulationDist
-            },
-
-            prosody: {
-                ganaSequence: pureGanas,
-                ganaMarkers: ganaMarkerDetails,
-                ganaCombinations: {
-                    count: ganaCombinationsList.length,
-                    combinations: ganaCombinationsList,
-                    limitedOutput: combinationsLimited,
-                    maxCombinationsShown: combinationsLimited ? 50 : ganaCombinationsList.length
-                },
-                statistics: prosodyStats
-            },
-
-            summary: {
-                linguisticProfile,
-                prosodicProfile,
-                dominantCategories
-            }
-        };
-    }
-
-    function downloadJSON(jsonData, filename) {
-        const jsonString = JSON.stringify(jsonData, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    // UI AND DISPLAY LOGIC
-    //////////////////////////////////////////////////////////////////////////
-    
-    let singleChartInstance = null;
-    let singleGanaChartInstance = null;
-    let compareChartInstance = null;
-    let compareGanaChartInstance = null;
-
-    const ganaAnalyzer = new GanaAnalyzer(GANA_DEFINITIONS);
-
-    let currentAnalysisJSON = null; // Store the current JSON for download
-
-    function openTab(event, tabName) {
-        document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
-        document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
-        document.getElementById(tabName).classList.add("active");
-        event.currentTarget.classList.add("active");
-    }
-
-    function createGanaTable(aksharaluList, ganaMarkers) {
-        if (!ganaMarkers || ganaMarkers.length === 0) return '';
-        const pureAksharalu = aksharaluList.filter(ak => !ignorable_chars.has(ak));
-        const pureMarkers = ganaMarkers.filter(m => m !== "");
-        if(pureMarkers.length === 0) return '';
-
-        let tableRows = '';
-        pureAksharalu.forEach((aksharam, i) => {
-            tableRows += `<tr><td>${aksharam}</td><td>${pureMarkers[i]}</td></tr>`;
-        });
-
-        return `
-            <h2 class="analysis-heading">గురు లఘు విభజన (Prosody Analysis)</h2>
-            <table>
-              <thead><tr><th>అక్షరం</th><th>గురులఘువులు (Guru/Laghu)</th></tr></thead>
-              <tbody>${tableRows}</tbody>
-            </table>`;
-    }
-
-    function createGanaTableFromJSON(aksharaluList, ganaMarkersArray) {
-        if (!ganaMarkersArray || ganaMarkersArray.length === 0) return '';
-
-        let tableRows = '';
-        ganaMarkersArray.forEach(markerData => {
-            tableRows += `<tr><td>${markerData.aksharam}</td><td>${markerData.marker}</td></tr>`;
-        });
-
-        return `
-            <h2 class="analysis-heading">గురు లఘు విభజన (Prosody Analysis)</h2>
-            <table>
-              <thead><tr><th>అక్షరం</th><th>గురులఘువులు (Guru/Laghu)</th></tr></thead>
-              <tbody>${tableRows}</tbody>
-            </table>`;
-    }
-
-    function createGanaCombinationsFromJSON(ganaCombinationsData, aksharaluList) {
-        if (!ganaCombinationsData || ganaCombinationsData.count === 0) return '';
-
-        const { count, combinations, limitedOutput } = ganaCombinationsData;
-
-        let listItems = '';
-        if (combinations.length <= 50 && !limitedOutput) {
-            combinations.forEach((combo, index) => {
-                const partitionStr = combo.map(gana =>
-                    `<span class="gana-part"><span class="syllable">${gana.syllable_text}</span> - <span class="gana-name">${gana.name}(${gana.pattern})</span></span>`
-                ).join(' + ');
-                listItems += `<li>${partitionStr}</li>`;
-            });
-        } else {
-            if (combinations.length > 0) {
-                const firstCombo = combinations[0];
-                const partitionStr = firstCombo.map(gana =>
-                    `<span class="gana-part"><span class="syllable">${gana.syllable_text}</span> - <span class="gana-name">${gana.name}(${gana.pattern})</span></span>`
-                ).join(' + ');
-                listItems += `<li><i>(Showing 1 of ${count})</i> ${partitionStr}</li>`;
-            }
-        }
-
-        return `
-            <h2 class="analysis-heading" style="margin-top: 2.5rem; margin-bottom: 1rem;">వివరణాత్మక గణ కలయికలు</h2>
-            <div class="summary-box" style="margin-bottom:0;">
-              <h2>${count} possible way(s) to partition</h2>
-              <ul class="gana-combinations-list">
-                  ${listItems}
-              </ul>
-            </div>`;
-    }
-
-    function createGanaCombinationsHtml(aksharaluList, ganaMarkers) {
-        const pureAksharalu = aksharaluList.filter(ak => !ignorable_chars.has(ak));
-        const pureGanas = ganaMarkers.filter(m => m !== "");
-
-        if (pureGanas.length === 0) return '';
-
-        // Limit to 20 combinations for performance
-        const MAX_COMBOS = 20;
-        const sequentialCombos = ganaAnalyzer.findSequentialCombinations(pureGanas, MAX_COMBOS);
-
-        if (sequentialCombos.length === 0) return '';
-
-        let listItems = '';
-        if (sequentialCombos.length <= MAX_COMBOS) {
-            sequentialCombos.forEach((combo, index) => {
-                const mappedCombo = mapSyllablesToPartition(combo, pureAksharalu);
-                const partitionStr = mappedCombo.map(gana =>
-                    `<span class="gana-part"><span class="syllable">${gana.syllable_text}</span> - <span class="gana-name">${gana.name}(${gana.pattern})</span></span>`
-                ).join(' + ');
-                listItems += `<li>${partitionStr}</li>`;
-            });
-        } else {
-            const firstCombo = mapSyllablesToPartition(sequentialCombos[0], pureAksharalu);
-            const partitionStr = firstCombo.map(gana =>
-                `<span class="gana-part"><span class="syllable">${gana.syllable_text}</span> - <span class="gana-name">${gana.name}(${gana.pattern})</span></span>`
-            ).join(' + ');
-            listItems += `<li><i>(Showing 1 of ${sequentialCombos.length}+)</i> ${partitionStr}</li>`;
-        }
-        
-        // REFACTORED: Returns only the inner content for better reusability
-        return `
-            <h2 class="analysis-heading" style="margin-top: 2.5rem; margin-bottom: 1rem;">వివరణాత్మక గణ కలయికలు</h2>
-            <div class="summary-box" style="margin-bottom:0;">
-              <h2>${sequentialCombos.length} possible way(s) to partition</h2>
-              <ul class="gana-combinations-list">
-                  ${listItems}
-              </ul>
-            </div>`;
-    }
-
-    function createGanaChart(canvasId, chartInstance, datasets) {
-        if (chartInstance) chartInstance.destroy();
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        
-        const maxLen = Math.max(...datasets.map(d => d.data.length));
-        const labels = Array.from({ length: maxLen }, (_, i) => i + 1);
-
-        return new Chart(ctx, {
-            type: 'line',
-            data: { labels, datasets },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    y: { ticks: { callback: v => (v === 1 ? 'Guru (U)' : (v === 0 ? 'Laghu (I)' : null)) }, min: -0.1, max: 1.1 },
-                    x: { title: { display: true, text: 'Aksharam Sequence' } }
-                },
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: { callbacks: { label: c => `${c.dataset.label || ''}: ${c.parsed.y === 1 ? 'Guru (U)' : 'Laghu (I)'}` } }
-                },
-                elements: {
-                    line: {
-                        tension: 0
-                    }
-                }
-            }
-        });
-    }
-
-    function truncateText(text, maxLength = 15) {
-        if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength).trim() + '...';
-    }
-
-    // --- Initialize Event Listeners ---
-    function initializeEventListeners() {
-
-    // --- Single Analysis ---
-    const analyzeSingleBtn = document.getElementById("analyzeSingleBtn");
-    if (!analyzeSingleBtn) {
-        console.error("analyzeSingleBtn not found!");
-        return;
-    }
-
-    analyzeSingleBtn.addEventListener("click", () => {
-        const rawText = document.getElementById("singleInput").value;
-        const resultsContainer = document.getElementById("singleResultContainer");
-        const downloadContainer = document.getElementById("downloadContainer");
-
-        if (!rawText.trim()) {
-            resultsContainer.innerHTML = "<p style='text-align:center;'>దయచేసి విశ్లేషణ కోసం కొంత వాక్యాన్ని నమోదు చేయండి.</p>";
-            downloadContainer.style.display = 'none';
-            return;
-        }
-
-        // Show loading indicator
-        resultsContainer.innerHTML = "<p style='text-align:center; font-size:1.2rem; color:#1971c2;'>⏳ విశ్లేషిస్తున్నాం... (Analyzing...)</p>";
-        downloadContainer.style.display = 'none';
-
-        // Use setTimeout to allow UI to update before heavy processing
-        setTimeout(() => {
-            try {
-                // Generate comprehensive JSON - single source of truth
-                currentAnalysisJSON = generateComprehensiveJSON(rawText);
-
-        // Show download button
-        downloadContainer.style.display = 'block';
-
-        // Extract data from JSON for rendering
-        const { metadata, input, linguistic, prosody, summary } = currentAnalysisJSON;
-        const { uniqueId } = metadata.inputHash;
-        const { aksharalu, categoryCounts, aksharaluList } = linguistic;
-        const { ganaMarkers, ganaCombinations } = prosody;
-
-        // Prepare sorted data for display
-        const sortedCats = Object.entries(categoryCounts).sort((a,b) => b[1] - a[1]);
-        const sortedAksharalu = [...aksharalu].sort((a,b) => b.count - a.count);
-
-        // Render UI from JSON
-        const summaryHtml = `<div class="summary-flex"><div class="summary-col"><div class="summary-box"><h2>సమాచారం (Info)</h2><p><strong>Unique ID:</strong> ${metadata.inputHash}</p><strong>Original Input:</strong><pre>${input.rawText}</pre></div><div class="summary-box"><div class="chart-container"><canvas id="singleCategoryChart"></canvas></div></div></div><div class="summary-col"><div class="summary-box"><h2>Category Counts</h2><table><thead><tr><th>Category</th><th>Count</th></tr></thead><tbody>${sortedCats.map(([cat, count]) => `<tr><td>${cat}</td><td>${count}</td></tr>`).join('')}</tbody></table></div></div></div>`;
-
-        const analysisTable = `<h2 class="analysis-heading">అక్షర విశ్లేషణ</h2><table><thead><tr><th>అక్షరం</th><th>గణన</th><th>వర్గాలు</th></tr></thead><tbody>${sortedAksharalu.map(info => `<tr><td>${info.aksharam}</td><td>${info.count}</td><td>${info.categories.join(", ")}</td></tr>`).join('')}</tbody></table>`;
-
-        // Create gana table from JSON
-        const ganaTableHtml = createGanaTableFromJSON(aksharaluList, ganaMarkers);
-
-        const ganaChartHtml = `<div class="summary-box"><div class="chart-container"><canvas id="singleGanaChart"></canvas></div></div>`;
-
-        // Create gana combinations HTML from JSON
-        const ganaCombinationsHtml = createGanaCombinationsFromJSON(ganaCombinations, aksharaluList);
-
-        resultsContainer.innerHTML = summaryHtml + analysisTable + ganaTableHtml + ganaCombinationsHtml + ganaChartHtml;
-
-        // Render charts
-        if (singleChartInstance) singleChartInstance.destroy();
-        const ctxPie = document.getElementById('singleCategoryChart').getContext('2d');
-        const labels = sortedCats.map(item => item[0]);
-        singleChartInstance = new Chart(ctxPie, { type: 'pie', data: { labels: labels, datasets: [{ label: 'Category Count', data: sortedCats.map(item => item[1]), backgroundColor: labels.map((_, i) => `hsl(${i * (360 / labels.length)}, 70%, 60%)`), borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
-
-        const ganaData = prosody.ganaSequence.map(m => m === 'U' ? 1 : 0);
-        if (ganaData.length > 0) {
-            const ganaDataset = [{ label: 'Gana Sequence', data: ganaData, borderColor: '#1c7ed6', backgroundColor: 'rgba(28, 126, 214, 0.1)', fill: true }];
-            singleGanaChartInstance = createGanaChart('singleGanaChart', singleGanaChartInstance, ganaDataset);
-        }
-            } catch (error) {
-                console.error("Analysis error:", error);
-                resultsContainer.innerHTML = "<p style='text-align:center; color:red;'>విశ్లేషణలో లోపం సంభవించింది. దయచేసి మళ్లీ ప్రయత్నించండి. (An error occurred during analysis. Please try again.)</p>";
-            }
-        }, 10); // Small delay to allow UI update
-    });
-
-    // Download JSON button handler
-    const downloadJsonBtn = document.getElementById("downloadJsonBtn");
-    if (!downloadJsonBtn) {
-        console.error("downloadJsonBtn not found!");
-        return;
-    }
-
-    downloadJsonBtn.addEventListener("click", () => {
-        if (currentAnalysisJSON) {
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-            const filename = `telugu_analysis_${timestamp}.json`;
-            downloadJSON(currentAnalysisJSON, filename);
-        }
-    });
-
-    // --- Comparative Analysis ---
-    const analyzeCompareBtn = document.getElementById("analyzeCompareBtn");
-    if (!analyzeCompareBtn) {
-        console.error("analyzeCompareBtn not found!");
-        return;
-    }
-
-    analyzeCompareBtn.addEventListener("click", () => {
-        const text1 = document.getElementById("compareInput1").value;
-        const text2 = document.getElementById("compareInput2").value;
-        const resultsContainer = document.getElementById("compareResultContainer");
-
-        if (!text1.trim() || !text2.trim()) {
-            resultsContainer.innerHTML = "<p style='text-align:center;'>దయచేసి పోలిక కోసం రెండు టెక్స్ట్ బాక్స్‌లలో వాక్యాన్ని నమోదు చేయండి.</p>";
-            return;
-        }
-
-        // Show loading indicator
-        resultsContainer.innerHTML = "<p style='text-align:center; font-size:1.2rem; color:#1971c2;'>⏳ పోల్చుతున్నాం... (Comparing...)</p>";
-
-        // Use setTimeout to allow UI to update before heavy processing
-        setTimeout(() => {
-            try {
-                const { word1Analysis, word2Analysis, comparison } = compareTeluguWords(text1, text2);
-        
-        const ganaTable1 = createGanaTable(word1Analysis.aksharaluList, word1Analysis.ganaMarkers);
-        const ganaTable2 = createGanaTable(word2Analysis.aksharaluList, word2Analysis.ganaMarkers);
-
-        // Generate detailed combinations HTML for both inputs
-        const ganaCombinationsHtml1 = createGanaCombinationsHtml(word1Analysis.aksharaluList, word1Analysis.ganaMarkers);
-        const ganaCombinationsHtml2 = createGanaCombinationsHtml(word2Analysis.aksharaluList, word2Analysis.ganaMarkers);
-
-        // Conditionally create the combinations row only if there's content to show
-        let combinationsRowHtml = '';
-        if (ganaCombinationsHtml1 || ganaCombinationsHtml2) {
-            combinationsRowHtml = `
-                <div class="summary-flex">
-                    <div class="summary-col">${ganaCombinationsHtml1 || '<div class="summary-box"></div>'}</div>
-                    <div class="summary-col">${ganaCombinationsHtml2 || '<div class="summary-box"></div>'}</div>
-                </div>`;
-        }
-
-        const ganaChartCompareHtml = `<h2 class="analysis-heading">గురు లఘు క్రమ పోలిక (Guru, Laghu Sequence Comparison)</h2><div class="summary-box"><div class="chart-container"><canvas id="compareGanaChart"></canvas></div></div>`;
-        
-        const lcsPanelHtml = `
-            <h2 class="analysis-heading">Longest Common Substring of Ganas</h2>
-            <div class="summary-box lcs-panel">
-                <div>
-                    <div class="lcs-label">'${truncateText(word1Analysis.word)}' Gana Sequence:</div>
-                    <div class="lcs-sequence">${word1Analysis.ganaMarkers.filter(m => m).join(' ')}</div>
-                </div>
-                <div>
-                    <div class="lcs-label">'${truncateText(word2Analysis.word)}' Gana Sequence:</div>
-                    <div class="lcs-sequence">${word2Analysis.ganaMarkers.filter(m => m).join(' ')}</div>
-                </div>
-                <hr>
-                <div>
-                    <div class="lcs-label">Longest Common Substring:</div>
-                    <div class="lcs-result">${comparison.lcs.join(' ') || 'None'}</div>
-                </div>
-            </div>`;
-        
-        const resultsHtml = `
-            <div class="summary-flex">
-              <div class="summary-col">
-                <div class="summary-box">
-                    <h2>మొదటి వాక్యం</h2>
-                    <p><strong>Unique ID:</strong> ${word1Analysis.uniqueId}</p>
-                    <pre>${text1}</pre>
-                    ${ganaTable1}
-                </div>
-              </div>
-              <div class="summary-col">
-                <div class="summary-box">
-                    <h2>రెండవ వాక్యం</h2>
-                    <p><strong>Unique ID:</strong> ${word2Analysis.uniqueId}</p>
-                    <pre>${text2}</pre>
-                    ${ganaTable2}
-                </div>
-              </div>
-            </div>
-            ${combinationsRowHtml}
-            <h2 class="analysis-heading">పోలిక కొలమానాలు (Comparison Metrics)</h2>
-            <div class="summary-flex">
-                <div class="summary-box summary-col score-box"><div class="score-value">${comparison.jaccardSimilarity.toFixed(3)}</div><div class="score-label">Linguistic Jaccard Similarity</div></div>
-                <div class="summary-box summary-col score-box"><div class="score-value">${comparison.jaccardDistance.toFixed(3)}</div><div class="score-label">Linguistic Jaccard Distance</div></div>
-                <div class="summary-box summary-col score-box"><div class="score-value">${comparison.ganaJaccard.similarity.toFixed(3)}</div><div class="score-label">Gana Jaccard Similarity</div></div>
-                <div class="summary-box summary-col score-box"><div class="score-value">${comparison.ganaJaccard.distance.toFixed(3)}</div><div class="score-label">Gana Jaccard Distance</div></div>
-            </div>
-            ${ganaChartCompareHtml}
-            ${lcsPanelHtml}
-            <div class="summary-box"><h2>లక్షణాల పోలిక (Feature Comparison)</h2><div class="chart-container" style="height: 250px;"><canvas id="compareChart"></canvas></div></div>
-            <div class="comparison-grid"><div class="summary-box comparison-features"><h2>సాధారణ లక్షణాలు (${comparison.commonTags.length})</h2><ul>${comparison.commonTags.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul></div><div class="summary-box comparison-features"><h2>ప్రత్యేక లక్షణాలు (Unique Features)</h2><p><strong>'${truncateText(word1Analysis.word, 10)}'లో మాత్రమే (${comparison.uniqueToWord1.length}):</strong></p><ul>${comparison.uniqueToWord1.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul><hr><p><strong>'${truncateText(word2Analysis.word, 10)}'లో మాత్రమే (${comparison.uniqueToWord2.length}):</strong></p><ul>${comparison.uniqueToWord2.map(tag => `<li>${tag}</li>`).join('') || '<li>None</li>'}</ul></div></div>`;
-        resultsContainer.innerHTML = resultsHtml;
-        
-        if (compareChartInstance) compareChartInstance.destroy();
-        const ctxBar = document.getElementById('compareChart').getContext('2d');
-        compareChartInstance = new Chart(ctxBar, { type: 'bar', data: { labels: ['Linguistic Features'], datasets: [ { label: 'Common', data: [comparison.commonTags.length], backgroundColor: '#4dabf7' }, { label: `Unique to '${truncateText(word1Analysis.word)}'`, data: [comparison.uniqueToWord1.length], backgroundColor: '#74c0fc' }, { label: `Unique to '${truncateText(word2Analysis.word)}'`, data: [comparison.uniqueToWord2.length], backgroundColor: '#a5d8ff' } ] }, options: { indexAxis: 'y', scales: { x: { stacked: true }, y: { stacked: true } }, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
-
-        const ganaData1 = word1Analysis.ganaMarkers.filter(m => m !== "").map(m => m === 'U' ? 1 : 0);
-        const ganaData2 = word2Analysis.ganaMarkers.filter(m => m !== "").map(m => m === 'U' ? 1 : 0);
-        if (ganaData1.length > 0 || ganaData2.length > 0) {
-            const ganaDatasets = [
-                { label: `"${truncateText(text1)}"`, data: ganaData1, borderColor: '#1c7ed6', backgroundColor: 'rgba(28, 126, 214, 0.1)', fill: true },
-                { label: `"${truncateText(text2)}"`, data: ganaData2, borderColor: '#f03e3e', backgroundColor: 'rgba(240, 62, 62, 0.1)', fill: true }
-            ];
-            compareGanaChartInstance = createGanaChart('compareGanaChart', compareGanaChartInstance, ganaDatasets);
-        }
-            } catch (error) {
-                console.error("Comparison error:", error);
-                resultsContainer.innerHTML = "<p style='text-align:center; color:red;'>పోలికలో లోపం సంభవించింది. దయచేసి మళ్లీ ప్రయత్నించండి. (An error occurred during comparison. Please try again.)</p>";
-            }
-        }, 10); // Small delay to allow UI update
-    });
-
-    } // End of initializeEventListeners function
-
-    // Call the initialization function
-    // Check if DOM is already loaded or wait for it
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeEventListeners);
+    prev = row;
+  }
+  return { seq: maxLength ? seq1.slice(endIndex - maxLength, endIndex) : [], startA: endIndex - maxLength, startB: endIndex2 - maxLength, length: maxLength };
+}
+
+/* =====================================================================================
+   ANALYSIS
+   FIX: te.tokenize() separates aksharas from spaces, CR, tabs, digits and punctuation, so
+   only real aksharas are tagged and scanned (the old splitter made "\r", tabs and Telugu
+   digits into laghu "syllables"). Segmentation otherwise follows the original: ZWJ/ZWNJ
+   are dropped, ఁ is ignored, and a lone pollu (C్) joins the akshara before it in the word.
+   ===================================================================================== */
+function analyze(raw) {
+  const t0 = performance.now();
+  const text = String(raw ?? "").replace(/\r\n?/g, "\n");
+  const sanitized = text.replace(/[^ఀ-౿\s​\n]+/g, "");
+  const items = [], list = [];
+  let line = 0, prevAk = false;
+  for (const tok of te.tokenize(text.replace(/[‌‍]/g, ""), { mergeFinalPollu: false })) {
+    if (tok.type === "akshara") {
+      const key = tok.text.split(ARASUNNA).join("");
+      if (!key) { prevAk = false; continue; }
+      const last = items[items.length - 1];
+      if (prevAk && last && key.length === 2 && teluguConsonants.has(key[0]) && key[1] === halant) {
+        last.key += key; last.display += tok.text; list[list.length - 1] = last.key; continue;
+      }
+      items.push({ key, display: tok.text, line }); list.push(key); prevAk = true;
     } else {
-        // DOM already loaded, call immediately
-        initializeEventListeners();
+      prevAk = false;
+      if (tok.type === "space") for (const ch of tok.text) { if (ch === "\n") { line++; list.push("\n"); } else list.push(" "); }
     }
-  </script>
+  }
+  // guru / laghu — the original aksharaGanaVibhajana() rules, with the reason kept for display
+  const sets = items.map(it => { it.tags = tagsOf(it.key); return new Set(it.tags); });
+  items.forEach((it, i) => {
+    const T = sets[i], k = it.key, r = [];
+    if (T.has("దీర్ఘ")) r.push("dirgha");
+    if (k.includes("ఐ") || k.includes("ఔ") || k.includes("ై") || k.includes("ౌ")) r.push("aiau");
+    if (T.has("అనుస్వారం")) r.push("anusvara");
+    if (T.has("విసర్గ అక్షరం")) r.push("visarga");
+    if (k.endsWith(halant)) r.push("pollu");
+    const nx = sets[i + 1];                          // next syllable anywhere in the text, as in the original
+    if (nx && (nx.has("సంయుక్తాక్షరం") || nx.has("ద్విత్వాక్షరం"))) r.push("next");
+    it.reasons = r; it.mark = r.length ? "U" : "I"; it.pos = i;
+  });
+  const unique = new Map();
+  items.forEach((it, pos) => {
+    let u = unique.get(it.key);
+    if (!u) unique.set(it.key, u = { aksharam: it.key, tags: it.tags, count: 0, positions: [], U: 0, I: 0 });
+    u.count++; u.positions.push(pos); u[it.mark]++;
+  });
+  const categoryCounts = {}, tags = new Set();
+  for (const u of unique.values()) for (const c of u.tags) { categoryCounts[c] = (categoryCounts[c] || 0) + u.count; tags.add(c); }
+  const lines = text.split("\n").map((t, index) => ({ index, text: t, items: [] }));
+  items.forEach((it, i) => lines[it.line].items.push(i));
+  const sanSet = new Set(sanitized);
+  return {
+    raw: String(raw ?? ""), text, sanitized, items, aksharaluList: list, unique, categoryCounts, tags,
+    padas: lines.filter(l => l.items.length),
+    sequence: items.map(it => it.mark).join(""),
+    guru: items.filter(it => it.mark === "U").length,
+    hash: simpleHash(sanitized),
+    characterCount: sanitized.length,
+    wordCount: sanitized.split(/\s+/).filter(w => w.trim()).length,
+    // FIX: counted on the text before punctuation is stripped (the old count was always 1)
+    sentenceCount: text.split(/[।॥.?!]+/).filter(s => /\p{L}/u.test(s)).length,
+    paragraphCount: sanitized.split("\n").filter(p => p.trim()).length,
+    removedChars: [...new Set([...text].filter(ch => !sanSet.has(ch) && ch !== "\r"))].sort(),
+    ms: performance.now() - t0,
+  };
+}
 
+function compareTexts(a, b) {
+  const A = analyze(a), B = analyze(b);
+  const common = [...A.tags].filter(t => B.tags.has(t)).sort();
+  const union = new Set([...A.tags, ...B.tags]);
+  const onlyA = [...A.tags].filter(t => !B.tags.has(t)).sort(), onlyB = [...B.tags].filter(t => !A.tags.has(t)).sort();
+  const jaccardSimilarity = union.size > 0 ? common.length / union.size : 0;
+  const mA = [...A.sequence], mB = [...B.sequence];
+  return { A, B, common, onlyA, onlyB, jaccardSimilarity, jaccardDistance: 1 - jaccardSimilarity, ganaJaccard: calculateGanaJaccard(mA, mB), lcs: findLongestCommonSubstring(mA, mB) };
+}
+
+/* ---------- JSON export (schema 1.1.0 = 1.0.0 + additive fields; see report) ----------
+   1.0.0 fields keep their names and types. Added: metadata.ganaFamilies, metadata.maxListedCombinations,
+   prosody.ganaCombinations.countExact (exact decimal string; counts can exceed 2^53),
+   ganaCombinations[].[].labels (every (family, name) for the pattern), prosody.lines (per-పాదం analysis).
+   Changed values (bug fixes): ganaCombinations.count is now the true total, input.sentenceCount is real. */
+const SCHEMA_VERSION = "1.1.0";
+function comboJSON(combos, keys) {
+  return combos.map(c => c.map(seg => ({ syllable_text: keys.slice(seg.start, seg.start + seg.len).join(""), name: englishName(seg.labels), pattern: seg.pattern,
+    labels: seg.labels.map(l => ({ family: l.family, name: l.name })) })));
+}
+function bigToNumber(b) { const n = Number(b); return Number.isFinite(n) ? n : null; }
+function buildJSON(an, { families = enabledFamilies(), cap = maxCombos() } = {}) {
+  const t0 = performance.now();
+  const gi = ganaIndex(families);
+  const keys = an.items.map(it => it.key);
+  const pureGanas = [...an.sequence];
+  const f = countTable(an.sequence, gi);
+  const total = an.sequence.length ? f[0] : 0n;
+  const combos = comboJSON(listPartitions(an.sequence, gi, cap, f), keys);
+  const cc = an.categoryCounts, n = keys.length;
+  const g = k => cc[k] || 0;
+  const vowelCount = g("అచ్చు"), consonantCount = g("హల్లు"), conjunctCount = g("సంయుక్తాక్షరం"), doubletCount = g("ద్విత్వాక్షరం");
+  const statistics = {
+    totalAksharas: n, uniqueAksharas: an.unique.size, vowelCount, consonantCount,
+    vowelToConsonantRatio: consonantCount > 0 ? (vowelCount / consonantCount).toFixed(3) : 0,
+    longVowelCount: g("దీర్ఘ"), shortVowelCount: g("హ్రస్వాక్షరం"), conjunctCount, doubletCount,
+    anusvaaramCount: g("అనుస్వారం"), visargaCount: g("విసర్గ అక్షరం"),
+    complexityScore: n > 0 ? ((conjunctCount + doubletCount) / n * 100).toFixed(2) : 0,
+  };
+  const pick = cats => Object.fromEntries(cats.map(c => [c, g(c)]));
+  const guruCount = an.guru, laghuCount = n - an.guru;
+  let mostCommonGana = null, ganaVariety = 0;
+  if (combos.length) {
+    const names = {};
+    combos.forEach(c => c.forEach(x => { names[x.name] = (names[x.name] || 0) + 1; }));
+    mostCommonGana = Object.entries(names).sort((a, b) => b[1] - a[1])[0][0];
+    ganaVariety = Object.keys(names).length;
+  }
+  const prosodyStats = n === 0
+    ? { totalSyllables: 0, guruCount: 0, laghuCount: 0, guruToLaghuRatio: 0, guruPercentage: 0, laghuPercentage: 0, mostCommonGana: null, ganaVariety: 0 }
+    : { totalSyllables: n, guruCount, laghuCount, guruToLaghuRatio: laghuCount > 0 ? (guruCount / laghuCount).toFixed(3) : 0,
+        guruPercentage: (guruCount / n * 100).toFixed(2), laghuPercentage: (laghuCount / n * 100).toFixed(2), mostCommonGana, ganaVariety };
+  const dominantCategories = Object.entries(cc).sort((a, b) => b[1] - a[1]).slice(0, 3).map(c => c[0]);
+  let linguisticProfile = `Text with ${n} aksharas, ${vowelCount} vowels, ${consonantCount} consonants`;
+  if (conjunctCount > 0) linguisticProfile += `, ${conjunctCount} conjuncts`;
+  let prosodicProfile = `Prosodic pattern: ${prosodyStats.guruPercentage}% Guru, ${prosodyStats.laghuPercentage}% Laghu`;
+  if (mostCommonGana) prosodicProfile += `, dominant Gana: ${mostCommonGana}`;
+  const lines = an.padas.map((p, i) => {
+    const seq = p.items.map(k => an.items[k].mark).join(""), lf = countTable(seq, gi), lk = p.items.map(k => an.items[k].key);
+    const lc = listPartitions(seq, gi, cap, lf);
+    return { pada: i + 1, lineIndex: p.index, text: p.text, aksharalu: lk, ganaSequence: [...seq],
+      ganaCombinations: { count: bigToNumber(lf[0]), countExact: lf[0].toString(), combinations: comboJSON(lc, lk), limitedOutput: lf[0] > BigInt(lc.length) } };
+  });
+  return {
+    metadata: { schemaVersion: SCHEMA_VERSION, analysisTimestamp: new Date().toISOString(), analyzerVersion: VERSION, inputHash: an.hash,
+      processingTimeMs: +(an.ms + performance.now() - t0).toFixed(2), ganaFamilies: families.map(k => FAMILIES.find(f => f.key === k).def), maxListedCombinations: cap },
+    input: { rawText: an.raw, sanitizedText: an.sanitized, characterCount: an.characterCount, wordCount: an.wordCount, sentenceCount: an.sentenceCount,
+      paragraphCount: an.paragraphCount, language: "Telugu",
+      scriptValidation: { isValid: an.removedChars.length === 0, invalidCharacters: an.removedChars, warnings: an.removedChars.length > 0 ? ["Non-Telugu characters removed"] : [] } },
+    linguistic: {
+      aksharalu: [...an.unique.values()].map(u => ({ aksharam: u.aksharam, categories: u.tags, count: u.count, positions: u.positions })),
+      aksharaluList: an.aksharaluList, categoryCounts: cc, statistics,
+      vargamDistribution: pick(["క వర్గము", "చ వర్గము", "ట వర్గము", "త వర్గము", "ప వర్గము", "స్పర్శములు", "ఊష్మాలు", "అంతస్తములు"]),
+      articulationDistribution: pick(GROUPS[3].cats),
+    },
+    prosody: {
+      ganaSequence: pureGanas,
+      ganaMarkers: an.items.map((it, i) => ({ aksharam: it.key, marker: it.mark, position: i })),
+      ganaCombinations: { count: bigToNumber(total), countExact: total.toString(), combinations: combos, limitedOutput: total > BigInt(combos.length), maxCombinationsShown: cap },
+      statistics: prosodyStats,
+      lines,
+    },
+    summary: { linguisticProfile, prosodicProfile, dominantCategories },
+  };
+}
+
+/* =====================================================================================
+   APP SHELL & SETTINGS
+   ===================================================================================== */
+const PAT_HELP = f => Object.entries(GANA_DEFINITIONS[f.def]).map(([p, nm]) => `${GANA_TE[nm][1]} ${p}`).join(" · ");
+const SETTINGS = [
+  { key: "maxCombos", label: "జాబితాలో చూపించే గణ విభజనలు", type: "range", min: 1, max: 100, step: 1, default: 20,
+    help: "లెక్కింపు అన్ని విభజనలకూ జరుగుతుంది; జాబితాలో ఇన్ని మాత్రమే (JSON లోనూ)" },
+  ...FAMILIES.map(f => ({ key: "fam_" + f.key, label: f.te, type: "toggle", default: f.on, help: PAT_HELP(f) })),
+  ...GROUPS.map(g => ({ key: "show_" + g.key, label: `చూపించు: ${g.te}`, type: "toggle", default: true, help: g.cats.join(", ") })),
+];
+const helpNode = () => el("div", { class: "help" },
+  el("p", { text: "తెలుగు పద్యం లేదా వాక్యాలు ఇవ్వండి. ప్రతి అక్షరాన్ని విడదీసి, దాని వర్గాలు (అచ్చు/హల్లు, వర్గము, ఉచ్చారణ స్థానం…), గురువు (U) / లఘువు (I) చూపిస్తాం. ఒక్కో వరుసను ఒక పాదంగా తీసుకుంటాం." }),
+  el("h3", { text: "గురువు ఎప్పుడు?" }),
+  el("ul", {}, ["దీర్ఘ అచ్చు ఉన్న అక్షరం (ా ీ ూ ే ో ౌ ౄ, ఆ ఈ ఊ ౠ ఏ ఓ)", "ఐ, ఔ (ై, ౌ)", "అనుస్వారం (ం) లేదా విసర్గ (ః)", "పొల్లుతో ముగిసే అక్షరం (ఉదా: పెన్)",
+    "తర్వాతి అక్షరం సంయుక్తాక్షరం లేదా ద్విత్వాక్షరం అయితే (వరుస మారినా వర్తిస్తుంది — పాత వెర్షన్ లాగానే)", "మిగతావన్నీ లఘువులు. అరసున్న (ఁ) ను పట్టించుకోము."].map(t => el("li", { text: t }))),
+  el("p", { text: "ఏదైనా అక్షరం చిప్‌ను తాకితే అది ఎందుకు గురువో/లఘువో, దాని వర్గాలు కనిపిస్తాయి." }),
+  el("h3", { text: "గణ విభజన" }),
+  el("p", { text: "అమరికల్లో ఎంచుకున్న గణ కుటుంబాలతో ప్రతి పాదపు U/I క్రమాన్ని ఎన్ని విధాలుగా విభజించవచ్చో లెక్కిస్తాం. పొడవైన గణాలు ముందు వచ్చేలా జాబితా ఇస్తాం; మొదటి విభజన చిప్‌ల కిందే కనిపిస్తుంది. మొదట 1, 2, 3 అక్షరాల గణాలు మాత్రమే ఎంచుకుని ఉంటాయి; సూర్య, ఇంద్ర, చంద్ర గణాలు అమరికల్లో ఆన్ చేయవచ్చు." }),
+  el("h3", { text: "పోలిక" }),
+  el("p", { text: "రెండు పాఠ్యాల అక్షర వర్గాల జాకార్డ్ సారూప్యత, గురు లఘు జంటల (UU, UI, IU, II) సారూప్యత, అతి పొడవైన ఉమ్మడి గురు లఘు భాగం చూపిస్తాం." }),
+  el("h3", { text: "ఇంకా లేనిది" }),
+  el("p", { text: "పద్య ఛందస్సు (ఉత్పలమాల, కందం, ఆటవెలది…) గుర్తింపు, యతి, ప్రాస తనిఖీలు ఇంకా లేవు. పండితులు నియమాలను సమీక్షించిన తర్వాత జోడిస్తాం." }),
+  el("p", { text: `వెర్షన్ v${VERSION} · JSON స్కీమా ${SCHEMA_VERSION}` }));
+
+const app = createApp({ id: "aksharanusarika", title: "అక్షరానుసారిక", accent: "indigo", theme: "auto", settings: SETTINGS, help: helpNode, helpTitle: "ఎలా వాడాలి?", sound: false,
+  onSettings: () => rerender() });
+const enabledFamilies = () => FAMILIES.filter(f => app.settings["fam_" + f.key]).map(f => f.key);
+const maxCombos = () => Math.max(1, Math.min(100, +app.settings.maxCombos || 20));
+const visibleCats = () => new Set(GROUPS.filter(g => app.settings["show_" + g.key]).flatMap(g => g.cats));
+const visibleGroups = () => GROUPS.filter(g => app.settings["show_" + g.key]);
+
+/* =====================================================================================
+   SMALL DOM / SVG HELPERS (no innerHTML anywhere; SVG via createElementNS + text nodes)
+   ===================================================================================== */
+const SVGNS = "http://www.w3.org/2000/svg";
+function svg(tag, attrs = {}, ...kids) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v != null && v !== false) n.setAttribute(k, String(v));
+  for (const c of kids.flat(Infinity)) if (c != null && c !== false) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+}
+const fmtN = n => Number(n).toLocaleString("en-IN");
+const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+function fmtBig(b) {
+  const s = b.toString();
+  if (s.length <= 15) return Number(b).toLocaleString("en-IN");
+  return `≈ ${s[0]}.${s.slice(1, 3)} × 10${String(s.length - 1).replace(/\d/g, d => SUP[d])}`;
+}
+const btn = (text, onClick, { ghost = true, title = null } = {}) =>
+  el("button", { type: "button", class: "tt-btn" + (ghost ? " tt-btn--ghost" : ""), text, title, on: { click: onClick } });
+const section = (title, badge, body, { open = false, id = null } = {}) =>
+  el("details", { class: "sec", open, id }, el("summary", {}, el("span", { text: title }), badge != null && el("span", { class: "badge", text: badge })),
+    el("div", { class: "sec__body" }, body));
+const isWide = () => matchMedia("(min-width: 960px)").matches;
+const smooth = () => (prefersReducedMotion() ? "auto" : "smooth");
+
+const measureCtx = document.createElement("canvas").getContext("2d");
+function measure(text, px, weight = 400) { measureCtx.font = `${weight} ${px}px "Noto Sans Telugu", system-ui, sans-serif`; return measureCtx.measureText(text).width; }
+
+/* ---------- responsive SVG bar charts (redrawn at the host's width) ---------- */
+const charts = new Set();
+const chartRO = new ResizeObserver(entries => { for (const e of entries) e.target._draw?.(); });
+function barChart(rows, { series = [{ cls: "sA", label: "" }], label = "", labels = null } = {}) {
+  const host = el("div", { class: "chart" });
+  host._draw = () => {
+    const W = Math.floor(host.clientWidth);
+    if (W < 60 || host._w === W) return;
+    host._w = W;
+    const font = W < 420 ? 12.5 : 13.5;
+    const labelW = Math.min(Math.round(W * 0.45), Math.ceil(Math.max(40, ...(labels ?? rows.map(r => r.label)).map(t => measure(t, font)))) + 12);
+    const valW = 34, plotX = labelW, plotW = Math.max(30, W - labelW - valW);
+    const nS = series.length, barH = nS > 1 ? 11 : 14, inner = nS * barH + (nS - 1) * 2;
+    const rowH = Math.max(inner + 10, 26), H = rows.length * rowH + 2;
+    const max = Math.max(1, ...rows.flatMap(r => r.values));
+    const root = svg("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": label });
+    root.append(svg("line", { x1: plotX + 0.5, x2: plotX + 0.5, y1: 0, y2: H, class: "c-axis" }));
+    rows.forEach((r, ri) => {
+      const y0 = ri * rowH + 1, cy = y0 + rowH / 2;
+      const g = svg("g", { class: "c-row" }, svg("rect", { x: 0, y: y0, width: W, height: rowH, class: "c-hit" }), svg("title", {}, r.title ?? `${r.label}: ${r.values.join(" / ")}`));
+      g.append(svg("text", { x: labelW - 8, y: cy, "text-anchor": "end", "dominant-baseline": "central", class: "c-lab", "font-size": font }, r.label));
+      let by = cy - inner / 2;
+      r.values.forEach((v, si) => {
+        const w = (v / max) * (plotW - 4);
+        if (v > 0) {
+          const ww = Math.max(w, 3), rr = Math.min(4, ww, barH / 2);
+          g.append(svg("path", { class: `c-bar ${series[si].cls}`, d: `M${plotX + 1},${by}h${ww - rr}a${rr},${rr} 0 0 1 ${rr},${rr}v${barH - 2 * rr}a${rr},${rr} 0 0 1 ${-rr},${rr}h${-(ww - rr)}z` }));
+        }
+        g.append(svg("text", { x: plotX + 1 + Math.max(w, v > 0 ? 3 : 0) + 5, y: by + barH / 2, "dominant-baseline": "central", class: "c-val", "font-size": font - 1 }, fmtN(v)));
+        by += barH + 2;
+      });
+      root.append(g);
+    });
+    setChildren(host, root);
+  };
+  charts.add(host); chartRO.observe(host);
+  return host;
+}
+document.fonts?.ready.then(() => { for (const h of charts) { if (!h.isConnected) { charts.delete(h); chartRO.unobserve(h); continue; } h._w = 0; h._draw(); } });
+
+/* ---------- the "mouth" diagram: a schematic vocal tract with one dot per place ---------- */
+const PLACES = [
+  { cat: "ఓష్ఠ్యములు", short: "ఓష్ఠ్య", where: "పెదవులు", set: OOSHTYAMULU, x: 30, y: 117, lx: 36, ly: 268 },
+  { cat: "దంత్యములు", short: "దంత్య", where: "పళ్ళు", set: DANTYAMULU, x: 66, y: 104, lx: 112, ly: 268 },
+  { cat: "మూర్ధన్యములు", short: "మూర్ధన్య", where: "అంగిలి పై భాగం (మూర్ధం)", set: MOORDHANYAMULU, x: 112, y: 88, lx: 104, ly: 16 },
+  { cat: "తాలవ్యములు", short: "తాలవ్య", where: "అంగిలి (తాలువు)", set: TAALAVYAMULU, x: 196, y: 86, lx: 200, ly: 16 },
+  { cat: "అనునాసికములు", short: "అనునాసిక", where: "ముక్కు", set: ANUNAASIKA_MULU, x: 266, y: 54, lx: 300, ly: 16 },
+  { cat: "కంఠ్యములు", short: "కంఠ్య", where: "గొంతు (కంఠం)", set: KANTHYAMULU, x: 330, y: 160, lx: 330, ly: 268 },
+];
+const JOINT = [
+  { cat: "కంఠతాలవ్యములు", where: "కంఠం + తాలువు", set: KANTHATAALAVYA_MULU },
+  { cat: "కంఠోష్ఠ్యములు", where: "కంఠం + పెదవులు", set: KANTHOSH_TYAMULU },
+  { cat: "దంత్యోష్ఠ్యములు", where: "పళ్ళు + పెదవులు", set: DANTYOSH_TYAMULU },
+];
+function mouthDiagram(counts) {
+  const max = Math.max(1, ...PLACES.map(p => counts[p.cat] || 0));
+  const root = svg("svg", { viewBox: "0 0 400 282", class: "mouth", role: "img",
+    "aria-label": "ఉచ్చారణ స్థానాల పటం: " + PLACES.map(p => `${p.short} ${counts[p.cat] || 0}`).join(", ") });
+  root.append(
+    svg("path", { class: "m-line", d: "M30 30 C25 48 15 60 6 71 C11 77 19 80 26 81" }),                                    // nose
+    svg("path", { class: "m-cav", d: "M26 81 C42 56 110 36 190 34 C252 32 300 38 330 56 C344 66 348 84 348 100 L348 112 C330 104 316 100 300 106 C284 92 262 84 230 80 C180 74 140 74 112 82 C96 86 80 92 66 100 C54 102 40 92 26 81 Z" }), // nasal cavity
+    svg("path", { class: "m-line", d: "M26 81 C18 86 12 93 14 101 C20 109 34 108 48 104 L66 100 C80 92 96 86 112 82 C140 74 180 74 230 80 C262 84 284 92 300 106 C308 114 312 122 312 132" }), // upper lip + palate + velum
+    svg("path", { class: "m-line", d: "M14 152 C12 140 24 129 46 129 L64 130" }),                                         // lower lip
+    svg("path", { class: "m-line", d: "M14 152 C16 172 26 194 60 204 C120 216 230 216 304 214" }),                       // jaw
+    svg("path", { class: "m-tongue", d: "M82 129 C96 113 130 103 170 101 C220 99 272 109 298 134 C312 152 318 182 316 214 C290 202 236 190 170 180 C120 172 92 156 82 129 Z" }),
+    svg("path", { class: "m-line", d: "M348 112 L348 262" }),                                                              // back wall of the throat
+    svg("path", { class: "m-line", d: "M316 214 C314 230 316 246 318 262" }),                                              // front wall
+    svg("path", { class: "m-line", d: "M318 238 L346 238" }),                                                              // vocal folds
+    svg("path", { class: "m-tooth", d: "M58 99 L71 96 L71 111 C67 114 62 114 58 111 Z" }),
+    svg("path", { class: "m-tooth", d: "M58 141 L71 143 L71 129 C67 126 62 126 58 129 Z" }),
+  );
+  for (const p of PLACES) {
+    const c = counts[p.cat] || 0, r = c ? 5 + 9 * Math.sqrt(c / max) : 4.5;
+    const toLabel = p.ly < 100 ? p.ly + 8 : p.ly - 16;
+    root.append(svg("line", { class: "m-lead", x1: p.x, y1: p.y + (p.ly < 100 ? -r : r), x2: p.lx, y2: toLabel }));
+    root.append(svg("circle", { cx: p.x, cy: p.y, r, class: c ? "m-dot" : "m-dot m-dot--0" }, svg("title", {}, `${p.cat} (${p.where}): ${c}`)));
+    root.append(svg("text", { x: p.lx, y: p.ly, "text-anchor": "middle", "dominant-baseline": "central", class: "m-lab" },
+      `${p.short} `, svg("tspan", { class: "c" }, fmtN(c))));
+  }
+  root.append(svg("text", { x: 354, y: 200, "text-anchor": "start", class: "m-cap" }, "గొంతు"), svg("text", { x: 200, y: 200, "text-anchor": "middle", class: "m-cap" }, "నాలుక"),
+    svg("text", { x: 190, y: 50, "text-anchor": "middle", class: "m-cap" }, "ముక్కు"));
+  return root;
+}
+
+/* =====================================================================================
+   RENDERING
+   ===================================================================================== */
+const REASON_TE = {
+  dirgha: "దీర్ఘ అచ్చు", aiau: "ఐ / ఔ (ై, ౌ)", anusvara: "అనుస్వారం (ం)", visarga: "విసర్గ (ః)", pollu: "పొల్లు (్) తో ముగుస్తుంది",
+};
+function openAkshara(an, i) {
+  const it = an.items[i], next = an.items[i + 1], vis = visibleCats();
+  const pada = an.padas.findIndex(p => p.index === it.line) + 1, inLine = an.padas[pada - 1].items.indexOf(i) + 1;
+  const reasons = it.reasons.map(r => r === "next" ? `తర్వాతి అక్షరం “${next.display}” ${next.tags.includes("ద్విత్వాక్షరం") ? "ద్విత్వాక్షరం" : "సంయుక్తాక్షరం"}` : REASON_TE[r]);
+  const groups = GROUPS.filter(g => app.settings["show_" + g.key]).map(g => [g, it.tags.filter(t => GROUP_OF[t] === g.key)]).filter(([, ts]) => ts.length);
+  const hidden = it.tags.filter(t => !vis.has(t)).length;
+  app.sheet(`అక్షరం: ${it.display}`, [
+    el("div", { class: "akd" }, el("div", { class: `big ${it.mark}`, text: it.display }),
+      el("div", {}, el("p", {}, el("b", { text: it.mark === "U" ? "గురువు (U)" : "లఘువు (I)" })),
+        el("p", { class: "hint", text: `పాదం ${pada}, ${inLine}వ అక్షరం · ఈ పాఠ్యంలో ${an.unique.get(it.key).count} సార్లు` }))),
+    it.mark === "U" ? [el("p", { text: "ఎందుకు గురువు:" }), el("ul", { class: "reasons" }, reasons.map(r => el("li", { text: r })))]
+      : el("p", { class: "hint", text: "గురువు నియమాలు ఏవీ వర్తించలేదు, కాబట్టి లఘువు." }),
+    groups.map(([g, ts]) => [el("h3", { class: "sub", text: g.te }), el("div", { class: "tags" }, ts.map(t => el("span", { class: "tag", text: t })))]),
+    hidden ? el("p", { class: "note", text: `${hidden} వర్గాలు అమరికల్లో దాచబడ్డాయి.` }) : null,
+  ]);
+}
+
+function comboList(combos, total, cap) {
+  return [
+    el("ol", { class: "combos" }, combos.map((c, k) => el("li", {},
+      el("span", { class: "n", text: k + 1 }),
+      el("span", { text: c.map(s => shortName(s.labels)).join(" · ") }),
+      el("span", { class: "pat", text: c.map(s => s.pattern).join(" ") })))),
+    total > BigInt(combos.length) ? el("p", { class: "note", text: `మొత్తం ${fmtBig(total)} విధాలలో మొదటి ${fmtN(combos.length)} (అమరికల్లో గరిష్టం ${cap}).` }) : null,
+  ];
+}
+
+function lineCard(an, pada, no, gi, cap) {
+  const its = pada.items.map(i => an.items[i]);
+  const seq = its.map(it => it.mark).join("");
+  const f = countTable(seq, gi), total = f[0];
+  const first = total > 0n ? listPartitions(seq, gi, 1, f)[0] : null;
+  const g = its.filter(it => it.mark === "U").length;
+  const chip = it => el("button", { type: "button", class: `chip ${it.mark}`, dataset: { i: String(it.pos) },
+    attrs: { "aria-label": `${it.display} — ${it.mark === "U" ? "గురువు" : "లఘువు"}` } },
+    el("span", { class: "ak", text: it.display }), el("span", { class: "mk", text: it.mark }));
+  const chips = first
+    ? el("div", { class: "chips" }, first.map(s => el("div", { class: "grp", title: `${s.pattern} = ${fullNames(s.labels)}` },
+        el("div", { class: "grp__chips" }, its.slice(s.start, s.start + s.len).map(chip)),
+        el("div", { class: "grp__lab" }, el("b", { text: shortName(s.labels) }), s.len > 1 ? [" ", el("i", { text: s.pattern })] : null))))
+    : el("div", { class: "chips chips--flat" }, its.map(chip));
+  let tail;
+  if (!gi.map.size) tail = el("p", { class: "warn", text: "గణ కుటుంబాలు ఏవీ ఎంచుకోలేదు — అమరికల్లో ఎంచుకోండి." });
+  else if (total === 0n) tail = el("p", { class: "warn", text: "ఎంచుకున్న గణ కుటుంబాలతో ఈ పాదాన్ని విభజించలేం. అమరికల్లో ఇంకొన్ని కుటుంబాలు ఎంచుకోండి." });
+  else if (total === 1n) tail = el("p", { class: "note", text: "ఈ గణాలతో ఒకే ఒక విభజన ఉంది." });
+  else {
+    tail = el("details", { class: "more" }, el("summary", { text: `గణ విభజనలు: ${fmtBig(total)} విధాలు — జాబితా చూడండి` }));
+    tail.addEventListener("toggle", () => { if (tail.open && !tail._done) { tail._done = true; tail.append(...comboList(listPartitions(seq, gi, cap, f), total, cap).filter(Boolean)); } });
+  }
+  return el("div", { class: "line", dataset: { pada: String(no) } },
+    el("div", { class: "line__head" }, el("span", { class: "line__no", text: `పాదం ${no}` }),
+      el("span", { class: "line__meta" }, `${its.length} అక్షరాలు · `, el("span", { class: "mk", text: "U" }), ` ${g} · `, el("span", { class: "mk", text: "I" }), ` ${its.length - g}`)),
+    el("p", { class: "line__src", text: pada.text.trim() }),
+    chips, tail);
+}
+
+function linesView(an, { limit = 60 } = {}) {
+  const gi = ganaIndex(enabledFamilies()), cap = maxCombos();
+  const host = el("div", { class: "lines" });
+  host.addEventListener("click", e => { const c = e.target.closest(".chip"); if (c) openAkshara(an, +c.dataset.i); });
+  const show = n => setChildren(host, an.padas.slice(0, n).map((p, i) => lineCard(an, p, i + 1, gi, cap)),
+    an.padas.length > n ? btn(`మిగతా ${an.padas.length - n} పాదాలు చూపించు`, () => show(an.padas.length), { title: null }) : null);
+  show(limit);
+  return host;
+}
+
+function aksharaTable(an) {
+  const vis = visibleCats();
+  const rows = [...an.unique.values()].sort((a, b) => b.count - a.count);
+  const tbody = el("tbody");
+  const row = u => el("tr", {},
+    el("td", { class: "ak", text: u.aksharam }),
+    el("td", { class: "num", attrs: { "data-label": "సంఖ్య" }, text: fmtN(u.count) }),
+    el("td", { class: "num", attrs: { "data-label": "గురు/లఘు" } }, u.U ? [el("span", { class: "mk", text: "U" }), ` ${u.U}`] : null, u.U && u.I ? " · " : null, u.I ? [el("span", { class: "mk", text: "I" }), ` ${u.I}`] : null),
+    el("td", { attrs: { "data-label": "వర్గాలు" } }, el("div", { class: "tags" }, u.tags.filter(t => vis.has(t)).map(t => el("span", { class: "tag", text: t })))));
+  const LIMIT = 24;
+  const fill = n => setChildren(tbody, rows.slice(0, n).map(row));
+  fill(LIMIT);
+  const more = rows.length > LIMIT ? btn(`అన్నీ చూపించు (${rows.length})`, () => { fill(rows.length); more.remove(); }) : null;
+  more?.classList.add("more-btn");
+  return [el("table", { class: "aktable" }, el("thead", {}, el("tr", {}, ["అక్షరం", "సంఖ్య", "గురు/లఘు", "వర్గాలు"].map(h => el("th", { text: h })))), tbody), more];
+}
+
+function categoryCharts(an) {
+  const total = an.items.length;
+  return [
+    el("p", { class: "note", text: "ఒక అక్షరం చాలా వర్గాలలో ఉండవచ్చు; అందుకే ఇవి వాటాలు (pie) కావు — ప్రతి వర్గంలో ఎన్ని అక్షరాలున్నాయో చూపే పట్టీలు." }),
+    visibleGroups().map(g => [el("h3", { text: g.te }),
+      barChart(g.cats.map(c => { const v = an.categoryCounts[c] || 0; return { label: c, values: [v], title: `${c}: ${fmtN(v)} / ${fmtN(total)} అక్షరాలు (${total ? Math.round(v / total * 100) : 0}%)` }; }), { label: g.te, labels: visibleGroups().flatMap(x => x.cats) })]),
+  ];
+}
+
+function placesView(an) {
+  const cc = an.categoryCounts;
+  const li = (p, sub) => el("li", {}, el("b", { text: p.cat }), el("span", { class: "cnt", text: fmtN(cc[p.cat] || 0) }), el("small", { text: `${sub} · ${[...p.set].join(" ")}` }));
+  return el("div", { class: "mouthwrap" }, mouthDiagram(cc),
+    el("div", {}, el("ul", { class: "places" }, PLACES.map(p => li(p, p.where))),
+      el("h3", { text: "రెండు స్థానాలు కలిసినవి" }), el("ul", { class: "places" }, JOINT.map(p => li(p, p.where)))));
+}
+
+function infoView(an, json) {
+  const kv = pairs => el("dl", { class: "kv" }, pairs.map(([k, v]) => el("div", {}, el("dt", { text: k }), el("dd", { text: String(v) }))));
+  const s = json.linguistic.statistics, p = json.prosody.statistics;
+  return [
+    kv([["గుర్తింపు (hash)", an.hash], ["అక్షరాలు", s.totalAksharas], ["విభిన్న అక్షరాలు", s.uniqueAksharas], ["పదాలు", an.wordCount], ["వాక్యాలు", an.sentenceCount],
+      ["వరుసలు", an.paragraphCount], ["అక్షర గుర్తులు (characters)", an.characterCount], ["అచ్చు : హల్లు", s.vowelToConsonantRatio], ["సంయుక్తాక్షరాలు", s.conjunctCount],
+      ["ద్విత్వాక్షరాలు", s.doubletCount], ["సంక్లిష్టత (%)", s.complexityScore], ["గురువులు (%)", p.guruPercentage], ["లఘువులు (%)", p.laghuPercentage],
+      ["గురు : లఘు", p.guruToLaghuRatio], ["విశ్లేషణ సమయం (ms)", json.metadata.processingTimeMs]]),
+    an.removedChars.length ? el("p", { class: "note", text: `తెలుగు కాని గుర్తులు (విశ్లేషణలో వదిలేశాం): ${an.removedChars.map(c => /\s/.test(c) ? JSON.stringify(c) : c).join(" ")}` }) : null,
+    el("h3", { text: "మూల పాఠ్యం" }), el("pre", { class: "raw", text: an.raw }),
+  ];
+}
+
+function wholeTextView(an, json) {
+  const gc = json.prosody.ganaCombinations, gi = ganaIndex(enabledFamilies()), cap = maxCombos();
+  const total = BigInt(gc.countExact);
+  const box = el("div");
+  const body = [el("p", { class: "note", text: "పాదాలుగా కాకుండా పాఠ్యం మొత్తాన్ని ఒకే U/I క్రమంగా తీసుకుని లెక్కించిన విభజనలు (JSON ఎగుమతిలో ఇవే)." }),
+    el("p", {}, el("b", { text: `${fmtBig(total)} విధాలు` }), ` · ${an.items.length} అక్షరాలు`), box];
+  if (total > 0n) box.append(...comboList(listPartitions(an.sequence, gi, Math.min(cap, 5)), total, Math.min(cap, 5)).filter(Boolean));
+  return body;
+}
+
+function summaryBar(an) {
+  const stat = (v, label, mk) => el("div", { class: "stat" }, el("b", { text: fmtN(v) }), el("span", {}, mk ? [el("span", { class: "mk", text: mk }), " "] : null, label));
+  return el("div", { class: "sumbar", attrs: { role: "group", "aria-label": "సారాంశం" } }, el("div", { class: "stats" },
+    stat(an.items.length, "అక్షరాలు"), stat(an.guru, "గురు", "U"), stat(an.items.length - an.guru, "లఘు", "I"), stat(an.padas.length, "పాదాలు"), stat(an.sentenceCount, "వాక్యాలు")));
+}
+
+/** Full single-text results into `host` (pure: used by the page and by the self-test). */
+function renderSingle(an, host, { actions = null } = {}) {
+  const json = buildJSON(an);
+  const wide = isWide(), sth = app.settings.show_sthana;
+  const n = an.items.length;
+  setChildren(host,
+    actions,
+    summaryBar(an),
+    n === 0 ? el("div", { class: "card" }, el("p", { text: "ఈ పాఠ్యంలో తెలుగు అక్షరాలు కనబడలేదు." })) : [
+      section("పాదాల వారీగా గురు లఘువులు, గణాలు", `${an.padas.length}`, linesView(an), { open: true, id: "sec-lines" }),
+      visibleGroups().length ? section("వర్గాల గణాంకాలు", null, categoryCharts(an), { open: wide, id: "sec-charts" }) : null,
+      sth ? section("ఉచ్చారణ స్థానాలు", null, placesView(an), { open: wide, id: "sec-places" }) : null,
+      section("అక్షరాల వర్గీకరణ", `${an.unique.size}`, aksharaTable(an), { id: "sec-table" }),
+      section("మొత్తం పాఠ్యపు గణ విభజనలు", null, wholeTextView(an, json), { id: "sec-whole" }),
+    ],
+    section("సమాచారం", null, infoView(an, json), { id: "sec-info" }));
+  return json;
+}
+
+/* ---------- compare ---------- */
+const clip = (s, n = 18) => { const a = [...s.trim().replace(/\s+/g, " ")]; return a.length > n ? a.slice(0, n).join("") + "…" : a.join(""); };
+function seqCells(seq, from, len) {
+  return el("div", { class: "cells", attrs: { "aria-label": seq.join(" ") } }, seq.map((m, i) => el("span", { class: m + (i >= from && i < from + len ? " lcs" : ""), text: m })));
+}
+function renderCompare(r, host) {
+  const vis = visibleCats();
+  const tile = (v, label) => el("div", { class: "tile" }, el("b", { text: v.toFixed(3) }), el("span", { text: label }));
+  const parts = [["sA", "ఉమ్మడి", r.common], ["sB", "A లో మాత్రమే", r.onlyA], ["sC", "B లో మాత్రమే", r.onlyB]];
+  const totalTags = parts.reduce((s, p) => s + p[2].length, 0) || 1;
+  const segbar = el("div", { class: "segbar", attrs: { role: "img", "aria-label": parts.map(p => `${p[1]} ${p[2].length}`).join(", ") } },
+    parts.filter(p => p[2].length).map(([cls, label, list]) => {
+      const pct = list.length / totalTags * 100;
+      return el("div", { class: `seg-${cls}`, style: { flex: `${list.length} 1 0` }, title: `${label}: ${list.length}`, text: pct >= 12 ? String(list.length) : "" });
+    }));
+  const tagList = list => { const shown = list.filter(t => vis.has(t)); return el("div", { class: "tags" }, shown.length ? shown.map(t => el("span", { class: "tag", text: t })) : el("span", { class: "hint", text: "లేవు" })); };
+  const hiddenNote = vis.size < 29 ? el("p", { class: "note", text: "దాచిన వర్గాలు జాబితాల్లో కనిపించవు, కానీ సారూప్యత లెక్కలో ఉంటాయి." }) : null;
+  const rows = visibleGroups().map(g => [g, g.cats.map(c => ({ label: c, values: [r.A.categoryCounts[c] || 0, r.B.categoryCounts[c] || 0],
+    title: `${c}: A ${r.A.categoryCounts[c] || 0}, B ${r.B.categoryCounts[c] || 0}` })).filter(x => x.values[0] || x.values[1])]).filter(([, rs]) => rs.length);
+  const mA = [...r.A.sequence], mB = [...r.B.sequence];
+  const side = (an, tag) => section(`${tag}: “${clip(an.raw, 22)}”`, `${an.items.length} అక్షరాలు`, [
+    el("p", { class: "note", text: `గుర్తింపు ${an.hash} · గురువులు ${an.guru} · లఘువులు ${an.items.length - an.guru} · పాదాలు ${an.padas.length}` }),
+    an.items.length ? linesView(an, { limit: 20 }) : el("p", { text: "తెలుగు అక్షరాలు లేవు." })]);
+  setChildren(host,
+    el("div", { class: "tiles" },
+      tile(r.jaccardSimilarity, "అక్షర వర్గాల సారూప్యత (Jaccard)"), tile(r.jaccardDistance, "అక్షర వర్గాల దూరం"),
+      tile(r.ganaJaccard.similarity, "గురు లఘు జంటల సారూప్యత"), tile(r.ganaJaccard.distance, "గురు లఘు జంటల దూరం")),
+    section("గురు లఘు క్రమాలు", r.lcs.length ? `ఉమ్మడి ${r.lcs.length}` : null, [
+      el("div", { class: "seqs" },
+        el("div", {}, el("div", { class: "who", text: `A · “${clip(r.A.raw)}” (${mA.length})` }), seqCells(mA, r.lcs.startA, r.lcs.length)),
+        el("div", {}, el("div", { class: "who", text: `B · “${clip(r.B.raw)}” (${mB.length})` }), seqCells(mB, r.lcs.startB, r.lcs.length))),
+      el("div", { class: "lcsbox" }, el("div", { class: "hint", text: "అతి పొడవైన ఉమ్మడి గురు లఘు భాగం (రెండింటిలో కింద గీతతో):" }),
+        el("div", { class: "mono", text: r.lcs.seq.length ? r.lcs.seq.join(" ") : "లేదు" })),
+    ], { open: true, id: "cmp-seq" }),
+    section("లక్షణాల పోలిక", `${r.common.length} ఉమ్మడి`, [
+      segbar,
+      el("div", { class: "legend" }, parts.map(([cls, label, list]) => el("span", {}, el("i", { class: `sw ${cls}` }), `${label} ${list.length}`))),
+      hiddenNote,
+      el("div", { class: "cols2" },
+        el("div", {}, el("h3", { class: "sub", text: `ఉమ్మడి వర్గాలు (${r.common.length})` }), tagList(r.common)),
+        el("div", {}, el("h3", { class: "sub", text: `A లో మాత్రమే (${r.onlyA.length})` }), tagList(r.onlyA),
+          el("h3", { class: "sub", text: `B లో మాత్రమే (${r.onlyB.length})` }), tagList(r.onlyB))),
+    ], { open: true, id: "cmp-tags" }),
+    rows.length ? section("వర్గాల వారీగా A, B", null, [
+      el("div", { class: "legend" }, el("span", {}, el("i", { class: "sw sA" }), "A"), el("span", {}, el("i", { class: "sw sB" }), "B")),
+      rows.map(([g, rs]) => [el("h3", { text: g.te }), barChart(rs, { series: [{ cls: "sA", label: "A" }, { cls: "sB", label: "B" }], label: g.te, labels: rows.flatMap(([, x]) => x.map(y => y.label)) })]),
+    ], { open: isWide(), id: "cmp-bars" }) : null,
+    side(r.A, "A"), side(r.B, "B"));
+}
+
+/* =====================================================================================
+   PAGE
+   ===================================================================================== */
+const SAMPLE = `ఎవ్వనిచే జనించు జగ మెవ్వని లోపల నుండు లీనమై
+యెవ్వని యందు డిందు బరమేశ్వరుఁ డెవ్వఁడు మూలకారణం
+బెవ్వఁ డనాదిమధ్యలయుఁ డెవ్వఁడు సర్వముఁ దానయైన వా
+డెవ్వఁడు వాని నాత్మభవు నీశ్వరు నే శరణంబు వేఁడెదన్`;
+const SAMPLE_B = `ఉప్పు కప్పురంబు నొక్కపోలిక నుండు
+చూడ చూడ రుచుల జాడ వేరు
+పురుషులందు పుణ్యపురుషులు వేరయా
+విశ్వదాభిరామ వినుర వేమ`;
+
+const state = { single: null, json: null, compare: null };
+const tabBtns = {}, panels = {};
+const tabBtn = (id, label) => (tabBtns[id] = el("button", { type: "button", id: `tab-${id}`, text: label,
+  attrs: { role: "tab", "aria-selected": "false", "aria-controls": `panel-${id}` }, on: { click: () => showTab(id) } }));
+function showTab(id) {
+  for (const k in panels) { panels[k].hidden = k !== id; tabBtns[k].setAttribute("aria-selected", String(k === id)); tabBtns[k].tabIndex = k === id ? 0 : -1; }
+}
+const tabs = el("div", { class: "tabs", attrs: { role: "tablist", "aria-label": "విభాగాలు" } }, tabBtn("single", "విశ్లేషణ"), tabBtn("compare", "పోలిక"));
+tabs.addEventListener("keydown", e => {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  const next = tabBtns.single.getAttribute("aria-selected") === "true" ? "compare" : "single";
+  showTab(next); tabBtns[next].focus(); e.preventDefault();
+});
+
+/* single */
+const input = el("textarea", { class: "txt", id: "single-input", placeholder: "మీ తెలుగు పద్యం లేదా వాక్యాలు ఇక్కడ ఉంచండి…",
+  attrs: { rows: "5", autocomplete: "off", autocapitalize: "off", spellcheck: "false" } });
+const results = el("div", { class: "results", hidden: true });
+const empty = el("div", { class: "card empty" },
+  el("h2", { text: "పద్యం ఇవ్వండి, గురు లఘువులు చూడండి" }),
+  el("p", { text: "ప్రతి అక్షరానికి గురువు (U) / లఘువు (I), గణ విభజన, వర్గాలు, ఉచ్చారణ స్థానాలు — ఒక్కో పాదానికి విడిగా." }),
+  el("div", { class: "row" }, btn("నమూనా పద్యం చూడండి", () => { input.value = SAMPLE; runSingle(); }, { ghost: false })),
+  el("div", { class: "legend-ui" }, el("span", { class: "chip U", style: { cursor: "default" } }, el("span", { class: "ak", text: "రా" }), el("span", { class: "mk", text: "U" })), "గురువు",
+    el("span", { class: "chip I", style: { cursor: "default" } }, el("span", { class: "ak", text: "ము" }), el("span", { class: "mk", text: "I" })), "లఘువు"));
+const actionsSingle = () => el("div", { class: "actions" },
+  btn("పంచుకో", () => shareLink({ text: state.single.raw }, "ఈ తెలుగు పాఠ్యపు గురు లఘువులు, గణాలు చూడండి")),
+  Object.assign(btn("కాపీ", () => copyResults(), { title: "ఫలితాలు కాపీ చేయి" }), { ariaLabel: "ఫలితాలు కాపీ" }),
+  btn("JSON", () => downloadJSON()));
+panels.single = el("section", { class: "panel", id: "panel-single", attrs: { role: "tabpanel", "aria-labelledby": "tab-single" } },
+  el("div", { class: "card input" },
+    el("label", { class: "lbl", for: "single-input" }, "తెలుగు పాఠ్యం ", el("small", { text: "— ఒక్కో వరుస ఒక పాదం" })),
+    input,
+    el("div", { class: "row" },
+      btn("విశ్లేషించు", () => runSingle(), { ghost: false }),
+      btn("నమూనా పద్యం", () => { input.value = SAMPLE; runSingle(); }),
+      btn("తుడిచివేయి", () => { input.value = ""; state.single = null; results.hidden = true; setChildren(results); empty.hidden = false; setUrl(null); input.focus(); }))),
+  empty, results);
+
+/* compare */
+const inA = el("textarea", { class: "txt", id: "cmp-a", placeholder: "మొదటి పాఠ్యం…", attrs: { rows: "4", spellcheck: "false" } });
+const inB = el("textarea", { class: "txt", id: "cmp-b", placeholder: "రెండవ పాఠ్యం…", attrs: { rows: "4", spellcheck: "false" } });
+const cmpResults = el("div", { class: "results", hidden: true });
+panels.compare = el("section", { class: "panel", id: "panel-compare", hidden: true, attrs: { role: "tabpanel", "aria-labelledby": "tab-compare" } },
+  el("div", { class: "card input" },
+    el("div", { class: "pair" },
+      el("div", {}, el("label", { class: "lbl", for: "cmp-a", text: "మొదటి పాఠ్యం (A)" }), inA),
+      el("div", {}, el("label", { class: "lbl", for: "cmp-b", text: "రెండవ పాఠ్యం (B)" }), inB)),
+    el("div", { class: "row" },
+      btn("పోల్చు", () => runCompare(), { ghost: false }),
+      btn("నమూనాలు", () => { inA.value = SAMPLE; inB.value = SAMPLE_B; runCompare(); }),
+      btn("పంచుకో", () => { if (!state.compare) return app.toast("ముందుగా పోల్చండి", { tone: "bad" }); shareLink({ a: state.compare.A.raw, b: state.compare.B.raw }, "ఈ రెండు తెలుగు పాఠ్యాల పోలిక చూడండి"); }))),
+  cmpResults);
+
+app.stage.append(el("div", { class: "page" }, tabs, panels.single, panels.compare, el("footer", { class: "foot", text: `అక్షరానుసారిక v${VERSION}` })));
+showTab("single");
+
+/* actions */
+function setUrl(q) {
+  const p = new URLSearchParams(q ?? {});
+  if (DEBUG) p.set("debug", "1");
+  const s = p.toString();
+  if (s.length < 7000) history.replaceState(null, "", s ? `${location.pathname}?${s}` : location.pathname);
+}
+const linkFor = q => `${location.origin}${location.pathname}?${new URLSearchParams(q)}`;
+function shareLink(q, text) { share({ title: "అక్షరానుసారిక", text, url: linkFor(q) }, app.toast); }
+
+function runSingle({ scroll = true } = {}) {
+  const text = input.value;
+  if (!text.trim()) { app.toast("దయచేసి కొంత తెలుగు పాఠ్యం ఇవ్వండి", { tone: "bad" }); input.focus(); return; }
+  state.single = analyze(text);
+  state.json = renderSingle(state.single, results, { actions: actionsSingle() });
+  results.hidden = false; empty.hidden = true; disposeBackdrop();
+  setUrl({ text });
+  if (scroll) requestAnimationFrame(() => results.scrollIntoView({ behavior: smooth(), block: "start" }));
+}
+function runCompare({ scroll = true } = {}) {
+  if (!inA.value.trim() || !inB.value.trim()) { app.toast("పోలికకు రెండు పెట్టెల్లోనూ పాఠ్యం ఇవ్వండి", { tone: "bad" }); return; }
+  state.compare = compareTexts(inA.value, inB.value);
+  renderCompare(state.compare, cmpResults);
+  cmpResults.hidden = false;
+  setUrl({ a: inA.value, b: inB.value });
+  if (scroll) requestAnimationFrame(() => cmpResults.scrollIntoView({ behavior: smooth(), block: "start" }));
+}
+function rerender() {
+  if (state.single) state.json = renderSingle(state.single, results, { actions: actionsSingle() });
+  if (state.compare) renderCompare(state.compare, cmpResults);
+}
+function downloadJSON() {
+  if (!state.single) return;
+  const json = buildJSON(state.single);
+  const url = URL.createObjectURL(new Blob([JSON.stringify(json, null, 2)], { type: "application/json" }));
+  const a = el("a", { href: url, download: `telugu_analysis_${new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)}.json` });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  app.toast("JSON దిగుమతి అవుతోంది");
+}
+function resultsText(an) {
+  const gi = ganaIndex(enabledFamilies());
+  const out = [`అక్షరానుసారిక v${VERSION}`, `అక్షరాలు ${an.items.length} · గురువులు (U) ${an.guru} · లఘువులు (I) ${an.items.length - an.guru} · పాదాలు ${an.padas.length} · వాక్యాలు ${an.sentenceCount}`];
+  an.padas.forEach((p, i) => {
+    const its = p.items.map(k => an.items[k]), seq = its.map(it => it.mark).join(""), f = countTable(seq, gi);
+    const first = f[0] > 0n ? listPartitions(seq, gi, 1, f)[0] : null;
+    out.push("", `పాదం ${i + 1}: ${p.text.trim()}`, its.map(it => `${it.display}(${it.mark})`).join(" "));
+    if (first) out.push(`${first.map(s => s.pattern).join(" ")}  =  ${first.map(s => shortName(s.labels)).join(" ")}  (${fmtBig(f[0])} విభజనల్లో మొదటిది)`);
+    else out.push(seq);
+  });
+  out.push("", linkFor({ text: an.raw }));
+  return out.join("\n");
+}
+async function copyResults() {
+  if (!state.single) return;
+  const text = resultsText(state.single);
+  try { await navigator.clipboard.writeText(text); app.toast("ఫలితాలు కాపీ అయ్యాయి", { tone: "good" }); }
+  catch {
+    const box = el("textarea", { class: "copybox", readOnly: true, value: text, attrs: { "aria-label": "ఫలితాలు" } });
+    app.sheet("ఫలితాలు కాపీ చేయండి", [el("p", { class: "hint", text: "ఎంచుకుని కాపీ చేయండి:" }), box]);
+    box.select();
+  }
+}
+
+/* ambient letters behind the empty state only (never behind results) */
+let backdrop = null, backdropGone = false;
+function disposeBackdrop() { backdropGone = true; backdrop?.dispose(); backdrop = null; }
+
+/* =====================================================================================
+   SELF-TEST (?debug=1 → window.__ak.selfTest())
+   ===================================================================================== */
+function selfTest() {
+  const checks = [];
+  const check = (name, got, want) => checks.push({ name, ok: JSON.stringify(got) === JSON.stringify(want), got: JSON.stringify(got), want: JSON.stringify(want) });
+  const fam13 = ganaIndex(["eka", "rendu", "moodu"]), famAll = ganaIndex(FAMILIES.map(f => f.key));
+  check("UIIUII with 1–3-syllable families (tribonacci)", countTable("UIIUII", fam13)[0].toString(), "24");
+  check("UIIUII with all six families (audit's true count)", countTable("UIIUII", famAll)[0].toString(), "27");
+  check("5 syllables IIIII, 1–3 families", countTable("IIIII", fam13)[0].toString(), "13");
+  const l27 = listPartitions("UIIUII", famAll, 1000);
+  check("all 27 listed, distinct, valid", [l27.length, new Set(l27.map(c => c.map(s => s.pattern).join("|"))).size, l27.every(c => c.map(s => s.pattern).join("") === "UIIUII")], [27, 27, true]);
+  check("cap respected (5 of 27)", listPartitions("UIIUII", famAll, 5).length, 5);
+  check("first listed = longest ganas first (utpalamala)", listPartitions("UIIUIUIIIUIIUIIUIUIU", fam13, 1)[0].map(s => s.pattern).join(" "), "UII UIU III UII UII UIU IU");
+  // brute force cross-check of the counter on random sequences and family subsets
+  let bfOK = true;
+  for (let t = 0; t < 60 && bfOK; t++) {
+    const n = 1 + (t % 10), seq = Array.from({ length: n }, () => (Math.random() < 0.5 ? "U" : "I")).join("");
+    const fams = FAMILIES.filter(() => Math.random() < 0.6).map(f => f.key), gi = ganaIndex(fams);
+    let bf = 0;
+    for (let mask = 0; mask < 1 << (n - 1); mask++) {
+      let s = 0, ok = true;
+      for (let i = 1; i <= n && ok; i++) if (i === n || mask & (1 << (i - 1))) { if (!gi.map.has(seq.slice(s, i))) ok = false; s = i; }
+      if (ok) bf++;
+    }
+    if (countTable(seq, gi)[0] !== BigInt(bf)) bfOK = false;
+  }
+  check("counter matches brute force (60 random cases)", bfOK, true);
+  check("duplicate patterns keep every family/name (UI)", famAll.map.get("UI").map(l => l.name), ["Galamu (Ha)", "Ha"]);
+  const crlf = analyze("రాము\r\n\tసీత 123 ౧౨౩\r\n");
+  check("CRLF / tab / digits are not aksharas", crlf.items.map(i => i.key), ["రా", "ము", "సీ", "త"]);
+  check("CRLF text → 2 పాదాలు, sequence", [crlf.padas.length, crlf.sequence], [2, "UIUI"]);
+  check("sentence count", analyze("రాము వచ్చాడు. సీత వెళ్ళింది? అవును! ౧.").sentenceCount, 3);
+  check("no punctuation → 1 sentence", analyze(SAMPLE).sentenceCount, 1);
+  check("ౘ is a consonant now", tagsOf("ౘ").includes("హల్లు") && tagsOf("ౘ").includes("చ వర్గము"), true);
+  check("ఌ is a vowel now", tagsOf("ఌ").includes("అచ్చు"), true);
+  check("pollu joins the previous akshara (పెన్)", analyze("పెన్ను పెన్").items.map(i => i.key), ["పె", "న్ను", "పెన్"]);
+  check("ఁ ignored for keys, kept for display", analyze("వేఁడు").items.map(i => [i.key, i.display]), [["వే", "వేఁ"], ["డు", "డు"]]);
+  check("sample padyam line 1 U/I", analyze(SAMPLE).padas[0].items.map(i => analyze(SAMPLE).items[i].mark).join(""), "UIIUIUIIIUIIUIIUIUIU");
+  // injection renders as text
+  const inj = `<img src=x onerror="window.__akXSS=1"><b>బలం</b>`;
+  const host = el("div");
+  renderSingle(analyze(inj), host);
+  check("injection: no <img>/<b> elements created", host.querySelectorAll("img, b.injected, script").length + [...host.querySelectorAll("b")].filter(b => b.textContent === "బలం").length, 0);
+  check("injection: raw text shown as text", host.textContent.includes("<img src=x onerror="), true);
+  const cHost = el("div");
+  renderCompare(compareTexts(inj, "<svg onload=alert(1)>రాము"), cHost);
+  check("injection in compare renders as text", [cHost.querySelectorAll("img, svg[onload]").length, cHost.textContent.includes("<img src=x")], [0, true]);
+  check("window.__akXSS untouched", typeof window.__akXSS, "undefined");
+  const json = buildJSON(analyze("UIIUII అమ్మ"), { families: ["eka", "rendu", "moodu"], cap: 3 });
+  check("JSON schema + count", [json.metadata.schemaVersion, json.prosody.ganaCombinations.countExact, json.prosody.ganaCombinations.combinations.length], [SCHEMA_VERSION, "2", 2]);
+  const ok = checks.every(c => c.ok);
+  console.table(checks);
+  console.log(ok ? "అక్షరానుసారిక self-test: all passed" : "అక్షరానుసారిక self-test: FAILURES");
+  return { ok, passed: checks.filter(c => c.ok).length, total: checks.length, checks };
+}
+
+/* =====================================================================================
+   BOOT
+   ===================================================================================== */
+const q = params();
+if (q.has("a") || q.has("b")) {
+  inA.value = q.get("a") ?? ""; inB.value = q.get("b") ?? "";
+  showTab("compare");
+  if (inA.value.trim() && inB.value.trim()) runCompare({ scroll: false });
+} else if (q.has("text")) {
+  input.value = q.get("text");
+  if (input.value.trim()) runSingle({ scroll: false });
+}
+if (!state.single && !prefersReducedMotion()) {
+  import("tt/three-kit.js")
+    .then(m => m.createBackdrop(empty, { count: 12, opacity: 0.12, letters: ["U", "I", "గ", "ల", "భ", "ర", "న", "స", "య", "మ", "జ", "త"] }))
+    .then(b => { backdrop = b; if (backdropGone) disposeBackdrop(); })
+    .catch(() => {});
+}
+if (DEBUG) window.__ak = { analyze, compareTexts, buildJSON, countTable, listPartitions, ganaIndex, categorizeAksharam, renderSingle, renderCompare, selfTest,
+  get state() { return state; }, GANA_DEFINITIONS, FAMILIES, VERSION, SCHEMA_VERSION };
+</script>
 </body>
 </html>

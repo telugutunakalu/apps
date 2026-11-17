@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="te" data-theme="dark" data-accent="peacock">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0c16">
+<title>తెలుగు సంపద — పద్యార్చన పురోగతి</title>
+<meta name="description" content="తెలుగు సంపద: పద్యార్చనలో ఇప్పటివరకు చేరిన పద్యాలు. ప్రతి పద్యం ఒక చుక్కగా కలశాన్ని నింపుతుంది; పదార్చన పదాల వృక్షం కూడా చూడవచ్చు.">
+<meta property="og:title" content="తెలుగు సంపద — పద్యార్చన, పదార్చన">
+<meta property="og:description" content="ప్రతి పద్యం ఒక చుక్క: అందరం కలిసి నింపుతున్న కలశం.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2322c3d6'/%3E%3Cpath d='M21 10h22l-3 5H24z' fill='%23f2b544'/%3E%3Cpath d='M26 15h12v5c8 3 13 9 13 17 0 9-8 15-19 15S13 46 13 37c0-8 5-14 13-17z' fill='%23f2b544'/%3E%3Cpath d='M15 37h34c-1 8-8 13-17 13s-16-5-17-13z' fill='%2300222a'/%3E%3Crect x='23' y='52' width='18' height='4' rx='2' fill='%23f2b544'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./lib/v1/tt.css">
+<style>
+  /* One screen, no page scroll: top bar + dashboard (v1 had a stray ~32px scroll from padding + 100vh). */
+  .tt-app { height: 100dvh; min-height: 0; overflow: hidden; }
+  .tt-stage { display: flex; flex-direction: column; overflow: hidden; }
+  .dash { flex: 1 1 auto; min-height: 0; width: 100%; max-width: 1440px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px;
+          padding: 0 calc(10px + var(--tt-safe-r)) calc(10px + var(--tt-safe-b)) calc(10px + var(--tt-safe-l)); }
+
+  .tabs { flex: none; display: flex; gap: 4px; padding: 3px; border-radius: var(--tt-pill); background: var(--tt-surface); border: 1px solid var(--tt-line); }
+  .tabs[hidden] { display: none; }
+  .tabs button { flex: 1; min-height: 44px; border: 0; border-radius: var(--tt-pill); background: transparent; color: var(--tt-muted);
+                 font-weight: 700; font-size: 16px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--tt-accent); color: var(--tt-accent-ink); }
+
+  .panels { flex: 1 1 auto; min-height: 0; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .dash[data-mode="split"] .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel { min-width: 0; min-height: 0; container-type: size; border-radius: 22px; overflow: hidden; border: 1px solid var(--tt-line);
+           background: radial-gradient(120% 80% at 50% 0%, #0d2a31 0%, #071319 55%, #05090c 100%); }
+  .panel[hidden], .dash[data-mode="tabs"] .panel:not(.is-active) { display: none; }
+  .panel__in { height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+  /* wide panels (landscape phones, a single panel on desktop): picture left, numbers right */
+  @container (min-aspect-ratio: 5/4) {
+    .panel__in { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, 1.25fr) minmax(250px, 1fr); }
+    .stats { align-content: center; border-top: 0 !important; border-left: 1px solid var(--tt-line); }
+  }
+
+  @container (min-width: 900px) and (min-height: 480px) {
+    .stats { padding: 24px 40px; gap: 10px; }
+    .count__now { font-size: clamp(48px, 5.4cqw, 80px); }
+    .count__of { font-size: 20px; }
+    .bar { height: 14px; }
+    .pct { font-size: 24px; }
+    .line { font-size: 17px; }
+    .miles { gap: 10px; }
+    .miles li { padding: 8px 4px; }
+    .miles .m-p { font-size: 17px; }
+    .miles .m-v { font-size: 14px; }
+    .meta { font-size: 14px; }
+  }
+
+  .viz { position: relative; min-height: 0; min-width: 0; overflow: hidden; }
+  .viz__head { position: absolute; z-index: 2; top: 8px; left: 10px; right: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; pointer-events: none; }
+  .viz__title { margin: 0 0 0 4px; font-family: var(--tt-font-display); font-weight: 400; font-size: clamp(22px, 5.6vw, 30px); line-height: 1.3;
+                color: var(--tt-ink); text-shadow: 0 2px 14px rgba(0, 0, 0, .7); white-space: nowrap; }
+  .dash[data-mode="tabs"] .viz__title { display: none; }
+  .dash[data-mode="tabs"] .viz__head { top: 12px; }
+  .viz__replay { position: absolute; z-index: 2; top: 8px; right: 8px; }
+  .viz__legend { display: flex; flex-wrap: wrap; gap: 2px 12px; padding: 3px 12px; border-radius: 14px; background: var(--tt-glass);
+                 border: 1px solid var(--tt-glass-line); font-size: 12.5px; line-height: 1.5; color: var(--tt-muted); }
+  .viz__legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .sw { width: 9px; height: 9px; border-radius: 50%; background: #8ff3ff; box-shadow: 0 0 8px #22c3d6; flex: none; }
+  .sw--leaf { width: 9px; height: 13px; border-radius: 0 100% 0 100%; background: #3cb371; box-shadow: none; }
+  .sw--bud { width: 9px; height: 13px; border-radius: 0 100% 0 100%; background: rgba(168, 239, 194, .3); box-shadow: none; }
+  .tt-webgl-fallback { font-size: 14px; }
+
+  .stats { min-width: 0; display: grid; gap: 6px; padding: 10px 16px 12px; border-top: 1px solid var(--tt-line); background: rgba(5, 10, 13, .55); }
+  .count { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
+  .count__now { font-size: clamp(34px, min(10vw, 7.5vh), 60px); font-weight: 800; line-height: 1.1; color: var(--tt-ink); font-variant-numeric: tabular-nums; }
+  .count__of { color: var(--tt-muted); font-size: 16px; }
+  .barrow { display: flex; align-items: center; gap: 10px; }
+  .bar { position: relative; flex: 1; height: 10px; border-radius: 99px; background: var(--tt-surface-2); overflow: hidden; }
+  .bar i { position: absolute; inset: 0; border-radius: inherit; transform-origin: left center; transform: scaleX(0);
+           background: linear-gradient(90deg, #0b7f8f, var(--tt-accent) 70%, #a9f6ff); }
+  .bar b { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(0, 0, 0, .45); }
+  .pct { min-width: 4.4em; text-align: right; font-weight: 800; font-size: 18px; color: #f2b544; font-variant-numeric: tabular-nums; }
+  .line { margin: 0; font-size: 15px; line-height: 1.45; color: var(--tt-muted); }
+  .line b { color: var(--tt-ink); font-variant-numeric: tabular-nums; }
+  .line[hidden] { display: none; }
+  .line--win { color: #f2b544; font-weight: 700; }
+  .miles { list-style: none; margin: 2px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .miles li { min-width: 0; padding: 4px 2px; border-radius: 12px; text-align: center; line-height: 1.25; background: var(--tt-surface-2);
+              border: 1px solid var(--tt-line); transition: background .3s, border-color .3s; }
+  .miles .m-p { display: block; font-weight: 800; font-size: 14px; color: var(--tt-muted); }
+  .miles .m-v { display: block; font-size: 12px; color: var(--tt-faint); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .miles li.done { background: color-mix(in srgb, #f2b544 20%, var(--tt-surface-2)); border-color: color-mix(in srgb, #f2b544 70%, transparent); }
+  .miles li.done .m-p { color: #f2b544; }
+  .miles li.done .m-p::before { content: "✓ "; }
+  .miles li.done .m-v { color: var(--tt-muted); }
+  .miles li.next { border-color: var(--tt-accent); }
+  .miles li.pop { animation: mpop .5s var(--tt-ease); }
+  @keyframes mpop { 40% { transform: scale(1.12); } }
+  .meta { margin: 0; font-size: 12.5px; color: var(--tt-faint); }
+  .meta[hidden] { display: none; }
+  .help p { margin: 8px 0; color: var(--tt-muted); }
+  .help pre { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--tt-radius-sm); background: var(--tt-surface-2); border: 1px solid var(--tt-line);
+              font-size: 12.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; direction: ltr; text-align: left; }
+
+  @media (max-height: 700px) {
+    .stats { gap: 4px; padding: 8px 14px 10px; }
+    .line { font-size: 14px; }
+  }
+  @media (max-height: 460px) {
+    .dash { gap: 6px; padding-bottom: calc(8px + var(--tt-safe-b)); }
+    .tabs button { font-size: 15px; }
+    .count__now { font-size: 34px; }
+    .count__of { font-size: 14px; }
+    .line { font-size: 13.5px; }
+    .miles .m-p { font-size: 13px; }
+    .viz__title { font-size: 22px; }
+  }
+</style>
+<script type="importmap">{ "imports": { "three": "./lib/v1/vendor/three/three.module.min.js", "three/addons/": "./lib/v1/vendor/three/addons/", "tt/": "./lib/v1/" } }</script>
+</head>
+<body>
+<noscript>ఈ పేజీ చూడటానికి JavaScript అవసరం.</noscript>
+<script type="module">
+import { createApp, createLoop, fontsReady, params, prefersReducedMotion, share } from "tt/shell.js";
+import { el, icon } from "tt/safe.js";
+import * as te from "tt/telugu.js";
+import { THREE, createRenderer, createComposer, autoResize, glyphTexture, Burst, dotTexture, skyDome, qualityTier } from "tt/three-kit.js";
+
+/* ======================================================================================
+   DATA — మీ పురోగతిని ఇక్కడ నవీకరించండి (update the numbers here).
+   Same numbers as v1 (dashboard.html). To update WITHOUT editing this file, publish a JSON
+   file of exactly this shape and open:   telugusampada.html?data=<url-to-json>
+   (the host must allow CORS — e.g. raw.githubusercontent.com or a gist "raw" link).
+   "updated" is optional ("YYYY-MM-DD"); only when it is present the page shows చివరి నవీకరణ.
+   ====================================================================================== */
+const DATA = {
+  padyarchana: { current: 48785, target: 100000 },   // పద్యార్చన — పద్యాలు (poems)
+  padarchana:  { current: 78543, target: 150000 },   // పదార్చన — పదాలు (words)
+  updated: null,
+};
+
+/* ============================== tuning ============================== */
+const DEBUG = params().has("debug");
+const tier = qualityTier();
+const PROJECTS = {
+  padyarchana: { name: "పద్యార్చన", unit: "పద్యాలు" },
+  padarchana:  { name: "పదార్చన", unit: "పదాలు" },
+};
+const KEYS = ["padyarchana", "padarchana"];
+const MILESTONES = [0.25, 0.5, 0.75, 1];
+const SPEEDS = { slow: 12, normal: 6, fast: 3, instant: 0 };          // seconds; count-up and visual share one clock
+const LEAD = 0.55;                                                      // s a drop takes to fall, so it lands as the count passes it
+const DROP_BUDGET = { low: 400, mid: 1000, high: 2000 }[tier];          // drops for a full vessel → "one drop = N poems"
+const DROP_POOL = { low: 160, mid: 360, high: 600 }[tier];
+const BUBBLES = { low: 26, mid: 60, high: 120 }[tier];
+const LEAF_BUDGET = { low: 300, mid: 600, high: 1000 }[tier];            // leaves on a full tree → "one leaf = N words"
+const FIREFLIES = { low: 0, mid: 12, high: 24 }[tier];
+const FALLING = { low: 0, mid: 4, high: 8 }[tier];
+const SEGS = { low: 40, mid: 56, high: 72 }[tier];
+const DPR_CAP = { low: 1, mid: 1.5, high: 2 }[tier];
+
+/* ============================== app shell ============================== */
+const SETTINGS = [
+  { key: "showWords", label: "పదార్చన చూపించు", type: "toggle", default: false, help: "పదాల వృక్షం (పదార్చన పురోగతి) కూడా చూపిస్తుంది" },
+  { key: "teluguDigits", label: "తెలుగు అంకెలు", type: "toggle", default: false, help: "సంఖ్యలను ౧, ౨, ౩… అంకెలతో చూపిస్తుంది" },
+  { key: "speed", label: "యానిమేషన్ వేగం", type: "segmented", default: "normal", help: "లెక్కింపు, నింపడం ఎప్పుడూ కలిసే జరుగుతాయి",
+    options: [{ value: "slow", label: "నెమ్మదిగా" }, { value: "normal", label: "మామూలు" }, { value: "fast", label: "వేగంగా" }, { value: "instant", label: "వెంటనే" }] },
+  { key: "reduceFx", label: "ఎఫెక్ట్‌లు తగ్గించు", type: "toggle", default: false, help: "మెరుపు, కదిలే కణాలు ఉండవు; లెక్క పూర్తయ్యాక దృశ్యం ఆగుతుంది — బ్యాటరీ ఆదా" },
+];
+const HELP_TITLE = "ఈ పేజీ గురించి";
+const app = createApp({ id: "telugusampada", title: "తెలుగు సంపద", accent: "peacock", settings: SETTINGS, onSettings,
+  sound: false, help: () => helpNode(), helpTitle: HELP_TITLE });
+
+const digits = () => !!app.settings.teluguDigits;
+const num = n => te.formatIndian(Math.round(n), { telugu: digits() });
+const tdig = s => (digits() ? te.toTeluguDigits(s) : String(s));
+const pctText = f => tdig((f * 100).toFixed(1)) + "%";
+let reducedOS = prefersReducedMotion();
+const motionOK = () => !reducedOS;
+const ambient = () => motionOK() && !app.settings.reduceFx;
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const ease = t => 1 - Math.pow(1 - t, 3);                               // one easing for the number AND the picture
+function niceUnit(x) { const p = 10 ** Math.floor(Math.log10(Math.max(1, x))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= x) return m * p; return 10 * p; }
+
+/* share button (the kit has no share icon yet — static SVG built here) */
+function shareIcon() {
+  const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("aria-hidden", "true"); svg.classList.add("tt-icon");
+  for (const d of ["M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7", "M16 6l-4-4-4 4", "M12 2v13"]) {
+    const p = document.createElementNS(NS, "path"); p.setAttribute("d", d); svg.append(p);
+  }
+  return svg;
+}
+const shareBtn = el("button", { class: "tt-iconbtn", type: "button", title: "పంచుకోండి", attrs: { "aria-label": "పంచుకోండి" }, on: { click: doShare } }, shareIcon());
+app.topbar.insertBefore(shareBtn, app.topbar.querySelector(`[aria-label="${HELP_TITLE}"]`));
+function helpNode() {
+  const ex = { padyarchana: { current: DATA.padyarchana.current, target: DATA.padyarchana.target },
+    padarchana: { current: DATA.padarchana.current, target: DATA.padarchana.target }, updated: "YYYY-MM-DD" };
+  return el("div", { class: "help" },
+    el("p", { text: `• పద్యార్చన: ప్రతి చుక్క = ${num(P.padyarchana.unitSize ?? 0)} పద్యాలు. కలశం "లక్ష్యం" గీత వరకు నిండితే లక్ష్యం పూర్తి; 25%, 50%, 75% ఉంగరాలు చేరగానే బంగారు రంగులో వెలుగుతాయి.` }),
+    el("p", { text: `• పదార్చన: ప్రతి ఆకు = ${num(P.padarchana.unitSize ?? 0)} పదాలు; లేత ఆకులు ఇంకా రావాల్సినవి. అమరికలలో "పదార్చన చూపించు" ఆన్ చేయండి.` }),
+    el("p", { text: "• లెక్క, బొమ్మ ఒకే గడియారంతో కలిసి పెరుగుతాయి. బొమ్మ పైన కుడివైపు ఉన్న \"మళ్ళీ చూపించు\" బటన్‌తో మళ్ళీ చూడవచ్చు." }),
+    el("p", { text: "• సంఖ్యలు మార్చడానికి HTML మార్చనవసరం లేదు: ఈ రూపంలో ఒక JSON ఫైల్ ప్రచురించి (ఉదా: GitHub gist \"raw\" లింక్), పేజీని ?data=<లింక్> తో తెరవండి. \"updated\" ఇస్తేనే చివరి నవీకరణ కనిపిస్తుంది." }),
+    el("pre", {}, el("code", { text: JSON.stringify(ex, null, 1) })));
+}
+
+/* ============================== DOM ============================== */
+const P = {};   // per project state
+const tabs = el("div", { class: "tabs", hidden: true, attrs: { role: "tablist", "aria-label": "ప్రాజెక్టులు" } });
+const panelsEl = el("div", { class: "panels" });
+const dash = el("div", { class: "dash", dataset: { mode: "single" } }, tabs, panelsEl);
+app.stage.append(dash);
+let activeTab = "padyarchana";
+
+function buildPanel(key) {
+  const meta = PROJECTS[key];
+  const legend = el("div", { class: "viz__legend", attrs: { "aria-hidden": "true" } });
+  const viz = el("div", { class: "viz" },
+    el("div", { class: "viz__head" }, el("h2", { class: "viz__title", text: meta.name }), legend),
+    el("button", { class: "tt-iconbtn viz__replay", type: "button", title: "మళ్ళీ చూపించు", attrs: { "aria-label": `${meta.name}: మళ్ళీ చూపించు` },
+      on: { click: () => replay(key) } }, icon("restart")));
+  const now = el("b", { class: "count__now", text: "0", attrs: { "aria-hidden": "true" } });
+  const of = el("span", { class: "count__of", attrs: { "aria-hidden": "true" } });
+  const barFill = el("i");
+  const bar = el("div", { class: "bar", attrs: { "aria-hidden": "true" } }, barFill, MILESTONES.slice(0, 3).map(m => el("b", { style: { left: m * 100 + "%" } })));
+  const pct = el("span", { class: "pct", attrs: { "aria-hidden": "true" } });
+  const remainVal = el("b"), remainUnit = el("span");
+  const remain = el("p", { class: "line", attrs: { "aria-hidden": "true" } }, el("span", { text: "లక్ష్యానికి ఇంకా " }), remainVal, remainUnit);
+  const win = el("p", { class: "line line--win", hidden: true, text: "లక్ష్యం చేరుకున్నాం!" });
+  const miles = MILESTONES.map(() => el("li", {}, el("span", { class: "m-p" }), el("span", { class: "m-v" })));
+  const nextVal = el("b"), nextLeft = el("b");
+  const next = el("p", { class: "line", attrs: { "aria-hidden": "true" } }, el("span", { text: "తదుపరి మైలురాయి " }), nextVal, el("span", { text: " · ఇంకా " }), nextLeft);
+  const metaLine = el("p", { class: "meta", hidden: true });
+  const sr = el("p", { class: "tt-visually-hidden" });
+  const stats = el("div", { class: "stats" },
+    el("div", { class: "count" }, now, of), el("div", { class: "barrow" }, bar, pct), remain, win,
+    el("ol", { class: "miles", attrs: { "aria-label": "మైలురాళ్ళు" } }, miles), next, metaLine, sr);
+  const panel = el("section", { class: "panel", id: "p-" + key, hidden: key !== "padyarchana", attrs: { "aria-label": meta.name } }, el("div", { class: "panel__in" }, viz, stats));
+  panelsEl.append(panel);
+  const tab = el("button", { type: "button", text: meta.name, attrs: { role: "tab", "aria-controls": "p-" + key, "aria-selected": "false" },
+    on: { click: () => { if (activeTab !== key) { activeTab = key; layout(); } } } });
+  tabs.append(tab);
+  P[key] = { key, meta, data: null, view: null, onscreen: false, e: 0, shown: -1, reached: 0, anim: { t0: null, dur: 0 },
+    el: { panel, viz, legend, now, of, barFill, pct, remain, remainVal, remainUnit, win, miles, next, nextVal, nextLeft, metaLine, sr, tab } };
+  new IntersectionObserver(([e]) => { P[key].onscreen = e.isIntersecting; if (e.isIntersecting) kick(); }).observe(viz);
+}
+KEYS.forEach(buildPanel);
+tabs.addEventListener("keydown", e => {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  activeTab = activeTab === KEYS[0] ? KEYS[1] : KEYS[0]; layout(); P[activeTab].el.tab.focus();
+});
+
+/* ============================== data ============================== */
+let source = null;   // hostname of ?data= when it was used
+const toNum = v => (typeof v === "number" ? v : typeof v === "string" ? Number(te.fromTeluguDigits(v).replace(/[,\s_]/g, "")) : NaN);
+function cleanProject(src, fallback) {
+  const c = toNum(src?.current), t = toNum(src?.target);
+  return Number.isFinite(c) && Number.isFinite(t) && c >= 0 && t > 0 ? { current: Math.round(c), target: Math.round(t) } : { ...fallback };
+}
+async function loadData() {
+  const url = params().get("data");
+  const base = { padyarchana: { ...DATA.padyarchana }, padarchana: { ...DATA.padarchana }, updated: DATA.updated };
+  if (!url) return base;
+  try {
+    const abs = new URL(url, location.href);
+    if (!/^(https?|data):$/.test(abs.protocol)) throw new Error("protocol");
+    const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(abs, { signal: ctrl.signal, cache: "no-store", credentials: "omit" });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    if (!json || typeof json !== "object") throw new Error("shape");
+    source = abs.protocol === "data:" ? "లింక్‌లోని డేటా" : abs.hostname;
+    return {
+      padyarchana: cleanProject(json.padyarchana, DATA.padyarchana),
+      padarchana: cleanProject(json.padarchana, DATA.padarchana),
+      updated: typeof json.updated === "string" || typeof json.updated === "number" ? String(json.updated).slice(0, 40) : null,
+    };
+  } catch (err) {
+    console.warn("telugusampada: ?data could not be used", err);
+    setTimeout(() => app.toast("డేటా లింక్ తెరవలేకపోయాం — అసలు సంఖ్యలు చూపిస్తున్నాం", { tone: "bad", ms: 3200 }), 400);
+    return base;
+  }
+}
+function fmtDate(v) {
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const d = new Date(dateOnly ? v + "T00:00:00Z" : v);
+  if (Number.isNaN(d.getTime())) return tdig(v);
+  let s;
+  try { s = new Intl.DateTimeFormat("te-IN", { day: "numeric", month: "long", year: "numeric", timeZone: dateOnly ? "UTC" : undefined }).format(d); }
+  catch { s = v; }
+  return tdig(s);
+}
+
+/* ============================== numbers (DOM) ============================== */
+const reachedOf = (p, e) => MILESTONES.filter(m => e * p.data.current >= m * p.data.target - 0.5).length;
+
+function refreshStatic(p) {
+  const d = p.data, E = p.el;
+  E.of.textContent = `/ ${num(d.target)} ${p.meta.unit}`;
+  E.remainUnit.textContent = " " + p.meta.unit;
+  MILESTONES.forEach((m, i) => {
+    E.miles[i].children[0].textContent = tdig(m * 100) + "%";
+    E.miles[i].children[1].textContent = num(m * d.target);
+  });
+  const parts = [];
+  if (store.updated) parts.push("చివరి నవీకరణ: " + fmtDate(store.updated));
+  if (source) parts.push("మూలం: " + source);
+  E.metaLine.hidden = !parts.length;
+  E.metaLine.textContent = parts.join(" · ");
+  const left = Math.max(0, d.target - d.current);
+  E.sr.textContent = `${p.meta.name}: ${num(d.target)} లక్ష్యంలో ${num(d.current)} ${p.meta.unit} పూర్తయ్యాయి (${pctText(d.current / d.target)}).`
+    + (left ? ` ఇంకా ${num(left)} కావాలి.` : " లక్ష్యం చేరుకున్నాం!");
+  setLegend(p);
+  p.view?.refreshLabels?.();
+  p.shown = -1;   // force the animated numbers to redraw
+}
+function setLegend(p) {
+  const L = p.el.legend;
+  if (p.key === "padyarchana") L.replaceChildren(el("span", {}, el("i", { class: "sw" }), `ఒక్కో చుక్క = ${num(p.unitSize)} పద్యాలు`));
+  else L.replaceChildren(el("span", {}, el("i", { class: "sw sw--leaf" }), `ఒక్కో ఆకు = ${num(p.unitSize)} పదాలు`),
+    el("span", {}, el("i", { class: "sw sw--bud" }), "ఇంకా రావాల్సినవి"));
+  if (p.view?.w) p.view.fit(p.view.w, p.view.h);
+}
+function updateStats(p) {
+  const d = p.data, E = p.el, shown = Math.round(p.e * d.current);
+  if (shown === p.shown) return;
+  p.shown = shown;
+  E.now.textContent = num(shown);
+  const f = shown / d.target;
+  E.barFill.style.transform = `scaleX(${Math.min(1, f)})`;
+  E.pct.textContent = pctText(f);
+  const left = d.target - shown;
+  E.remain.hidden = left <= 0; E.win.hidden = left > 0;
+  if (left > 0) E.remainVal.textContent = num(left);
+  const nextIdx = MILESTONES.findIndex(m => shown < m * d.target);
+  MILESTONES.forEach((m, i) => { E.miles[i].classList.toggle("done", shown >= m * d.target); E.miles[i].classList.toggle("next", i === nextIdx); });
+  E.next.hidden = nextIdx < 0 || MILESTONES[nextIdx] === 1;    // the target itself is already the "remaining" line
+  if (!E.next.hidden) { E.nextVal.textContent = num(MILESTONES[nextIdx] * d.target); E.nextLeft.textContent = num(MILESTONES[nextIdx] * d.target - shown); }
+}
+
+/* ============================== shared 3D pieces ============================== */
+function makeEnvScene() {   // a warm, softly lit "temple" room for the brass to reflect (PMREM)
+  const s = new THREE.Scene();
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false,
+    vertexShader: "varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
+    fragmentShader: `varying vec3 vP; void main(){ float h = vP.y;
+      vec3 c = h > 0. ? mix(vec3(.22,.16,.11), vec3(.75,.6,.42), pow(h, .8)) : mix(vec3(.22,.16,.11), vec3(.03,.025,.02), pow(-h, .5));
+      gl_FragColor = vec4(c, 1.); }`,
+  }));
+  s.add(sky);
+  const panel = (hex, k, pos, w, h) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(k), side: THREE.DoubleSide }));
+    m.position.set(...pos); m.lookAt(0, 0, 0); s.add(m);
+  };
+  panel("#fff1d6", 2.4, [-4, 5, 4], 4, 2.4);   // soft box, front-left above
+  panel("#ffb066", 1.8, [5, 1.2, 3], 1.6, 4);   // warm lamp, right
+  panel("#22c3d6", 1.4, [-5, 1, -3], 2, 5);     // peacock rim, back-left
+  panel("#ffffff", 1.0, [0, 6, -4], 6, 1);      // top back strip
+  return s;
+}
+let mugguTex = null;
+function mugguTexture() {   // stone floor with a రంగవల్లి/ముగ్గు lotus around the base
+  if (mugguTex) return mugguTex;
+  const S = 512, C = S / 2, c = document.createElement("canvas"); c.width = c.height = S;
+  const g = c.getContext("2d"), r = te.rng(9);
+  g.fillStyle = "#2a2521"; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 4000; i++) { g.fillStyle = r() < 0.5 ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.14)"; g.fillRect(r() * S, r() * S, 2, 2); }
+  const chalk = "rgba(246,240,228,.85)";
+  g.lineCap = g.lineJoin = "round";
+  for (let i = 0; i < 12; i++) {
+    g.save(); g.translate(C, C); g.rotate(i / 12 * Math.PI * 2);
+    g.beginPath(); g.moveTo(0, -118); g.quadraticCurveTo(36, -160, 0, -206); g.quadraticCurveTo(-36, -160, 0, -118);
+    g.fillStyle = i % 2 ? "rgba(34,195,214,.5)" : "rgba(255,138,61,.45)"; g.fill();
+    g.strokeStyle = chalk; g.lineWidth = 3; g.stroke();
+    g.beginPath(); g.arc(0, -170, 5, 0, Math.PI * 2); g.fillStyle = chalk; g.fill();
+    g.rotate(Math.PI / 12); g.beginPath(); g.arc(0, -196, 4, 0, Math.PI * 2); g.fill();
+    g.restore();
+  }
+  for (const [rad, w] of [[116, 3], [222, 2.5]]) { g.beginPath(); g.arc(C, C, rad, 0, Math.PI * 2); g.strokeStyle = chalk; g.lineWidth = w; g.stroke(); }
+  for (let i = 0; i < 48; i++) { const a = i / 48 * Math.PI * 2; g.beginPath(); g.arc(C + Math.cos(a) * 238, C + Math.sin(a) * 238, 3.2, 0, Math.PI * 2); g.fillStyle = chalk; g.fill(); }
+  mugguTex = new THREE.CanvasTexture(c); mugguTex.colorSpace = THREE.SRGBColorSpace; mugguTex.anisotropy = 4;
+  return mugguTex;
+}
+const PLAT = 0.16;   // platform top
+function addPlatform(scene) {
+  const side = new THREE.MeshStandardMaterial({ color: 0x2b2622, roughness: 0.9, metalness: 0 });
+  const top = new THREE.MeshStandardMaterial({ map: mugguTexture(), roughness: 0.8, metalness: 0 });
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.42, PLAT, SEGS), [side, top, side]);
+  m.position.y = PLAT / 2; scene.add(m);
+}
+function addDiyas(scene) {   // two small clay lamps; flames flicker and bloom
+  const clay = new THREE.MeshStandardMaterial({ color: 0x9a4a26, roughness: 0.75, metalness: 0 });
+  const geo = new THREE.SphereGeometry(0.17, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+  const flames = [];
+  for (const x of [-1.5, 1.5]) {
+    const d = new THREE.Mesh(geo, clay); d.scale.set(1, 0.6, 1.25); d.position.set(x, PLAT + 0.1, 1.45); scene.add(d);
+    const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: new THREE.Color(2.6, 1.35, 0.45), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+    f.scale.set(0.12, 0.26, 1); f.position.set(x, PLAT + 0.24, 1.45); scene.add(f);
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: 0xff9a3c, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.22, depthWrite: false }));
+    halo.scale.setScalar(0.9); halo.position.copy(f.position); scene.add(halo);
+    flames.push({ f, halo, ph: Math.random() * 9 });
+  }
+  const lamp = new THREE.PointLight(0xffa451, 9, 7, 2); lamp.position.set(0, PLAT + 0.6, 1.7); scene.add(lamp);
+  return t => { for (const { f, halo, ph } of flames) { const k = 1 + Math.sin(t * 13 + ph) * 0.06 + Math.sin(t * 7.3 + ph * 2) * 0.05; f.scale.set(0.12 * k, 0.26 * k, 1); halo.material.opacity = 0.2 * k; } lamp.intensity = 9 * (0.95 + Math.sin(t * 11) * 0.05); };
+}
+
+function baseView(p, box) {
+  const host = p.el.viz;
+  const renderer = createRenderer({ container: host, tier, exposure: 1.0 });
+  if (!renderer) return null;
+  renderer.domElement.setAttribute("aria-hidden", "true");
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+  // bloom threshold sits above the lit brass/stone: only liquid, drops, flames and lit rings glow
+  const { composer, bloomPass } = createComposer(renderer, scene, camera, { bloom: { strength: 0.7, radius: 0.45, threshold: 0.88 } });
+  const pm = new THREE.PMREMGenerator(renderer);
+  scene.environment = pm.fromScene(makeEnvScene(), 0.035).texture;
+  pm.dispose();
+  scene.add(skyDome({ radius: 90, top: "#03141a", horizon: "#0a232b", bottom: "#030607", exponent: 0.8 }));
+  const v = { p, renderer, scene, camera, composer, bloomPass, box, w: 0, h: 0 };
+  v.fit = (w, h) => {
+    // keep the scene clear of the title + legend overlay at the top of the picture
+    const r = host.getBoundingClientRect(), lb = p.el.legend.getBoundingClientRect();
+    const pad = Math.min(0.3, Math.max(0, (lb.bottom - r.top + 4) / h));
+    const a = w / h, b = v.box, t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const cx = (b.minX + b.maxX) / 2, cy = (b.minY + b.maxY) / 2;
+    const d = Math.max((b.maxY - b.minY) / (1 - pad) / 2 / t, (b.maxX - b.minX) / 2 / (t * a)) * 1.05 + b.depth / 2;
+    const lookY = cy + pad * t * (d - b.depth / 4);
+    const elev = THREE.MathUtils.degToRad(b.elev);
+    camera.position.set(cx, lookY + Math.sin(elev) * d, Math.cos(elev) * d);
+    camera.lookAt(cx, lookY, 0);
+    camera.far = d + 120; camera.updateProjectionMatrix();
+  };
+  v.applyFx = () => {
+    const dpr = app.settings.reduceFx ? 1 : Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    renderer.setPixelRatio(dpr); composer.setPixelRatio(dpr);
+    if (v.w && v.h) { renderer.setSize(v.w, v.h, false); composer.setSize(v.w, v.h); }
+    if (bloomPass) bloomPass.enabled = !app.settings.reduceFx;
+  };
+  v.applyFx();
+  autoResize({ renderer, camera, composer, bloomPass, container: host, onResize: (w, h) => { v.w = w; v.h = h; v.fit(w, h); kick(); } });
+  return v;
+}
+
+/* ============================== పద్యార్చన: the కలశం ============================== */
+// Profile (radius, height) of a temple water vessel, in vessel space (y = 0 at the foot).
+const BODY_BOT = 0.5, BODY_TOP = 2.95, WIN_BOT = 0.72, WIN_TOP = 2.86, WIN = Math.PI / 2;   // front window: 90° of glass
+const Y0 = 0.74, Y100 = 2.62;                                     // inner floor (0 %) and the target line (100 %)
+const bodyR = y => { const u = clamp01((y - BODY_BOT) / (BODY_TOP - BODY_BOT)); return 0.6 + 0.1 * u + 1.1 * Math.pow(Math.sin(Math.PI * u), 0.75); };
+const levelY = f => Y0 + f * (Y100 - Y0);
+const bodyPts = (y0, y1, off = 0, n = 36) => Array.from({ length: n + 1 }, (_, i) => { const y = y0 + (y1 - y0) * i / n; return new THREE.Vector2(Math.max(0.001, bodyR(y) + off), y); });
+const smooth = (pts, n) => new THREE.SplineCurve(pts.map(([x, y]) => new THREE.Vector2(x, y))).getPoints(n);
+
+function vesselView(p) {
+  const v = baseView(p, { minX: -1.95, maxX: 2.8, minY: -0.5, maxY: 4.7, depth: 4.6, elev: 11 });
+  if (!v) return null;
+  const { scene } = v;
+  addPlatform(scene);
+  const flicker = addDiyas(scene);
+  scene.add(new THREE.HemisphereLight(0x9adfe8, 0x1a120c, 0.35));
+
+  const g = new THREE.Group(); g.position.y = PLAT; scene.add(g);
+  const brass = new THREE.MeshStandardMaterial({ color: 0xd8a24a, metalness: 1, roughness: 0.3 });
+  const brass2 = brass.clone(); brass2.side = THREE.DoubleSide;
+  const copper = new THREE.MeshStandardMaterial({ color: 0xa65a33, metalness: 0.8, roughness: 0.5, side: THREE.BackSide });
+  const copperUp = new THREE.MeshStandardMaterial({ color: 0x8a4a2a, metalness: 0.7, roughness: 0.55 });
+  const add = (geo, mat, ro = 0) => { const m = new THREE.Mesh(geo, mat); m.renderOrder = ro; g.add(m); return m; };
+
+  // foot + stem, lower body, windowed body, upper body, neck + rolled lip
+  add(new THREE.LatheGeometry(smooth([[0, 0], [0.95, 0], [1.0, 0.05], [0.96, 0.12], [0.78, 0.2], [0.62, 0.3], [0.57, 0.4], [0.6, 0.5]], 40), SEGS), brass);
+  add(new THREE.LatheGeometry(bodyPts(BODY_BOT, WIN_BOT, 0, 6), SEGS), brass);
+  add(new THREE.LatheGeometry(bodyPts(WIN_BOT, WIN_TOP), SEGS, WIN / 2, Math.PI * 2 - WIN), brass);
+  add(new THREE.LatheGeometry(bodyPts(WIN_TOP, BODY_TOP, 0, 4), SEGS), brass);
+  add(new THREE.LatheGeometry(smooth([[0.7, 2.95], [0.665, 3.08], [0.655, 3.22], [0.69, 3.36], [0.8, 3.5], [0.97, 3.62], [1.1, 3.71], [1.12, 3.77],
+    [1.06, 3.81], [0.94, 3.8], [0.7, 3.66], [0.6, 3.45], [0.6, 3.0]], 60), SEGS), brass2);
+  // inside: copper wall (only the far side renders: BackSide) and floor
+  add(new THREE.LatheGeometry(bodyPts(Y0 - 0.03, BODY_TOP, -0.045), SEGS), copper);
+  const floor = add(new THREE.CircleGeometry(bodyR(Y0) - 0.04, 40).rotateX(-Math.PI / 2), copperUp); floor.position.y = Y0 - 0.005;
+  // bands hiding the window seams + window trims
+  for (const y of [WIN_BOT, WIN_TOP]) { const b = add(new THREE.TorusGeometry(bodyR(y) + 0.012, 0.045, 10, SEGS).rotateX(Math.PI / 2), brass); b.position.y = y; }
+  for (const phi of [WIN / 2, -WIN / 2]) {
+    const pts = bodyPts(WIN_BOT, WIN_TOP, 0.005, 24).map(q => new THREE.Vector3(q.x * Math.sin(phi), q.y, q.x * Math.cos(phi)));
+    add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.038, 8), brass);
+  }
+
+  // liquid: a lathe the shader cuts at the current level, plus a glowing surface disc with ripples
+  const DEEP = new THREE.Color(0.0, 0.045, 0.085), BRIGHT = new THREE.Color(0.1, 1.0, 1.25);
+  const uni = { uLevel: { value: Y0 }, uBottom: { value: Y0 }, uTime: { value: 0 }, uDeep: { value: DEEP }, uBright: { value: BRIGHT } };
+  const liquid = add(new THREE.LatheGeometry([new THREE.Vector2(0.001, Y0), ...bodyPts(Y0, WIN_TOP - 0.03, -0.07)], SEGS), new THREE.ShaderMaterial({
+    uniforms: uni, transparent: true, depthWrite: false,
+    vertexShader: `varying vec3 vN, vV, vL; void main(){ vec4 w = modelMatrix * vec4(position, 1.); vN = normalize(mat3(modelMatrix) * normal);
+      vV = cameraPosition - w.xyz; vL = position; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform float uLevel, uBottom, uTime; uniform vec3 uDeep, uBright; varying vec3 vN, vV, vL;
+      void main(){
+        if (vL.y > uLevel) discard;
+        float fr = 1. - abs(dot(normalize(vN), normalize(vV)));
+        float h = clamp((vL.y - uBottom) / max(uLevel - uBottom, .05), 0., 1.);
+        float ang = atan(vL.x, vL.z);
+        float caustic = sin(vL.y * 15. - uTime * 1.8 + sin(ang * 6. + uTime * .7) * 1.3) * .5 + .5;
+        vec3 c = mix(uDeep, uBright * .4, .15 + .55 * h) * (.78 + .34 * caustic);
+        c += uBright * pow(fr, 2.4) * .4;
+        c += uBright * smoothstep(uLevel - .06, uLevel, vL.y) * .6;
+        gl_FragColor = vec4(c, .85);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  }), 1);
+  const rip = Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, -99, 0));
+  let ripCursor = 0;
+  const discU = { uTime: uni.uTime, uR: { value: 1 }, uRip: { value: rip }, uDeep: uni.uDeep, uBright: uni.uBright };
+  const disc = add(new THREE.CircleGeometry(1, SEGS).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
+    uniforms: discU, transparent: true, depthWrite: false,
+    vertexShader: "uniform float uR; varying vec2 vP; void main(){ vP = position.xz * uR; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }",
+    fragmentShader: `uniform float uTime, uR; uniform vec4 uRip[8]; uniform vec3 uDeep, uBright; varying vec2 vP;
+      void main(){
+        float d = length(vP) / uR, w = 0.;
+        for (int i = 0; i < 8; i++) { vec4 r = uRip[i]; float age = uTime - r.z; if (age < 0. || age > 1.4) continue;
+          float k = abs(length(vP - r.xy) - age * .5); w += r.w * exp(-k * k * 700.) * (1. - age / 1.4); }
+        float swirl = sin(d * 13. - uTime * 1.4) * .5 + .5;
+        vec3 c = mix(uDeep * 2., uBright * .6, .3 + .3 * smoothstep(.55, 1., d) + .08 * swirl) + uBright * min(w, 1.) * .45;
+        gl_FragColor = vec4(c, .93);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  }), 2);
+  const innerLight = new THREE.PointLight(0x22c3d6, 0, 3.4, 2); g.add(innerLight);
+
+  // glass window (fresnel), drawn after everything inside it
+  add(new THREE.LatheGeometry(bodyPts(WIN_BOT, WIN_TOP, 0.002), 24, -WIN / 2, WIN), new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false,
+    vertexShader: `varying vec3 vN, vV, vL; void main(){ vec4 w = modelMatrix * vec4(position, 1.); vN = normalize(mat3(modelMatrix) * normal);
+      vV = cameraPosition - w.xyz; vL = position; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `varying vec3 vN, vV, vL; void main(){
+        float fr = pow(1. - abs(dot(normalize(vN), normalize(vV))), 2.4);
+        float s = vL.x / max(length(vL.xz), .001);
+        float streak = smoothstep(.07, 0., abs(s + .38)) * .45 + smoothstep(.03, 0., abs(s - .3)) * .18;
+        vec3 c = vec3(.7, .93, 1.) * (.08 + fr * .75 + streak);
+        gl_FragColor = vec4(c, clamp(.03 + fr * .42 + streak * .5, 0., .75));
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  }), 6);
+
+  // shadow + aura
+  const blob = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 2.8).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: dotTexture(), color: 0x000000, transparent: true, opacity: 0.6, depthWrite: false }));
+  blob.position.y = PLAT + 0.003; scene.add(blob);
+  const aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: new THREE.Color(0.03, 0.16, 0.2), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+  aura.scale.setScalar(7.5); aura.position.set(0, 2.1, -2.2); scene.add(aura);
+
+  // milestone rings (25/50/75 %) and the target line (100 %), with Telugu-capable labels (glyphTexture)
+  const DIM = new THREE.Color(0.07, 0.3, 0.34), GOLD = new THREE.Color(1.7, 1.15, 0.32);
+  const rings = MILESTONES.map((m, i) => {
+    const y = levelY(m), R = bodyR(y) + 0.035;
+    const ring = add(new THREE.TorusGeometry(R, i === 3 ? 0.04 : 0.024, 8, SEGS + 24).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: DIM.clone() }));
+    ring.position.y = y;
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
+    label.center.set(0, 0.5); label.position.set(R + 0.16, PLAT + y, 0.2); label.renderOrder = 8; scene.add(label);
+    return { m, y, R, ring, label, flash: 0, lit: false };
+  });
+  const tgtWord = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
+  tgtWord.center.set(0, 0.5); tgtWord.position.set(rings[3].R + 0.16, PLAT + rings[3].y + 0.27, 0.2); tgtWord.renderOrder = 8; scene.add(tgtWord);
+  const setLabel = (s, text, h, color) => {
+    const tex = glyphTexture(text, { height: 96, weight: 700, color, padding: 0.1, font: "'Noto Sans Telugu', system-ui, sans-serif" });
+    s.material.map = tex; s.material.needsUpdate = true; s.scale.set(h * tex.userData.aspect, h, 1);
+  };
+  v.refreshLabels = () => {
+    rings.forEach((r, i) => setLabel(r.label, i === 3 ? num(p.data.target) : tdig(r.m * 100) + "%", i === 3 ? 0.28 : 0.24, r.lit ? "#ffd36b" : "#8fd6e0"));
+    setLabel(tgtWord, "లక్ష్యం", 0.21, rings[3].lit ? "#ffd36b" : "#cfeff4");
+  };
+
+  // drops ("every poem a drop"), bubbles, splashes
+  const SRC = new THREE.Vector3(0, 4.32, 0);
+  const source = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: new THREE.Color(0.35, 1.25, 1.4), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+  source.scale.setScalar(0.34); source.position.copy(SRC); g.add(source);
+  const dGeo = new THREE.BufferGeometry(), dPos = new Float32Array(DROP_POOL * 3).fill(-1e5);
+  dGeo.setAttribute("position", new THREE.BufferAttribute(dPos, 3));
+  const drops = new THREE.Points(dGeo, new THREE.PointsMaterial({ size: 0.085, map: dotTexture(), color: new THREE.Color(0.55, 1.6, 1.8), transparent: true,
+    depthWrite: false, blending: THREE.AdditiveBlending }));
+  drops.frustumCulled = false; drops.renderOrder = 3; g.add(drops);
+  const dVy = new Float32Array(DROP_POOL), dOn = new Uint8Array(DROP_POOL);
+  let dCursor = 0;
+  const bGeo = new THREE.BufferGeometry(), bPos = new Float32Array(BUBBLES * 3);
+  bGeo.setAttribute("position", new THREE.BufferAttribute(bPos, 3));
+  const bubbles = new THREE.Points(bGeo, new THREE.PointsMaterial({ size: 0.05, map: dotTexture(), color: new THREE.Color(0.5, 1.05, 1.15), transparent: true, opacity: 0.6,
+    depthWrite: false, blending: THREE.AdditiveBlending }));
+  bubbles.frustumCulled = false; bubbles.renderOrder = 3; g.add(bubbles);
+  const bq = new Float32Array(BUBBLES), ba = new Float32Array(BUBBLES), br = new Float32Array(BUBBLES), bs = new Float32Array(BUBBLES);
+  for (let i = 0; i < BUBBLES; i++) { bq[i] = Math.random(); ba[i] = Math.random() * 6.283; br[i] = Math.sqrt(Math.random()) * 0.9; bs[i] = 0.25 + Math.random() * 0.35; }
+  const splash = new Burst({ max: { low: 160, mid: 320, high: 600 }[tier], size: 0.05 }); splash.renderOrder = 3; g.add(splash);
+  const sparks = new Burst({ max: { low: 200, mid: 400, high: 700 }[tier], size: 0.09 }); sparks.renderOrder = 4; g.add(sparks);
+
+  p.unitSize = niceUnit(p.data.target / DROP_BUDGET);
+  let level = Y0, emitted = 0, goal = 0, drip = 1, time = 0, sway = 0;
+
+  function spawnDrop() {
+    const i = dCursor; dCursor = (dCursor + 1) % DROP_POOL;
+    const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * 0.15;
+    dPos[i * 3] = Math.sin(a) * r; dPos[i * 3 + 1] = SRC.y - Math.random() * 0.08; dPos[i * 3 + 2] = Math.cos(a) * r;
+    dVy[i] = -2.2 - Math.random() * 0.4; dOn[i] = 1;
+  }
+  function land(i) {
+    const x = dPos[i * 3], z = dPos[i * 3 + 2];
+    dOn[i] = 0; dPos[i * 3 + 1] = -1e5;
+    rip[ripCursor].set(x, z, time, 0.8 + Math.random() * 0.4); ripCursor = (ripCursor + 1) % rip.length;
+    splash.emit(new THREE.Vector3(x, level + 0.01, z), { count: 3, color: 0x8ff3ff, speed: 1.3, gravity: -6, life: 0.32 });
+  }
+  function placeBubbles() {
+    const H = level - Y0, show = H > 0.06;
+    for (let i = 0; i < BUBBLES; i++) {
+      const y = Y0 + 0.02 + bq[i] * (H - 0.05), r = (bodyR(y) - 0.1) * br[i];
+      bPos[i * 3] = show ? Math.sin(ba[i]) * r : 0; bPos[i * 3 + 1] = show ? y : -1e5; bPos[i * 3 + 2] = show ? Math.cos(ba[i]) * r : 0;
+    }
+    bGeo.attributes.position.needsUpdate = true;
+  }
+  function milestoneFx(i) {
+    const r = rings[i];
+    r.flash = 1;
+    for (let k = 0; k < 28; k++) { const a = k / 28 * 6.283; sparks.emit(new THREE.Vector3(Math.sin(a) * r.R, r.y, Math.cos(a) * r.R), { count: 2, color: 0xffd36b, speed: 1.3, gravity: -1.2, life: 0.9 }); }
+  }
+
+  v.reset = () => { emitted = 0; goal = 0; dOn.fill(0); dPos.fill(-1e5); dGeo.attributes.position.needsUpdate = true; rings.forEach(r => { r.lit = false; r.flash = 0; }); v.refreshLabels(); };
+  v.milestone = milestoneFx;
+  /** called every rendered frame with the shared eased progress e (and e a drop-fall ahead) */
+  v.setProgress = (e, eLead, animating, now) => {
+    const frac = p.data.current / p.data.target;
+    const f = Math.min(1.06, e * frac);
+    level = levelY(f);
+    v.fill = f;
+    uni.uLevel.value = level;
+    disc.visible = f > 0.003; disc.position.y = level; discU.uR.value = bodyR(level) - 0.07; disc.scale.set(discU.uR.value, 1, discU.uR.value);
+    innerLight.intensity = f > 0.003 ? 4 + 10 * f : 0; innerLight.position.set(0, Math.max(Y0 + 0.2, level - 0.35), 0.15);
+    aura.material.opacity = 0.5 + 0.5 * f;
+    goal = animating ? Math.floor(eLead * p.data.current / p.unitSize) : goal;
+    const reached = reachedOf(p, e);
+    let relabel = false;
+    rings.forEach((r, i) => {
+      const lit = i < reached;
+      if (lit !== r.lit) { r.lit = lit; relabel = true; }
+      r.ring.material.color.copy(lit ? GOLD : DIM).multiplyScalar(1 + r.flash * 1.5);
+    });
+    if (relabel) v.refreshLabels();
+    source.material.opacity = animating ? 1 : ambient() ? 0.35 + Math.sin(now / 600) * 0.1 : 0.25;
+    if (!ambient()) placeBubbles();
+  };
+  v.step = (dt, animating) => {
+    time += dt; uni.uTime.value = time;
+    if (ambient()) { sway += dt; g.rotation.y = Math.sin(sway * 0.35) * 0.16; }
+    flicker(time);
+    // drops: during the count-up as many as the number says; afterwards an occasional drip
+    let n = 0;
+    while (emitted < goal && n++ < 24) { spawnDrop(); emitted++; }
+    if (!animating && ambient()) { drip -= dt; if (drip <= 0) { drip = 1.1 + Math.random() * 1.4; spawnDrop(); } }
+    for (let i = 0; i < DROP_POOL; i++) {
+      if (!dOn[i]) continue;
+      dVy[i] -= 9.8 * dt; dPos[i * 3 + 1] += dVy[i] * dt;
+      if (dPos[i * 3 + 1] <= level) land(i);
+    }
+    dGeo.attributes.position.needsUpdate = true;
+    if (ambient() || animating) {
+      const H = Math.max(0.1, level - Y0);
+      for (let i = 0; i < BUBBLES; i++) { bq[i] += bs[i] * dt / H; ba[i] += 0.15 * dt; if (bq[i] >= 1) { bq[i] = 0; ba[i] = Math.random() * 6.283; br[i] = Math.sqrt(Math.random()) * 0.9; } }
+      placeBubbles();
+    }
+    rings.forEach(r => { r.flash = Math.max(0, r.flash - dt * 1.4); });
+    splash.update(dt); sparks.update(dt);
+  };
+  v.settle = () => { dOn.fill(0); dPos.fill(-1e5); dGeo.attributes.position.needsUpdate = true; };
+  v.refreshLabels();
+  return v;
+}
+
+/* ============================== పదార్చన: the tree of words ============================== */
+function treeView(p) {
+  const v = baseView(p, { minX: -2.5, maxX: 2.5, minY: -0.5, maxY: 4.75, depth: 4.6, elev: 10 });
+  if (!v) return null;
+  const { scene } = v;
+  addPlatform(scene);
+  const flicker = addDiyas(scene);
+  scene.add(new THREE.HemisphereLight(0xcfefff, 0x2a1c12, 0.7));
+  const key = new THREE.DirectionalLight(0xffe2b8, 2.2); key.position.set(-3, 6, 5); scene.add(key);
+  // planter: terracotta ring with soil
+  const terracotta = new THREE.MeshStandardMaterial({ color: 0xa4512b, roughness: 0.8 });
+  const soil = new THREE.MeshStandardMaterial({ color: 0x3b2618, roughness: 1 });
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 0.88, 0.34, SEGS), [terracotta, soil, terracotta]);
+  pot.position.y = PLAT + 0.17; scene.add(pot);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.05, 8, SEGS).rotateX(Math.PI / 2), terracotta); rim.position.y = PLAT + 0.34; scene.add(rim);
+  const BASE = new THREE.Vector3(0, PLAT + 0.33, 0);
+
+  // branches: seeded recursive tree (same tree every visit)
+  const rng = te.rng(20240613), UP = new THREE.Vector3(0, 1, 0), B = [];
+  (function grow(parent, t, dir, len, rad, depth) {
+    const b = { parent, t, dir, len, rad, depth, i: B.length, s: new THREE.Vector3(), e: new THREE.Vector3(), ph: rng() * 6.283 };
+    B.push(b);
+    if (depth >= 5) return;
+    const n = depth === 0 ? 3 : rng() < 0.5 ? 2 : 3, az0 = rng() * 6.283;
+    for (let k = 0; k < n; k++) {
+      const az = az0 + (k / n) * 6.283 + (rng() - 0.5) * 0.7;
+      const perp = new THREE.Vector3(Math.cos(az), 0, Math.sin(az)); perp.addScaledVector(dir, -perp.dot(dir)).normalize();
+      const tilt = (depth === 0 ? 0.62 : 0.38) + rng() * (depth === 0 ? 0.25 : 0.4);
+      const nd = dir.clone().multiplyScalar(Math.cos(tilt)).addScaledVector(perp, Math.sin(tilt)); nd.y += 0.1; nd.normalize();
+      grow(b, depth === 0 ? 0.78 + rng() * 0.22 : 0.6 + rng() * 0.4, nd, len * (0.72 + rng() * 0.1), rad * 0.66, depth + 1);
+    }
+  })(null, 0, UP.clone(), 1.2, 0.16, 0);
+  const bark = new THREE.MeshStandardMaterial({ color: 0x6b4a32, roughness: 0.85 });
+  const branchMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.66, 1, 1, 7, 1).translate(0, 0.5, 0), bark, B.length);
+  branchMesh.frustumCulled = false; scene.add(branchMesh);
+
+  // leaf slots: one per N words up to the target, clustered round the twigs; filled in a seeded shuffled order
+  p.unitSize = niceUnit(p.data.target / LEAF_BUDGET);
+  const slots = Math.max(Math.ceil(p.data.target / p.unitSize), Math.floor(p.data.current / p.unitSize));
+  const twigs = B.filter(b => b.depth >= 4);
+  const GREENS = ["#2f9e5b", "#3cb371", "#4cc27e", "#278a4c", "#5fd08a", "#36a862", "#6cc644"].map(c => new THREE.Color(c));
+  const leaves = [];
+  for (let j = 0; j < slots; j++) {
+    const b = twigs[j % twigs.length];
+    const off = new THREE.Vector3(rng() - 0.5, rng() - 0.3, rng() - 0.5).normalize().multiplyScalar(0.03 + Math.cbrt(rng()) * 0.17);
+    const q = new THREE.Quaternion().setFromUnitVectors(UP, off.clone().normalize().add(b.dir).normalize());
+    q.multiply(new THREE.Quaternion().setFromAxisAngle(UP, rng() * 6.283));
+    leaves.push({ b, t: 0.45 + rng() * 0.55, off, q, s: 0.8 + rng() * 0.45, c: GREENS[Math.floor(rng() * GREENS.length)], born: -1e9 });
+  }
+  for (let j = leaves.length - 1; j > 0; j--) { const k = Math.floor(rng() * (j + 1)); [leaves[j], leaves[k]] = [leaves[k], leaves[j]]; }
+  const leafShape = new THREE.Shape(); leafShape.moveTo(0, 0); leafShape.bezierCurveTo(0.1, 0.05, 0.08, 0.17, 0, 0.25); leafShape.bezierCurveTo(-0.08, 0.17, -0.1, 0.05, 0, 0);
+  const leafGeo = new THREE.ShapeGeometry(leafShape, 4);
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0, side: THREE.DoubleSide, emissive: 0x0a2414 });
+  const leafMesh = new THREE.InstancedMesh(leafGeo, leafMat, slots);
+  leaves.forEach((L, i) => leafMesh.setColorAt(i, L.c));
+  leafMesh.instanceColor.needsUpdate = true; leafMesh.frustumCulled = false; leafMesh.count = 0; scene.add(leafMesh);
+  // leaves still to come: faint ghost leaves outlining the full canopy of the target
+  const ghost = new THREE.InstancedMesh(leafGeo, new THREE.MeshBasicMaterial({ color: 0xa8efc2, transparent: true, opacity: 0.13, side: THREE.DoubleSide, depthWrite: false }), slots);
+  ghost.frustumCulled = false; ghost.count = 0; scene.add(ghost);
+
+  // ambience: fireflies and a few falling leaves
+  const ffGeo = new THREE.BufferGeometry(), ffPos = new Float32Array(Math.max(1, FIREFLIES) * 3), ffCol = new Float32Array(Math.max(1, FIREFLIES) * 3);
+  ffGeo.setAttribute("position", new THREE.BufferAttribute(ffPos, 3)); ffGeo.setAttribute("color", new THREE.BufferAttribute(ffCol, 3));
+  const ff = Array.from({ length: FIREFLIES }, () => ({ c: new THREE.Vector3((Math.random() - 0.5) * 3.6, 1 + Math.random() * 3.4, (Math.random() - 0.5) * 2.4), ph: Math.random() * 9, sp: 0.3 + Math.random() * 0.5 }));
+  const fireflies = new THREE.Points(ffGeo, new THREE.PointsMaterial({ size: 0.08, map: dotTexture(), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  fireflies.frustumCulled = false; scene.add(fireflies);
+  const fallMesh = new THREE.InstancedMesh(leafGeo, leafMat, Math.max(1, FALLING));
+  for (let i = 0; i < Math.max(1, FALLING); i++) fallMesh.setColorAt(i, GREENS[(i * 2 + 1) % GREENS.length]);
+  fallMesh.frustumCulled = false; fallMesh.count = 0; scene.add(fallMesh);
+  const falling = Array.from({ length: FALLING }, () => ({ on: false, p: new THREE.Vector3(), vy: 0, life: 0, rot: 0, ph: 0 }));
+  let fallTimer = 1.5;
+
+  const m4 = new THREE.Matrix4(), qv = new THREE.Quaternion(), sv = new THREE.Vector3(), pv = new THREE.Vector3(), dv = new THREE.Vector3();
+  let time = 0, shownLeaves = 0, gF = 0.25;
+  function pose(swayOn) {
+    for (const b of B) {
+      if (b.parent) b.s.lerpVectors(b.parent.s, b.parent.e, b.t); else b.s.copy(BASE);
+      dv.copy(b.dir);
+      if (swayOn && b.depth) { dv.x += Math.sin(time * 1.1 + b.ph) * 0.025 * b.depth; dv.z += Math.cos(time * 0.8 + b.ph) * 0.018 * b.depth; dv.normalize(); }
+      const len = b.len * gF;
+      b.e.copy(b.s).addScaledVector(dv, len);
+      const r = b.rad * (0.45 + 0.55 * gF);
+      branchMesh.setMatrixAt(b.i, m4.compose(b.s, qv.setFromUnitVectors(UP, dv), sv.set(r, len, r)));
+    }
+    branchMesh.instanceMatrix.needsUpdate = true;
+    const nowS = performance.now() / 1000;
+    for (let i = 0; i < slots; i++) {
+      const L = leaves[i];
+      pv.lerpVectors(L.b.s, L.b.e, L.t).addScaledVector(L.off, gF);
+      if (i < shownLeaves) {
+        const age = nowS - L.born, k = age >= 0.4 ? 1 : 1 + 2.7 * Math.pow(age / 0.4 - 1, 3) + 1.7 * Math.pow(age / 0.4 - 1, 2);   // ease-out-back pop
+        leafMesh.setMatrixAt(i, m4.compose(pv, L.q, sv.setScalar(L.s * Math.max(0, k) * (0.55 + 0.45 * gF))));
+      } else ghost.setMatrixAt(i - shownLeaves, m4.compose(pv, L.q, sv.setScalar(L.s * (0.55 + 0.45 * gF))));
+    }
+    leafMesh.count = shownLeaves; leafMesh.instanceMatrix.needsUpdate = true;
+    ghost.count = slots - shownLeaves; ghost.instanceMatrix.needsUpdate = true;
+  }
+
+  gF = 1; pose(false);
+  const bb = new THREE.Box3(new THREE.Vector3(-2.42, 0, -2.42), new THREE.Vector3(2.42, PLAT, 2.42));
+  B.forEach(b => bb.expandByPoint(b.e)); leaves.forEach(L => bb.expandByPoint(pv.lerpVectors(L.b.s, L.b.e, L.t).add(L.off)));
+  v.box = { minX: Math.min(-2.5, bb.min.x - 0.15), maxX: Math.max(2.5, bb.max.x + 0.15), minY: -0.5, maxY: bb.max.y + 0.3, depth: 4.6, elev: 10 };
+  if (v.w && v.h) v.fit(v.w, v.h);
+  gF = 0.25;
+  v.reset = () => { shownLeaves = 0; leaves.forEach(L => (L.born = -1e9)); falling.forEach(f => (f.on = false)); fallMesh.count = 0; };
+  v.milestone = () => {};
+  v.setProgress = (e, eLead, animating) => {
+    gF = 0.25 + 0.75 * e;
+    const want = Math.min(slots, Math.floor(Math.round(e * p.data.current) / p.unitSize));
+    if (want > shownLeaves) { const nowS = performance.now() / 1000; for (let i = shownLeaves; i < want; i++) leaves[i].born = animating && motionOK() ? nowS : -1e9; }
+    shownLeaves = want;
+    v.leavesShown = shownLeaves;
+    pose(ambient());
+  };
+  v.step = dt => {
+    time += dt; flicker(time);
+    if (!ambient()) return;
+    for (let i = 0; i < FIREFLIES; i++) {
+      const f = ff[i], t = time * f.sp + f.ph;
+      ffPos.set([f.c.x + Math.sin(t) * 0.5, f.c.y + Math.sin(t * 1.3) * 0.3, f.c.z + Math.cos(t * 0.9) * 0.5], i * 3);
+      const k = Math.max(0, Math.sin(t * 2.1)) ** 2 * 1.6;
+      ffCol.set([k * 1.4, k * 1.5, k * 0.4], i * 3);
+    }
+    ffGeo.attributes.position.needsUpdate = true; ffGeo.attributes.color.needsUpdate = true;
+    fallTimer -= dt;
+    if (FALLING && fallTimer <= 0 && shownLeaves > 0) {
+      fallTimer = 1.8 + Math.random() * 2.5;
+      const f = falling.find(q => !q.on);
+      if (f) { const L = leaves[Math.floor(Math.random() * shownLeaves)]; f.on = true; f.p.lerpVectors(L.b.s, L.b.e, L.t).add(L.off); f.vy = -0.35; f.life = 0; f.ph = Math.random() * 6; }
+    }
+    let n = 0;
+    for (const f of falling) {
+      if (!f.on) continue;
+      f.life += dt; f.p.y += f.vy * dt; f.p.x += Math.sin(f.life * 2.4 + f.ph) * 0.4 * dt;
+      if (f.p.y < PLAT + 0.36 || f.life > 7) { f.on = false; continue; }
+      fallMesh.setMatrixAt(n, m4.compose(f.p, qv.setFromAxisAngle(sv.set(Math.sin(f.ph), 0.3, Math.cos(f.ph)).normalize(), f.life * 2.2 + f.ph), sv.setScalar(Math.min(1, (7 - f.life) / 1.5))));
+      n++;
+    }
+    fallMesh.count = n; fallMesh.instanceMatrix.needsUpdate = true;
+  };
+  v.settle = () => {};
+  v.refreshLabels = () => {};
+  return v;
+}
+
+/* ============================== loop ============================== */
+const store = {};   // loaded data (+ updated)
+let ready = false, pendingRaf = 0;
+const visibleNow = k => !P[k].el.panel.hidden && P[k].el.panel.classList.contains("is-active");
+const wantsAmbient = () => ambient() && KEYS.some(k => P[k].view && visibleNow(k));   // nothing to animate without WebGL
+function anyAnimating(now = performance.now()) {
+  return KEYS.some(k => { const a = P[k].anim; return visibleNow(k) && (a.t0 === null || (a.dur && now - a.t0 < a.dur + 1200)); });
+}
+function frame() {
+  if (!ready) return;
+  const now = performance.now();
+  for (const k of KEYS) {
+    const p = P[k];
+    if (!visibleNow(k)) continue;
+    const a = p.anim;
+    if (a.t0 === null) { a.t0 = now; a.dur = motionOK() ? SPEEDS[app.settings.speed] * 1000 : 0; p.reached = 0; p.view?.reset(); }
+    const t = a.dur ? clamp01((now - a.t0) / a.dur) : 1;
+    const animating = t < 1;
+    p.e = ease(t);
+    const eLead = a.dur ? ease(clamp01((now - a.t0 + LEAD * 1000) / a.dur)) : 1;
+    const reached = reachedOf(p, p.e);
+    if (reached > p.reached) {
+      for (let i = p.reached; i < reached; i++) {
+        if (animating || (a.dur && now - a.t0 < a.dur + 100)) {
+          p.view?.milestone(i);
+          const li = p.el.miles[i]; li.classList.remove("pop"); void li.offsetWidth; li.classList.add("pop");
+        }
+      }
+      p.reached = reached;
+    }
+    updateStats(p);
+    if (p.view) {
+      if (!animating && !ambient() && a.dur && now - a.t0 > a.dur + 1100) p.view.settle();
+      p.view.setProgress(p.e, eLead, animating, now);
+      p.view.composer.render();
+    }
+  }
+  if (loop.running && !anyAnimating(now) && !wantsAmbient()) loop.stop();
+}
+const loop = createLoop({
+  update: dt => { const now = performance.now(); for (const k of KEYS) { const p = P[k]; if (p.view && visibleNow(k)) p.view.step(dt, p.anim.t0 !== null && p.anim.dur > 0 && now - p.anim.t0 < p.anim.dur); } },
+  render: frame,
+});
+/** Something changed: keep animating if there is motion to show, else draw one still frame. */
+function kick() {
+  if (!ready) return;
+  if (motionOK() && (wantsAmbient() || anyAnimating())) { loop.start(); return; }
+  if (!pendingRaf) pendingRaf = requestAnimationFrame(() => { pendingRaf = 0; frame(); });
+}
+function replay(key) {
+  const p = P[key];
+  p.anim.t0 = null; p.shown = -1;
+  p.view?.reset();
+  kick();
+}
+matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", e => { reducedOS = e.matches; if (reducedOS) { loop.stop(); KEYS.forEach(k => { P[k].anim.dur = 0; }); } kick(); });
+
+/* ============================== layout ============================== */
+const splitMQ = matchMedia("(min-width: 1000px) and (min-height: 560px)");
+splitMQ.addEventListener?.("change", () => layout());
+function layout() {
+  const both = !!app.settings.showWords;
+  const mode = !both ? "single" : splitMQ.matches ? "split" : "tabs";
+  dash.dataset.mode = mode;
+  tabs.hidden = mode !== "tabs";
+  if (!both) activeTab = "padyarchana";
+  for (const k of KEYS) {
+    const p = P[k], on = k === "padyarchana" || both;
+    p.el.panel.hidden = !on;
+    p.el.panel.classList.toggle("is-active", mode !== "tabs" || activeTab === k);
+    p.el.tab.setAttribute("aria-selected", String(activeTab === k));
+    p.el.tab.tabIndex = activeTab === k ? 0 : -1;
+  }
+  if (both && ready && !P.padarchana.view && !P.padarchana.noGL) createView("padarchana");
+  for (const k of KEYS) { const v = P[k].view; if (v?.w && visibleNow(k)) v.fit(v.w, v.h); }
+  kick();
+}
+function createView(key) {
+  const p = P[key];
+  p.view = key === "padyarchana" ? vesselView(p) : treeView(p);
+  if (!p.view) { p.noGL = true; p.unitSize = niceUnit(p.data.target / (key === "padyarchana" ? DROP_BUDGET : LEAF_BUDGET)); }
+  else {   // warm up: draw the full state once so every shader is compiled before the clock starts
+    p.view.setProgress(1, 1, false, performance.now()); p.view.composer.render();
+    p.view.reset(); p.view.setProgress(0, 0, false, performance.now());
+  }
+  setLegend(p);
+}
+
+/* ============================== settings & share ============================== */
+function onSettings(values, key) {
+  if (!ready) return;
+  if (key === "showWords" || key === null) layout();
+  if (key === "teluguDigits" || key === null) KEYS.forEach(k => refreshStatic(P[k]));
+  if (key === "reduceFx" || key === null) KEYS.forEach(k => P[k].view?.applyFx());
+  if (key === "speed") KEYS.forEach(k => { if (visibleNow(k)) replay(k); });
+  kick();
+}
+function doShare() {
+  const parts = KEYS.filter(k => k === "padyarchana" || app.settings.showWords)
+    .map(k => { const d = P[k].data; return `${PROJECTS[k].name}: ${num(d.current)} / ${num(d.target)} ${PROJECTS[k].unit} (${pctText(d.current / d.target)})`; });
+  const url = new URL(location.href);
+  for (const q of ["debug", "q"]) url.searchParams.delete(q);
+  share({ title: "తెలుగు సంపద", text: `తెలుగు సంపద · ${parts.join(" · ")}`, url: url.toString() }, app.toast);
+}
+
+/* ============================== boot ============================== */
+// fontsReady() loads only the Telugu subset; the 3D labels also need its Latin digits
+const latinDigits = document.fonts ? Promise.race([document.fonts.load("700 48px 'Noto Sans Telugu'", "0123456789,.%").catch(() => null), new Promise(r => setTimeout(r, 3000))]) : null;
+const [loaded] = await Promise.all([loadData(), fontsReady(), latinDigits]);
+Object.assign(store, loaded);
+for (const k of KEYS) P[k].data = store[k];
+ready = true;
+createView("padyarchana");
+KEYS.forEach(k => { if (!P[k].unitSize) P[k].unitSize = niceUnit(P[k].data.target / (k === "padyarchana" ? DROP_BUDGET : LEAF_BUDGET)); refreshStatic(P[k]); });
+layout();
+if (DEBUG) window.__dash = {
+  P, store, tier, loop, replay, layout,
+  snapshot: () => Object.fromEntries(KEYS.map(k => [k, { e: P[k].e, text: P[k].el.now.textContent, shown: P[k].shown, fill: P[k].view?.fill ?? null,
+    leaves: P[k].view?.leavesShown ?? null, unit: P[k].unitSize, current: P[k].data.current, target: P[k].data.target, onscreen: P[k].onscreen, t0: P[k].anim.t0, dur: P[k].anim.dur }])),
+};
+</script>
+</body>
+</html>
