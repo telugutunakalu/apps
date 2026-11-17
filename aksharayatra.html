@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>అక్షర యాత్ర — బ్రాహ్మీ నుండి తెలుగు దాకా</title>
+<meta name="description" content="2,300 ఏళ్ల తెలుగు లిపి పరిణామం: ప్రతి అక్షరం బ్రాహ్మీ నుండి నేటి తెలుగు దాకా ఎలా మారిందో కణాల యానిమేషన్‌లో చూడండి.">
+<meta property="og:title" content="అక్షర యాత్ర — బ్రాహ్మీ నుండి తెలుగు దాకా">
+<meta property="og:description" content="తెలుగు లిపి పరిణామం — క్రీ.పూ. 3వ శతాబ్దం నుండి నేటి వరకు, ప్రతి అక్షరం.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Ctext x='32' y='46' font-size='40' text-anchor='middle' fill='%23f2b544'%3E%E0%B0%85%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;600&family=Noto+Serif+Telugu:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000;
+    --ink: #f3e7cf;
+    --muted: #a59a86;
+    --faint: #6b6152;
+    --line: rgba(243, 231, 207, .14);
+    --accent: #f2b544;
+    --panel: rgba(12, 10, 14, .55);
+    --te: "Noto Serif Telugu", "Noto Sans Telugu", serif;
+    --te-sans: "Noto Sans Telugu", sans-serif;
+    --en: "Cormorant Garamond", "Noto Sans Telugu", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden;
+               overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+  body { font-family: var(--en); -webkit-font-smoothing: antialiased; }
+  canvas#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .ui { position: fixed; inset: 0; pointer-events: none; display: grid;
+        grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr);
+        padding: max(22px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right))
+                 max(18px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
+        gap: 8px; }
+  .ui > * { pointer-events: auto; min-width: 0; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  /* header */
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; pointer-events: none; }
+  .home { pointer-events: auto; display: inline-block; font-family: var(--te-sans); font-size: 13px; color: var(--faint);
+          text-decoration: none; margin-bottom: 4px; transition: color .2s; }
+  .home:hover, .home:focus-visible { color: var(--accent); outline: none; }
+  .title h1 { margin: 0; font-family: var(--te); font-weight: 700; font-size: clamp(24px, 2.8vw, 36px); letter-spacing: .01em; }
+  .title p { margin: 2px 0 0; color: var(--muted); font-family: var(--te-sans); font-size: clamp(13px, 1.2vw, 16px); }
+  .now { text-align: right; }
+  .now .glyph { font-family: var(--te); font-size: clamp(40px, 5vw, 64px); line-height: 1; color: var(--accent); }
+  .now .roman { color: var(--muted); font-size: 17px; letter-spacing: .12em; text-transform: lowercase; }
+
+  /* caption + source cell */
+  .middle { display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+  .caption { display: flex; align-items: center; gap: 20px; padding-bottom: 8px; min-height: 92px; }
+  .caption .text { text-align: center; transition: opacity .45s ease; }
+  .caption .text.fade { opacity: 0; }
+  .era-te { font-family: var(--te-sans); font-size: clamp(16px, 1.6vw, 21px); font-weight: 600; }
+  .era-en { color: var(--muted); font-size: clamp(16px, 1.5vw, 20px); margin-top: 2px; }
+  .era-en b { color: var(--accent); font-family: var(--te-sans); font-weight: 600; font-size: .85em; }
+  .era-epoch { color: var(--faint); font-family: var(--te-sans); font-size: 14px; margin-top: 2px; min-height: 1.2em; }
+  .source { display: flex; flex-direction: column; align-items: center; gap: 4px; transition: opacity .45s ease; }
+  .source.fade { opacity: 0; }
+  .source .frame { width: 58px; height: 80px; border: 1px solid var(--line); border-radius: 4px; background: #fff;
+                   display: grid; place-items: center; overflow: hidden; }
+  .source .scan { background-repeat: no-repeat; image-rendering: pixelated; filter: contrast(1.15) sepia(.12); }
+  .source .frame .modern { font-family: var(--te-sans); color: #1b160f; font-size: 38px; font-weight: 600; }
+  .source small { color: var(--faint); font-family: var(--te-sans); font-size: 12px; }
+
+  /* timeline */
+  .timeline { position: relative; display: flex; justify-content: space-between; align-items: center;
+              margin: 6px auto 4px; width: min(920px, 100%); height: 34px; }
+  .timeline::before { content: ""; position: absolute; left: 8px; right: 8px; top: 50%; height: 1px; background: var(--line); }
+  .timeline .fill { position: absolute; left: 8px; top: 50%; height: 1px; background: var(--accent);
+                    transition: width .6s ease; box-shadow: 0 0 8px var(--accent); }
+  .node { position: relative; width: 17px; height: 17px; display: grid; place-items: center; }
+  .node i { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); transition: all .3s ease; }
+  .node.empty i { background: transparent; border: 1px solid var(--faint); width: 7px; height: 7px; }
+  .node.empty { cursor: default; }
+  .node.branch i { background: transparent; border: 1px dashed var(--muted); }
+  .node.branch.on i { background: var(--muted); border: 0; }
+  .node.past i { background: var(--accent); opacity: .65; }
+  .node.current i { background: var(--accent); width: 13px; height: 13px; box-shadow: 0 0 12px var(--accent); opacity: 1; }
+  .node .tip { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+               background: #15121a; border: 1px solid var(--line); padding: 4px 8px; border-radius: 4px;
+               font-family: var(--te-sans); font-size: 13px; color: var(--ink); opacity: 0; pointer-events: none; transition: opacity .15s; }
+  .node:first-child .tip { left: 0; transform: none; }
+  .node:last-child .tip { left: auto; right: 0; transform: none; }
+  .node:hover .tip, .node:focus-visible .tip { opacity: 1; }
+  .ends { display: flex; justify-content: space-between; gap: 12px; width: min(920px, 100%); margin: 0 auto;
+          color: var(--faint); font-family: var(--te-sans); font-size: 12px; }
+  .ends .hint { text-align: center; }
+  .hint .touch { display: none; }
+  @media (pointer: coarse) { .hint .touch { display: inline; } .hint .keys { display: none; } }
+
+  /* bottom bar */
+  .bar { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+  .controls { display: flex; gap: 6px; flex-shrink: 0; }
+  .ctl { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center;
+         background: var(--panel); transition: border-color .2s; }
+  .ctl:hover, .ctl:focus-visible { border-color: var(--accent); outline: none; }
+  .ctl svg { width: 16px; height: 16px; fill: var(--ink); }
+  .toggle { display: flex; align-items: center; gap: 8px; color: var(--muted); font-family: var(--te-sans); font-size: 14px;
+            white-space: nowrap; cursor: pointer; }
+  .toggle input { accent-color: var(--accent); }
+  .toggle .short { display: none; }
+  .letters { flex: 1; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: thin; padding: 4px 2px;
+             mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent); }
+  .letters .grp { width: 1px; align-self: stretch; margin: 6px 8px; background: var(--line); flex-shrink: 0; }
+  .letters button { font-family: var(--te-sans); font-size: 21px; min-width: 38px; height: 40px; border-radius: 6px;
+                    color: var(--muted); flex-shrink: 0; transition: color .2s, background .2s; }
+  .letters button:hover, .letters button:focus-visible { color: var(--ink); background: rgba(255,255,255,.05); outline: none; }
+  .letters button.active { color: var(--bg); background: var(--accent); }
+  .loading { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center;
+             color: var(--muted); font-family: var(--te-sans); pointer-events: none; transition: opacity .6s; }
+
+  /* phones / narrow windows */
+  @media (max-width: 720px) {
+    .ui { gap: 4px;
+          padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+                   max(10px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+    .title h1 { font-size: 23px; }
+    .title p { font-size: 13px; }
+    .now .glyph { font-size: 38px; }
+    .now .roman { font-size: 14px; }
+    .caption { gap: 12px; min-height: 76px; padding-bottom: 4px; }
+    .caption .text { text-align: left; }
+    .era-te { font-size: 15px; }
+    .era-en { font-size: 15px; }
+    .era-epoch { font-size: 13px; }
+    .source { order: -1; }
+    .source .frame { width: 42px; height: 58px; }
+    .source .frame .modern { font-size: 28px; }
+    .source small { display: none; }
+    .timeline { height: 30px; }
+    .node { width: 20px; height: 26px; }        /* larger tap targets between the dots */
+    .node .tip { display: none; }
+    .bar { flex-wrap: wrap; gap: 8px 14px; margin-top: 6px; }
+    .controls { gap: 8px; }
+    .ctl { width: 44px; height: 44px; }
+    .letters { order: 3; flex-basis: 100%; }
+    .letters button { min-width: 44px; height: 44px; font-size: 22px; }
+    .toggle { gap: 6px; min-height: 44px; }
+    .toggle .long { display: none; }
+    .toggle .short { display: inline; }
+  }
+  @media (max-width: 360px) {
+    .ends .hint { display: none; }
+    .ctl { width: 40px; height: 40px; }
+  }
+  /* short screens: landscape phones */
+  @media (max-height: 520px) {
+    .ui { gap: 2px; padding-top: max(10px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+    .home { display: none; }
+    .title h1 { font-size: 19px; }
+    .title p, .ends, .era-epoch, .source { display: none; }
+    .now .glyph { font-size: 30px; }
+    .caption { min-height: 0; padding-bottom: 0; }
+    .caption .text { text-align: center; }
+    .era-te, .era-en { font-size: 14px; }
+    .timeline { height: 24px; margin: 2px auto; }
+    .bar { flex-wrap: nowrap; margin-top: 2px; }
+    .letters { order: 0; flex-basis: auto; }
+    .letters button, .ctl { height: 38px; }
+    .ctl { width: 38px; }
+    .toggle { min-height: 0; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="ఎంచుకున్న అక్షరం బ్రాహ్మీ నుండి తెలుగుగా మారే కణాల యానిమేషన్"></canvas>
+<div class="loading" id="loading">అక్షరాలు సిద్ధమవుతున్నాయి…</div>
+
+<div class="ui">
+  <header>
+    <div class="title">
+      <a class="home" href="./index.html">← తెలుగు తునకలు</a>
+      <h1>అక్షర యాత్ర</h1>
+      <p>బ్రాహ్మీ నుండి తెలుగు దాకా · క్రీ.పూ. 3వ శతాబ్దం – నేడు</p>
+    </div>
+    <div class="now" aria-live="polite">
+      <div class="glyph" id="nowGlyph">అ</div>
+      <div class="roman" id="nowRoman">a</div>
+    </div>
+  </header>
+
+  <div class="middle">
+    <div class="caption">
+      <div class="text" id="capText">
+        <div class="era-te" id="eraTe"></div>
+        <div class="era-en" id="eraEn"></div>
+        <div class="era-epoch" id="eraEpoch"></div>
+      </div>
+      <div class="source" id="source">
+        <div class="frame" id="sourceFrame"></div>
+        <small>మూల పట్టిక</small>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="timeline" id="timeline"><div class="fill" id="fill"></div></div>
+    <div class="ends"><span>క్రీ.పూ. 3వ శ.</span>
+      <span class="hint"><span class="keys">← → యుగాలు · ↑ ↓ అక్షరాలు · స్పేస్ — ఆపు/నడుపు</span><span class="touch">← → స్వైప్ — యుగాలు · ↑ ↓ — అక్షరాలు</span></span>
+      <span>నేడు</span></div>
+    <div class="bar">
+      <div class="controls">
+        <button class="ctl" id="prev" aria-label="వెనుకటి యుగం"><svg viewBox="0 0 16 16"><path d="M11 2 4 8l7 6z"/></svg></button>
+        <button class="ctl" id="play" aria-label="ఆపు"><svg viewBox="0 0 16 16" id="playIcon"><path d="M4 2h3v12H4zM9 2h3v12H9z"/></svg></button>
+        <button class="ctl" id="next" aria-label="తదుపరి యుగం"><svg viewBox="0 0 16 16"><path d="m5 2 7 6-7 6z"/></svg></button>
+      </div>
+      <div class="letters" id="letters" role="listbox" aria-label="అక్షరం ఎంచుకోండి"></div>
+      <label class="toggle" title="పల్లవ గ్రంథ/తమిళ వరుసను కూడా చూపు (ఇది పక్క శాఖ, తెలుగుకు నేరు పూర్వరూపం కాదు)">
+        <input type="checkbox" id="branch"> <span class="long">పల్లవ శాఖ</span><span class="short">పల్లవ</span>
+      </label>
+      <label class="toggle" title="నేటి రూపం తర్వాత తదుపరి అక్షరానికి వెళ్ళు">
+        <input type="checkbox" id="advance" checked> <span class="long">వరుసగా అన్ని అక్షరాలు</span><span class="short">వరుసగా</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<script src="aksharayatra_data.js"></script>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
+/* Glyph data comes from aksharayatra_data.js, generated by
+   evolution_of_telugu/tools/extract_glyphs.py from two script-evolution charts.
+   Per letter: `masks` = PNG strip of 15 particle masks (14 eras + modern, `cell` px each),
+   `scans` = JPEG strip of the 14 original chart cells, `has` = "1"/"0" per era. */
+const DATA = window.AKSHARA_YATRA_DATA;
+const ERAS = DATA.eras;
+const LETTERS = DATA.letters;
+const CELL = DATA.cell;
+const BRANCH = ERAS.findIndex(e => e.branch);
+const SMALL = matchMedia("(max-width: 720px), (pointer: coarse)").matches;
+const N = SMALL ? 4500 : 7000;   // particles (lighter on phones)
+const GLYPH_SCALE = 2.3;         // world units spanned by one mask cell
+const GLYPH_WORLD = GLYPH_SCALE * DATA.fit / CELL;   // glyph's longest side
+const HOLD = 1.7, MORPH = 1.6, HOLD_MODERN = 3.2;
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = id => document.getElementById(id);
+const has = (li, ei) => LETTERS[li].has[ei] === "1";
+
+// Era colour ramp: sandstone (Brahmi) → copper (Telugu-Kannada) → gold (Telugu) → lamp-white (modern)
+const RAMP = ["#c9a27a", "#d3a06e", "#d99a5f", "#de9152", "#e38747", "#e8793c", "#9fb4c9",
+              "#ec8a3a", "#ef9b3c", "#f1ab40", "#f2b544", "#f4c25a", "#f6cf74", "#f8db92", "#fff1cf"]
+  .map(c => new THREE.Color(c));
+
+/* ---------- glyph → point cloud ---------- */
+const sampleCanvas = document.createElement("canvas");
+sampleCanvas.width = sampleCanvas.height = CELL;
+const sctx = sampleCanvas.getContext("2d", { willReadFrequently: true });
+const cache = new Map(), strips = new Map();
+
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function hilbert(x, y, n = 1024) {           // xy → distance along a Hilbert curve
+  let d = 0;
+  for (let s = n >> 1; s > 0; s >>= 1) {
+    const rx = (x & s) > 0 ? 1 : 0, ry = (y & s) > 0 ? 1 : 0;
+    d += s * s * ((3 * rx) ^ ry);
+    if (ry === 0) { if (rx === 1) { x = s - 1 - x; y = s - 1 - y; } [x, y] = [y, x]; }
+  }
+  return d;
+}
+
+function maskStrip(li) {
+  if (!strips.has(li)) strips.set(li, new Promise((res, rej) => {
+    const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = LETTERS[li].masks;
+  }));
+  return strips.get(li);
+}
+
+async function glyphPoints(li, ei) {
+  const key = li + ":" + ei;
+  if (cache.has(key)) return cache.get(key);
+  const img = await maskStrip(li);
+  sctx.clearRect(0, 0, CELL, CELL);
+  sctx.drawImage(img, ei * CELL, 0, CELL, CELL, 0, 0, CELL, CELL);
+  const px = sctx.getImageData(0, 0, CELL, CELL).data;
+  const idx = [], cum = []; let total = 0;
+  for (let i = 0; i < CELL * CELL; i++) { const a = px[i * 4]; if (a > 50) { total += a; idx.push(i); cum.push(total); } }
+  const rnd = mulberry32(li * 131 + ei * 7 + 1);
+  const pts = [];
+  for (let k = 0; k < N; k++) {
+    const r = rnd() * total; let lo = 0, hi = cum.length - 1;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (cum[m] < r) lo = m + 1; else hi = m; }
+    const p = idx[lo];
+    const gx = (p % CELL) + rnd(), gy = Math.floor(p / CELL) + rnd();
+    pts.push({ x: (gx / CELL - .5) * GLYPH_SCALE, y: -(gy / CELL - .5) * GLYPH_SCALE,
+               z: (rnd() - .5) * .06, h: hilbert(Math.floor(gx * 8), Math.floor(gy * 8)) });
+  }
+  // Order along a Hilbert curve so particle i lands in a spatially "matching" place in every glyph.
+  pts.sort((a, b) => a.h - b.h);
+  const arr = new Float32Array(N * 3);
+  pts.forEach((p, i) => { arr[i * 3] = p.x; arr[i * 3 + 1] = p.y; arr[i * 3 + 2] = p.z; });
+  cache.set(key, arr);
+  return arr;
+}
+
+/* ---------- three.js scene ---------- */
+const canvas = $("stage");
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
+} catch (err) {
+  $("loading").textContent = "క్షమించండి — ఈ బ్రౌజర్‌లో WebGL అందుబాటులో లేదు. దయచేసి వేరే బ్రౌజర్‌లో ప్రయత్నించండి.";
+  throw err;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, SMALL ? 1.5 : 2));
+// Pure black: through the composer's linear render targets + OutputPass, any other
+// clear colour gets sRGB-encoded a second time and turns into a grey haze.
+renderer.setClearColor(0x000000, 1);
+// Particles are drawn in HDR (>1) so bloom catches them; ACES rolls dense strokes off
+// to a hot gold instead of clipping to flat white. Exposure = overall brightness knob.
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, .1, 60);
+camera.position.set(0, 0, 4.6);
+const group = new THREE.Group();
+scene.add(group);
+
+const geo = new THREE.BufferGeometry();
+const aFrom = new Float32Array(N * 3), aTo = new Float32Array(N * 3), aRand = new Float32Array(N * 4);
+for (let i = 0; i < N * 4; i++) aRand[i] = Math.random();
+for (let i = 0; i < N; i++) {             // start as a loose nebula
+  const r = 2.5 * Math.cbrt(Math.random()), t = Math.random() * 6.283, u = Math.random() * 2 - 1;
+  const s = Math.sqrt(1 - u * u);
+  aFrom[i * 3] = r * s * Math.cos(t); aFrom[i * 3 + 1] = r * s * Math.sin(t) * .6; aFrom[i * 3 + 2] = r * u * .6;
+}
+aTo.set(aFrom);
+geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(N * 3), 3)); // unused, needed for draw count
+geo.setAttribute("aFrom", new THREE.BufferAttribute(aFrom, 3));
+geo.setAttribute("aTo", new THREE.BufferAttribute(aTo, 3));
+geo.setAttribute("aRand", new THREE.BufferAttribute(aRand, 4));
+geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 6);
+
+const uniforms = {
+  uProgress: { value: 1 }, uTime: { value: 0 },
+  uSize: { value: SMALL ? 22 : 19 }, uPR: { value: renderer.getPixelRatio() },
+  uGlow: { value: 1.25 },   // HDR multiplier: how luminous each particle is
+  uSwirl: { value: reduceMotion ? .25 : 1 },
+  uColA: { value: RAMP[0].clone() }, uColB: { value: RAMP[0].clone() },
+};
+const mat = new THREE.ShaderMaterial({
+  uniforms, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: /* glsl */`
+    uniform float uProgress, uTime, uSize, uPR, uSwirl;
+    uniform vec3 uColA, uColB;
+    attribute vec3 aFrom, aTo; attribute vec4 aRand;
+    varying vec3 vCol; varying float vA;
+    float ease(float t){ return t < .5 ? 4.*t*t*t : 1. - pow(-2.*t + 2., 3.) / 2.; }
+    void main(){
+      float delay = aRand.x * .38;
+      float e = ease(clamp((uProgress - delay) / .62, 0., 1.));
+      vec3 p = mix(aFrom, aTo, e);
+      float arc = sin(3.14159265 * e);
+      float ang = aRand.y * 6.2831853 + uTime * .7 + e * 3.;
+      p.xy += uSwirl * arc * (.18 + .42 * aRand.z) * vec2(cos(ang), sin(ang));
+      p.z  += uSwirl * arc * (aRand.w - .5) * 1.6;
+      p += .007 * vec3(sin(uTime*1.7 + aRand.y*40.), cos(uTime*1.3 + aRand.z*40.), sin(uTime*.9 + aRand.w*40.));
+      vec4 mv = modelViewMatrix * vec4(p, 1.);
+      gl_Position = projectionMatrix * mv;
+      gl_PointSize = uSize * uPR * (.55 + .9 * aRand.w) * (1. + arc * .5) / -mv.z;
+      vCol = mix(uColA, uColB, e) * (1. + arc * .5);
+      // a few particles burn hotter, like embers; all twinkle gently
+      float spark = step(.93, aRand.y) * 1.2;
+      vA = (.32 + .3 * aRand.z + spark) * (.85 + .15 * sin(uTime * 2.3 + aRand.x * 60.)) * (1. - arc * .2);
+    }`,
+  fragmentShader: /* glsl */`
+    uniform float uGlow;
+    varying vec3 vCol; varying float vA;
+    void main(){
+      float d = length(gl_PointCoord - .5);
+      if (d > .5) discard;
+      float halo = pow(smoothstep(.5, 0., d), 2.2);
+      float core = smoothstep(.14, 0., d);                 // white-hot centre
+      vec3 c = (vCol * halo + vec3(1., .9, .72) * core * .55) * vA * uGlow;
+      gl_FragColor = vec4(c, halo * vA);
+    }`,
+});
+group.add(new THREE.Points(geo, mat));
+
+// drifting dust for depth
+const dust = (() => {
+  const M = 900, pos = new Float32Array(M * 3);
+  for (let i = 0; i < M; i++) { pos[i*3] = (Math.random()-.5)*12; pos[i*3+1] = (Math.random()-.5)*7; pos[i*3+2] = -Math.random()*8 - .5; }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const d = new THREE.Points(g, new THREE.PointsMaterial({ size: .022, color: 0x8a7a62, transparent: true, opacity: .45,
+    depthWrite: false, blending: THREE.AdditiveBlending }));
+  scene.add(d); return d;
+})();
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), .95, .38, .22);  // strength, radius, threshold
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// Fit the glyph into the free band between the header and the caption, whatever the
+// screen shape: pick the camera distance that gives the glyph the wanted pixel size,
+// then slide the particle group so the glyph is centred in that band.
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); composer.setSize(w, h); bloom.resolution.set(w, h);
+  camera.aspect = w / h;
+  const top = document.querySelector("header").getBoundingClientRect().bottom + 10;
+  const bot = Math.max(document.querySelector(".caption").getBoundingClientRect().top - 6, top + 80);
+  const size = Math.max(80, Math.min((bot - top) * .94, w * .78, 520));   // glyph px
+  const worldPerPx = GLYPH_WORLD / size;
+  camera.position.z = (h * worldPerPx) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+  group.position.y = (h / 2 - (top + bot) / 2) * worldPerPx;
+  uniforms.uPR.value = renderer.getPixelRatio();
+  camera.updateProjectionMatrix();
+  if (state.ei >= 0) { drawScan(); updateTimeline(); }
+}
+addEventListener("resize", resize);
+// fonts change the header/caption heights, so re-fit once they are in
+document.fonts?.ready.then(resize);
+
+/* ---------- sequencing ---------- */
+const state = { li: 0, seq: [], pos: 0, ei: -1, playing: !reduceMotion, phase: "hold", t: 0, busy: false };
+let pending = null;
+
+function buildSeq(li) {
+  return ERAS.map((_, i) => i).filter(i => has(li, i) && (i !== BRANCH || $("branch").checked));
+}
+
+function currentPositions() {     // snapshot mid-flight positions so interruptions stay smooth
+  const out = new Float32Array(N * 3), p = uniforms.uProgress.value;
+  for (let i = 0; i < N; i++) {
+    let t = Math.min(Math.max((p - aRand[i * 4] * .38) / .62, 0), 1);
+    t = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    for (let k = 0; k < 3; k++) out[i*3+k] = aFrom[i*3+k] + (aTo[i*3+k] - aFrom[i*3+k]) * t;
+  }
+  return out;
+}
+
+// Latest request wins: while a glyph is still being sampled, newer clicks/ticks replace
+// the queued target instead of stacking up and skipping eras.
+async function morphTo(li, ei) {
+  pending = [li, ei];
+  if (state.busy) return;
+  state.busy = true;
+  try {
+    while (pending) {
+      const [l, e] = pending; pending = null;
+      const target = await glyphPoints(l, e);
+      if (pending) continue;
+      aFrom.set(currentPositions());
+      aTo.set(target);
+      geo.attributes.aFrom.needsUpdate = geo.attributes.aTo.needsUpdate = true;
+      uniforms.uColA.value.copy(state.ei >= 0 ? RAMP[state.ei] : RAMP[0]);
+      uniforms.uColB.value.copy(RAMP[e]);
+      uniforms.uProgress.value = 0;
+      state.li = l; state.ei = e; state.phase = "morph"; state.t = 0;
+      updateCaption(); updateTimeline();
+    }
+  } finally { state.busy = false; }
+  const nx = state.seq[state.pos + 1]; if (nx !== undefined) glyphPoints(state.li, nx);   // warm the cache
+}
+
+async function goLetter(li, eraIdx) {
+  state.seq = buildSeq(li);
+  state.pos = eraIdx === undefined ? 0 : Math.max(0, state.seq.indexOf(eraIdx));
+  renderLetterStrip(li);
+  await morphTo(li, state.seq[state.pos]);
+}
+
+function step(dir) {
+  const np = state.pos + dir;
+  if (np >= 0 && np < state.seq.length) { state.pos = np; morphTo(state.li, state.seq[np]); return; }
+  if (dir > 0) {
+    if ($("advance").checked) goLetter((state.li + 1) % LETTERS.length);
+    else { state.pos = 0; morphTo(state.li, state.seq[0]); }
+  }
+}
+
+/* ---------- UI ---------- */
+function drawScan() {
+  const fr = $("sourceFrame"), sc = fr.querySelector(".scan");
+  if (!sc) return;
+  const { w, h } = DATA.scan, s = Math.min(fr.clientWidth / w, fr.clientHeight / h);
+  Object.assign(sc.style, {
+    width: w * s + "px", height: h * s + "px",
+    backgroundImage: `url(${LETTERS[state.li].scans})`,
+    backgroundSize: `${w * s * (ERAS.length - 1)}px ${h * s}px`,
+    backgroundPosition: `${-state.ei * w * s}px 0`,
+  });
+}
+
+function updateCaption() {
+  const e = ERAS[state.ei], L = LETTERS[state.li];
+  const txt = $("capText"), src = $("source");
+  txt.classList.add("fade"); src.classList.add("fade");
+  setTimeout(() => {
+    $("eraTe").textContent = e.te;
+    $("eraEn").innerHTML = `<b>${e.date_te}</b> · ${e.en}`;
+    $("eraEpoch").textContent = e.epoch_te ? `${e.epoch_te} (${e.epoch})` : "";
+    const fr = $("sourceFrame");
+    if (e.id === "modern") {
+      fr.innerHTML = `<span class="modern">${L.char}</span>`;
+      src.querySelector("small").textContent = "నేడు";
+    } else {
+      fr.innerHTML = `<div class="scan" role="img" aria-label="మూల పట్టికలో ${e.te} లో ${L.char}"></div>`;
+      drawScan();
+      src.querySelector("small").textContent = "మూల పట్టిక";
+    }
+    txt.classList.remove("fade"); src.classList.remove("fade");
+  }, 260);
+  $("nowGlyph").textContent = L.char; $("nowRoman").textContent = L.roman;
+}
+
+const tl = $("timeline");
+ERAS.forEach((e, i) => {
+  const b = document.createElement("button");
+  b.className = "node"; b.dataset.i = i;
+  b.innerHTML = `<i></i><span class="tip">${e.date_te} · ${e.te}</span>`;
+  b.addEventListener("click", () => {
+    const at = state.seq.indexOf(i);
+    if (at >= 0) { state.pos = at; morphTo(state.li, i); }
+  });
+  tl.appendChild(b);
+});
+function updateTimeline() {
+  const nodes = [...tl.querySelectorAll(".node")];
+  nodes.forEach((n, i) => {
+    const ok = has(state.li, i);
+    n.className = "node";
+    if (!ok) n.classList.add("empty");
+    if (i === BRANCH) { n.classList.add("branch"); if ($("branch").checked) n.classList.add("on"); }
+    if (i < state.ei && ok) n.classList.add("past");
+    if (i === state.ei) n.classList.add("current");
+    n.setAttribute("aria-label", `${ERAS[i].te}, ${ERAS[i].date_te}${ok ? "" : " — పట్టికలో రూపం లేదు"}`);
+  });
+  const cur = nodes[state.ei];
+  $("fill").style.width = cur ? (cur.offsetLeft + cur.offsetWidth / 2 - 8) + "px" : "0";
+}
+
+const strip = $("letters");
+LETTERS.forEach((L, i) => {
+  if (L.char === "క") strip.insertAdjacentHTML("beforeend", `<span class="grp" aria-hidden="true" title="అచ్చులు | హల్లులు"></span>`);
+  const b = document.createElement("button");
+  b.textContent = L.char; b.title = L.roman; b.setAttribute("role", "option");
+  b.addEventListener("click", () => goLetter(i));
+  strip.appendChild(b); L.btn = b;
+});
+function renderLetterStrip(li) {
+  LETTERS.forEach((L, i) => { L.btn.classList.toggle("active", i === li); L.btn.setAttribute("aria-selected", i === li); });
+  LETTERS[li].btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+}
+
+function setPlaying(p) {
+  state.playing = p;
+  $("play").setAttribute("aria-label", p ? "ఆపు" : "నడుపు");
+  $("playIcon").innerHTML = p ? '<path d="M4 2h3v12H4zM9 2h3v12H9z"/>' : '<path d="m4 2 10 6-10 6z"/>';
+}
+$("play").onclick = () => setPlaying(!state.playing);
+$("prev").onclick = () => step(-1);
+$("next").onclick = () => step(1);
+$("branch").onchange = () => {
+  state.seq = buildSeq(state.li);
+  const at = state.seq.indexOf(state.ei);
+  if (at >= 0) state.pos = at; else { state.pos = Math.max(0, state.seq.findIndex(i => i > state.ei) - 1); }
+  updateTimeline();
+};
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") step(1);
+  else if (e.key === "ArrowLeft") step(-1);
+  else if (e.key === "ArrowDown") goLetter((state.li + 1) % LETTERS.length);
+  else if (e.key === "ArrowUp") goLetter((state.li - 1 + LETTERS.length) % LETTERS.length);
+  else if (e.key === " ") { e.preventDefault(); setPlaying(!state.playing); }
+});
+
+const mouse = new THREE.Vector2();
+addEventListener("pointermove", e => { mouse.set(e.clientX / innerWidth * 2 - 1, e.clientY / innerHeight * 2 - 1); });
+
+// touch: swipe left/right through eras, up/down through letters
+let swipe = null;
+canvas.addEventListener("pointerdown", e => { swipe = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener("pointercancel", () => { swipe = null; mouse.set(0, 0); });
+canvas.addEventListener("pointerup", e => {
+  if (e.pointerType !== "mouse") mouse.set(0, 0);   // let the tilt settle after a drag
+  if (!swipe) return;
+  const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y; swipe = null;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) step(dx < 0 ? 1 : -1);
+  else if (Math.abs(dy) > 55 && Math.abs(dy) > Math.abs(dx) * 1.3)
+    goLetter((state.li + (dy < 0 ? 1 : -1) + LETTERS.length) % LETTERS.length);
+});
+
+/* ---------- loop ---------- */
+const clock = new THREE.Clock();
+function tick() {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  uniforms.uTime.value = t;
+  if (state.phase === "morph") {
+    state.t += dt;
+    uniforms.uProgress.value = Math.min(state.t / MORPH, 1);
+    if (state.t >= MORPH) { state.phase = "hold"; state.t = 0; }
+  } else if (state.playing && state.ei >= 0 && !state.busy) {
+    state.t += dt;
+    const hold = ERAS[state.ei].id === "modern" ? HOLD_MODERN : HOLD;
+    if (state.t >= hold) { state.t = 0; step(1); }
+  }
+  const sway = reduceMotion ? 0 : 1;
+  group.rotation.y += ((mouse.x * .32 + Math.sin(t * .25) * .06) * sway - group.rotation.y) * .04;
+  group.rotation.x += ((mouse.y * .18) * sway - group.rotation.x) * .04;
+  dust.rotation.y = t * .01;
+  composer.render();
+  requestAnimationFrame(tick);
+}
+
+/* ---------- boot ---------- */
+setPlaying(state.playing);
+resize();
+await goLetter(0);
+$("loading").style.opacity = 0;
+tick();
+</script>
+</body>
+</html>
