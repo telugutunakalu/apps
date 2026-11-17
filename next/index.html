@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="te" data-theme="dark" data-accent="saffron">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>తెలుగు తునకలు — బీటా</title>
+<link rel="stylesheet" href="../lib/v1/tt.css">
+<style>
+  .wrap { padding: 8px 16px 40px; max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+  .lead { color: var(--tt-muted); margin: 4px 0 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+  .card { display: grid; grid-template-columns: 56px 1fr; gap: 4px 14px; align-items: center; padding: 14px; border-radius: var(--tt-radius);
+          background: var(--tt-surface); border: 1px solid var(--tt-line); text-decoration: none; color: inherit; }
+  .card .ic { grid-row: span 2; width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; font-family: var(--tt-font-display);
+              font-size: 28px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+  .card h2 { margin: 0; font-size: 18px; }
+  .card p { margin: 0; color: var(--tt-muted); font-size: 14px; }
+  .links { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .tag { font-size: 12.5px; padding: 3px 10px; border-radius: var(--tt-pill); border: 1px solid var(--tt-line); color: var(--tt-muted); text-decoration: none; }
+  .tag--next { background: var(--tt-warn); color: #2a1d00; border-color: transparent; font-weight: 700; }
+  .tag--off { opacity: .5; }
+  h3 { font-family: var(--tt-font-display); font-weight: 400; font-size: 20px; margin: 22px 0 10px; }
+</style>
+<script type="importmap">{ "imports": { "three": "../lib/v1/vendor/three/three.module.min.js", "three/addons/": "../lib/v1/vendor/three/addons/", "tt/": "../lib/v1/" } }</script>
+</head>
+<body>
+<script type="module">
+import { createApp } from "tt/shell.js";
+import { el } from "tt/safe.js";
+import { createBackdrop } from "tt/three-kit.js";
+
+const app = createApp({ id: "next-gallery", title: "తునకలు — బీటా", accent: "saffron", backHref: "../index.html", backLabel: "లైవ్" });
+const accents = { saffron: "#ff8a3d", turmeric: "#ffc233", leaf: "#34d17e", peacock: "#22c3d6", lotus: "#ff5c93", indigo: "#8f80ff", gold: "#f2b544", chili: "#ff4f4f" };
+const data = await fetch("../apps.json").then(r => r.json());
+
+const card = a => el("div", { class: "card", style: { "--c": accents[a.accent] } },
+  el("div", { class: "ic", text: [...a.te][0] }),
+  el("h2", { text: a.te }),
+  el("p", { text: a.blurb_te }),
+  el("div", { class: "links" },
+    a.next ? el("a", { class: "tag tag--next", href: `./${a.slug}.html`, text: "కొత్త (బీటా) →" }) : el("span", { class: "tag tag--off", text: "కొత్తది ఇంకా రాలేదు" }),
+    a.live ? el("a", { class: "tag", href: `../${a.slug}.html`, text: a.upgraded ? "లైవ్ (కొత్తది)" : "లైవ్ (పాతది)" }) : null));
+
+const wrap = el("div", { class: "wrap" },
+  el("p", { class: "lead", text: "పరీక్షలో ఉన్న కొత్త వెర్షన్లు. ఫోన్‌లో ఆడి చూసి అభిప్రాయం చెప్పండి." }),
+  el("h3", { text: "ఆటలు" }), el("div", { class: "grid" }, data.apps.filter(a => a.category === "games").map(card)),
+  el("h3", { text: "పరికరాలు" }), el("div", { class: "grid" }, data.apps.filter(a => a.category === "tools").map(card)),
+  el("h3", { text: "డెవలపర్‌ల కోసం" }),
+  el("div", { class: "grid" }, el("a", { class: "card", href: "./kit-demo.html", style: { "--c": accents.indigo } },
+    el("div", { class: "ic", text: "⚙" }), el("h2", { text: "కిట్ డెమో" }), el("p", { text: "lib/v1 అంశాలన్నీ ఒకే పేజీలో" }))),
+);
+app.stage.append(wrap);
+createBackdrop(app.stage, { count: 18, opacity: 0.12 });
+</script>
+</body>
+</html>

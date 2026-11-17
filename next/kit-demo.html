@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="te" data-theme="dark" data-accent="indigo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>కిట్ డెమో — lib/v1</title>
+<link rel="stylesheet" href="../lib/v1/tt.css">
+<style>
+  .wrap { padding: 4px 16px 48px; max-width: 980px; margin: 0 auto; display: grid; gap: 16px; position: relative; z-index: 1; }
+  section { background: var(--tt-surface); border: 1px solid var(--tt-line); border-radius: var(--tt-radius); padding: 16px; }
+  section h2 { margin: 0 0 10px; font-family: var(--tt-font-display); font-weight: 400; font-size: 20px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  textarea { width: 100%; min-height: 70px; border-radius: var(--tt-radius-sm); border: 1px solid var(--tt-line); background: var(--tt-surface-2); padding: 10px; font-size: 18px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { padding: 4px 10px; border-radius: 10px; background: var(--tt-surface-2); border: 1px solid var(--tt-line); font-size: 20px; }
+  .chip small { display: block; font-size: 10px; color: var(--tt-faint); text-align: center; }
+  .scene { position: relative; height: min(56vh, 420px); border-radius: var(--tt-radius); overflow: hidden; background: #000; touch-action: none; }
+  .scene .tag { position: absolute; left: 10px; bottom: 10px; z-index: 2; }
+  .muted { color: var(--tt-muted); font-size: 14px; margin: 6px 0 0; }
+</style>
+<script type="importmap">{ "imports": { "three": "../lib/v1/vendor/three/three.module.min.js", "three/addons/": "../lib/v1/vendor/three/addons/", "tt/": "../lib/v1/" } }</script>
+</head>
+<body>
+<script type="module">
+import { createApp, pointerControls, createLoop, fontsReady } from "tt/shell.js";
+import { el, setChildren } from "tt/safe.js";
+import { sfx, speak, canSpeakTelugu } from "tt/sfx.js";
+import * as te from "tt/telugu.js";
+import { loadWords } from "tt/words.js";
+import { THREE, createRenderer, createComposer, autoResize, glyphSprite, Burst, skyDome, parseVoxelArt, voxelMesh, createBackdrop, qualityTier } from "tt/three-kit.js";
+
+const app = createApp({
+  id: "kit-demo", title: "కిట్ డెమో", accent: "indigo", backHref: "./index.html", backLabel: "బీటా",
+  help: "ఇది lib/v1 అంశాల ప్రదర్శన పేజీ.\nప్రతి యాప్ ఇవే బటన్లు, అమరికలు, శబ్దాలు వాడుతుంది.",
+  settings: [
+    { key: "size", label: "గ్రిడ్ పరిమాణం", type: "segmented", default: "11", restart: true,
+      options: [{ value: "7", label: "చిన్న 7×7" }, { value: "11", label: "మధ్య 11×11" }, { value: "15", label: "పెద్ద 15×15" }] },
+    { key: "speed", label: "వేగం", type: "range", min: 1, max: 10, default: 5, format: v => `${v}/10` },
+    { key: "glow", label: "మెరుపు", type: "toggle", default: true, help: "3D దృశ్యంలో బ్లూమ్ ప్రభావం" },
+  ],
+  onSettings: (v, key) => { app.toast(`${key ?? "అన్నీ"} → ${key ? v[key] : "మొదటివి"}`); if (bloomPass) bloomPass.enabled = v.glow; },
+});
+
+const wrap = el("div", { class: "wrap" });
+app.stage.append(wrap);
+
+/* --- UI pieces --- */
+wrap.append(el("section", {},
+  el("h2", { text: "బటన్లు · టోస్ట్ · ఓవర్లే · శబ్దాలు" }),
+  el("div", { class: "row" },
+    el("button", { class: "tt-btn", text: "సరైనది!", on: { click: () => { sfx.play("good"); app.toast("భలే! సరైన జవాబు", { tone: "good" }); } } }),
+    el("button", { class: "tt-btn tt-btn--ghost", text: "తప్పు", on: { click: () => { sfx.play("bad"); app.toast("అయ్యో! మళ్ళీ ప్రయత్నించండి", { tone: "bad" }); } } }),
+    el("button", { class: "tt-btn tt-btn--ghost", text: "ఓవర్లే", on: { click: () => app.overlay({
+      title: "ఆట ముగిసింది", body: "మీ స్కోరు ఇదిగో.", stats: [{ label: "స్కోరు", value: "1,250" }, { label: "ఉత్తమం", value: "2,000" }],
+      actions: [{ label: "మళ్ళీ ఆడు", onClick: app.hideOverlay }, { label: "మూసివేయి", ghost: true, onClick: app.hideOverlay }] }) } }),
+    el("button", { class: "tt-btn tt-btn--ghost", text: "అమరికలు", on: { click: app.openSettings } }),
+  ),
+  el("div", { class: "row", style: { marginTop: "10px" } },
+    ["tap", "pop", "good", "bad", "coin", "jump", "whoosh", "crash", "level", "win"].map(n => el("button", { class: "tt-chip", text: n, on: { click: () => sfx.play(n) } }))),
+  el("p", { class: "muted", text: `నాణ్యత స్థాయి (quality tier): ${qualityTier()} · తెలుగు స్వరం: ${canSpeakTelugu() ? "ఉంది" : "లేదు"}` }),
+));
+
+/* --- segmenter playground --- */
+const ta = el("textarea", { value: "ప్రపంచం పునరావృతం శ్రీకృష్ణదేవరాయలు పెన్ క్షమ", attrs: { "aria-label": "తెలుగు వచనం" } });
+const chips = el("div", { class: "chips" });
+const renderChips = () => setChildren(chips, te.tokenize(ta.value).filter(t => t.type !== "space").map(t =>
+  el("span", { class: "chip", on: { click: () => speak(t.text) } }, t.text, el("small", { text: t.type === "akshara" ? (te.vowelOf(t.text) ?? "పొల్లు") : t.type }))));
+ta.addEventListener("input", renderChips); renderChips();
+const words = await loadWords();
+wrap.append(el("section", {}, el("h2", { text: "అక్షరాల విభజన (telugu.js)" }), ta, chips,
+  el("p", { class: "muted", text: `పద బ్యాంకు: ${words.length} పదాలు · క గుణింతం: ${te.gunintham("క").join(" ")}` })));
+
+/* --- three.js scene: glyph sprites, burst, voxel car, sky --- */
+const sceneBox = el("div", { class: "scene" }, el("span", { class: "tt-pill tag", text: "తాకండి → మెరుపులు" }));
+wrap.append(el("section", {}, el("h2", { text: "3D కిట్ (three-kit.js)" }), sceneBox));
+await fontsReady();
+const renderer = createRenderer({ container: sceneBox, pixelSize: 1 });
+let bloomPass = null;
+if (renderer) {
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xff9a5a, 20, 90);   // = sky horizon colour, so distant ground melts into the sky
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 500);
+  camera.position.set(0, 3.2, 9); camera.lookAt(0, 1.4, 0);
+  scene.add(skyDome({ top: "#1b1340", horizon: "#ff9a5a", bottom: "#2a1530" }));
+  scene.add(new THREE.HemisphereLight(0xffe2c4, 0x40305a, 1.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(4, 8, 6); scene.add(sun);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshLambertMaterial({ color: 0x3b7a3a }));
+  ground.rotation.x = -Math.PI / 2; scene.add(ground);
+  const P = { b: "#ff8a3d", k: "#1b1b22", g: "#8fd3ff", r: "#ff3355", h: "#fff4c2" };
+  const car = voxelMesh(parseVoxelArt([
+    [".....", "kbbbk", "kbbbk", ".bbb.", ".bbb.", ".bbb.", "kbbbk", "kbbbk", "....."],
+    ["rbbbr", "bbbbb", "bbbbb", "bbbbb", "bbbbb", "bbbbb", "bbbbb", "bbbbb", "hbbbh"],
+    [".....", ".....", ".ggg.", ".bbb.", ".bbb.", ".ggg.", ".....", ".....", "....."],
+  ], P), { size: 0.32 });
+  scene.add(car);
+  const ring = new THREE.Group(); scene.add(ring);
+  te.gunintham("క").slice(0, 12).forEach((g, i, a) => {
+    const s = glyphSprite(g, { size: 0.9, color: "#ffd98a", stroke: "#3a1d00", strokeWidth: 6 });
+    const ang = (i / a.length) * Math.PI * 2;
+    s.position.set(Math.cos(ang) * 3.6, 1.8 + Math.sin(i) * 0.3, Math.sin(ang) * 3.6);
+    ring.add(s);
+  });
+  const burst = new Burst(); scene.add(burst);
+  const { composer, bloomPass: bp } = createComposer(renderer, scene, camera, { bloom: { strength: 0.7, radius: 0.35, threshold: 0.85 } });
+  bloomPass = bp; if (bloomPass) bloomPass.enabled = app.settings.glow;
+  autoResize({ renderer, camera, composer, bloomPass, container: sceneBox });
+  pointerControls(sceneBox, { onTap: ({ x, y, w, h }) => {
+    sfx.play("pop");
+    const v = new THREE.Vector3((x / w) * 2 - 1, -(y / h) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
+    const p = camera.position.clone().add(v.multiplyScalar(7));
+    burst.emit(p, { count: 60, color: [0xffc233, 0xff5c93, 0x22c3d6][Math.floor(Math.random() * 3)] });
+  } });
+  let t = 0;
+  createLoop({
+    update: dt => { t += dt; ring.rotation.y += dt * 0.35 * (app.settings.speed / 5); car.rotation.y = Math.sin(t * 0.6) * 0.5; burst.update(dt); },
+    render: () => composer.render(),
+  }).start();
+}
+createBackdrop(document.body.querySelector(".tt-stage"), { count: 14, opacity: 0.1 });
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "telugutunakalu-apps",
+  "private": true,
+  "type": "module",
+  "description": "తెలుగు తునకలు web apps (GitHub Pages). See tests/ and tools/.",
+  "scripts": {
+    "serve": "node tests/serve.mjs",
+    "test": "node --test tests/unit/*.test.mjs",
+    "smoke": "node tests/smoke.mjs",
+    "promote": "node tools/promote.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1"
+  }
+}

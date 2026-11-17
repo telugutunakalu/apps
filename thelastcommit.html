@@ -501,7 +501,9 @@
                 tooltip.style.left = `${e.clientX + 15}px`;
                 tooltip.style.top = `${e.clientY + 15}px`;
                 const commitDate = new Date(commit.commit.author.date).toLocaleString();
-                tooltip.innerHTML = `<p class="mb-2">${commit.commit.message.split('\n')[0]}</p><p class="author">by ${commit.commit.author.name}</p><p class="text-gray-400 text-sm mb-1">${commitDate}</p><p class="sha">${commit.sha.substring(0, 12)}...</p>`;
+                // Commit text comes from any public repo (or a loaded JSON file): escape it so it can't inject markup/script.
+                const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                tooltip.innerHTML = `<p class="mb-2">${esc(commit.commit.message.split('\n')[0])}</p><p class="author">by ${esc(commit.commit.author.name)}</p><p class="text-gray-400 text-sm mb-1">${esc(commitDate)}</p><p class="sha">${esc(commit.sha.substring(0, 12))}...</p>`;
             } else {
                 tooltip.style.display = 'none';
                 lastHoveredIndex = -1;

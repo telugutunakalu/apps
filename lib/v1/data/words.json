@@ -1,0 +1,1499 @@
+{
+ "version": 1,
+ "note": "Imported unchanged from tadaperata.html and carushikaru.html (2026-11-17). Content review pending; entries with emojiBroken need a picture.",
+ "words": [
+  {
+   "te": "పండు",
+   "syllables": [
+    "పం",
+    "డు"
+   ],
+   "emoji": "🍎",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కళ్ళు",
+   "syllables": [
+    "క",
+    "ళ్ళు"
+   ],
+   "emoji": "👀",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఇల్లు",
+   "syllables": [
+    "ఇ",
+    "ల్లు"
+   ],
+   "emoji": "🏠",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కుక్క",
+   "syllables": [
+    "కు",
+    "క్క"
+   ],
+   "emoji": "🐶",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పిల్లి",
+   "syllables": [
+    "పి",
+    "ల్లి"
+   ],
+   "emoji": "🐱",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "బంతి",
+   "syllables": [
+    "బం",
+    "తి"
+   ],
+   "emoji": "⚽",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కారు",
+   "syllables": [
+    "కా",
+    "రు"
+   ],
+   "emoji": "🚗",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "నీరు",
+   "syllables": [
+    "నీ",
+    "రు"
+   ],
+   "emoji": "💧",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "గోడ",
+   "syllables": [
+    "గో",
+    "డ"
+   ],
+   "emoji": "🧱",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "మేడ",
+   "syllables": [
+    "మే",
+    "డ"
+   ],
+   "emoji": "🏰",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కాకి",
+   "syllables": [
+    "కా",
+    "కి"
+   ],
+   "emoji": "🐦",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "నది",
+   "syllables": [
+    "న",
+    "ది"
+   ],
+   "emoji": "🏞️",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పక్షి",
+   "syllables": [
+    "ప",
+    "క్షి"
+   ],
+   "emoji": "🕊️",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "రాయి",
+   "syllables": [
+    "రా",
+    "యి"
+   ],
+   "emoji": "🪨",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "గాలి",
+   "syllables": [
+    "గా",
+    "లి"
+   ],
+   "emoji": "💨",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "మేఘం",
+   "syllables": [
+    "మే",
+    "ఘం"
+   ],
+   "emoji": "☁️",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ద్రాక్ష",
+   "syllables": [
+    "ద్రా",
+    "క్ష"
+   ],
+   "emoji": "🍇",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "నక్క",
+   "syllables": [
+    "న",
+    "క్క"
+   ],
+   "emoji": "🦊",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "దీపం",
+   "syllables": [
+    "దీ",
+    "పం"
+   ],
+   "emoji": "💡",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "దంతం",
+   "syllables": [
+    "దం",
+    "తం"
+   ],
+   "emoji": "🦷",
+   "level": 1,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఏనుగు",
+   "syllables": [
+    "ఏ",
+    "ను",
+    "గు"
+   ],
+   "emoji": "🐘",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "మామిడి",
+   "syllables": [
+    "మా",
+    "మి",
+    "డి"
+   ],
+   "emoji": "🥭",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "అరటి",
+   "syllables": [
+    "అ",
+    "ర",
+    "టి"
+   ],
+   "emoji": "🍌",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కడవ",
+   "syllables": [
+    "క",
+    "డ",
+    "వ"
+   ],
+   "emoji": "🏺",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఉడుత",
+   "syllables": [
+    "ఉ",
+    "డు",
+    "త"
+   ],
+   "emoji": "🐿️",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఉంగరం",
+   "syllables": [
+    "ఉం",
+    "గ",
+    "రం"
+   ],
+   "emoji": "💍",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పడవ",
+   "syllables": [
+    "ప",
+    "డ",
+    "వ"
+   ],
+   "emoji": "⛵",
+   "level": 2,
+   "sources": [
+    "tadaperata",
+    "carushikaru"
+   ],
+   "meaning_en": "Boat"
+  },
+  {
+   "te": "కమలం",
+   "syllables": [
+    "క",
+    "మ",
+    "లం"
+   ],
+   "emoji": "🌺",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఆకాశం",
+   "syllables": [
+    "ఆ",
+    "కా",
+    "శం"
+   ],
+   "emoji": "🌌",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కిటికీ",
+   "syllables": [
+    "కి",
+    "టి",
+    "కీ"
+   ],
+   "emoji": "🖼️",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పతంగి",
+   "syllables": [
+    "ప",
+    "తం",
+    "గి"
+   ],
+   "emoji": "🪁",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "అడవి",
+   "syllables": [
+    "అ",
+    "డ",
+    "వి"
+   ],
+   "emoji": "🏞️",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పలక",
+   "syllables": [
+    "ప",
+    "ల",
+    "క"
+   ],
+   "emoji": "✍️",
+   "level": 2,
+   "sources": [
+    "tadaperata",
+    "carushikaru"
+   ],
+   "meaning_en": "Slate"
+  },
+  {
+   "te": "గడప",
+   "syllables": [
+    "గ",
+    "డ",
+    "ప"
+   ],
+   "emoji": "🚪",
+   "level": 2,
+   "sources": [
+    "tadaperata",
+    "carushikaru"
+   ],
+   "meaning_en": "Threshold"
+  },
+  {
+   "te": "టమోటా",
+   "syllables": [
+    "ట",
+    "మో",
+    "టా"
+   ],
+   "emoji": "🍅",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పుస్తకం",
+   "syllables": [
+    "పు",
+    "స్త",
+    "కం"
+   ],
+   "emoji": "📖",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "సూర్యుడు",
+   "syllables": [
+    "సూ",
+    "ర్యు",
+    "డు"
+   ],
+   "emoji": "☀️",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "చంద్రుడు",
+   "syllables": [
+    "చం",
+    "ద్రు",
+    "డు"
+   ],
+   "emoji": "🌙",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "చెవులు",
+   "syllables": [
+    "చె",
+    "వు",
+    "లు"
+   ],
+   "emoji": "👂",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "జడలు",
+   "syllables": [
+    "జ",
+    "డ",
+    "లు"
+   ],
+   "emoji": "👧",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "విమానం",
+   "syllables": [
+    "వి",
+    "మా",
+    "నం"
+   ],
+   "emoji": "✈️",
+   "level": 2,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పాఠశాల",
+   "syllables": [
+    "పా",
+    "ఠ",
+    "శా",
+    "ల"
+   ],
+   "emoji": "🏫",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "దోమతెర",
+   "syllables": [
+    "దో",
+    "మ",
+    "తె",
+    "ర"
+   ],
+   "emoji": "🦟",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఉల్లిపాయ",
+   "syllables": [
+    "ఉ",
+    "ల్లి",
+    "పా",
+    "య"
+   ],
+   "emoji": "🧅",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "తలగడ",
+   "syllables": [
+    "త",
+    "ల",
+    "గ",
+    "డ"
+   ],
+   "emoji": "�",
+   "emojiBroken": true,
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "గడియారం",
+   "syllables": [
+    "గ",
+    "డి",
+    "యా",
+    "రం"
+   ],
+   "emoji": "🕰️",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "అగ్గిపెట్టె",
+   "syllables": [
+    "అ",
+    "గ్గి",
+    "పె",
+    "ట్టె"
+   ],
+   "emoji": "🔥",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "బడిగంట",
+   "syllables": [
+    "బ",
+    "డి",
+    "గం",
+    "ట"
+   ],
+   "emoji": "🔔",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "జంతుశాల",
+   "syllables": [
+    "జం",
+    "తు",
+    "శా",
+    "ల"
+   ],
+   "emoji": "🦁",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "రైలుబండి",
+   "syllables": [
+    "రై",
+    "లు",
+    "బం",
+    "డి"
+   ],
+   "emoji": "🚂",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "మేకపిల్ల",
+   "syllables": [
+    "మే",
+    "క",
+    "పి",
+    "ల్ల"
+   ],
+   "emoji": "🐐",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "అంతరిక్షం",
+   "syllables": [
+    "అం",
+    "త",
+    "రి",
+    "క్షం"
+   ],
+   "emoji": "🚀",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కంప్యూటరు",
+   "syllables": [
+    "కం",
+    "ప్యూ",
+    "ట",
+    "రు"
+   ],
+   "emoji": "💻",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "దూరవాణి",
+   "syllables": [
+    "దూ",
+    "ర",
+    "వా",
+    "ణి"
+   ],
+   "emoji": "📞",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఉష్ణోగ్రత",
+   "syllables": [
+    "ఉ",
+    "ష్ణో",
+    "గ్ర",
+    "త"
+   ],
+   "emoji": "🌡️",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "విద్యుచ్ఛక్తి",
+   "syllables": [
+    "వి",
+    "ద్యు",
+    "చ్ఛ",
+    "క్తి"
+   ],
+   "emoji": "⚡",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "నక్షత్రాలు",
+   "syllables": [
+    "న",
+    "క్ష",
+    "త్రా",
+    "లు"
+   ],
+   "emoji": "🌌",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "తాళంచెవి",
+   "syllables": [
+    "తా",
+    "ళం",
+    "చె",
+    "వి"
+   ],
+   "emoji": "🔑",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పుచ్చకాయ",
+   "syllables": [
+    "పు",
+    "చ్చ",
+    "కా",
+    "య"
+   ],
+   "emoji": "🍉",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "సబ్బుబిళ్ళ",
+   "syllables": [
+    "స",
+    "బ్బు",
+    "బి",
+    "ళ్ళ"
+   ],
+   "emoji": "🧼",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "గ్రంథాలయం",
+   "syllables": [
+    "గ్రం",
+    "థా",
+    "ల",
+    "యం"
+   ],
+   "emoji": "📚",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కర్మాగారం",
+   "syllables": [
+    "క",
+    "ర్మా",
+    "గా",
+    "రం"
+   ],
+   "emoji": "🏭",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఆసుపత్రి",
+   "syllables": [
+    "ఆ",
+    "సు",
+    "ప",
+    "త్రి"
+   ],
+   "emoji": "🏥",
+   "level": 3,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "రామచిలుక",
+   "syllables": [
+    "రా",
+    "మ",
+    "చి",
+    "లు",
+    "క"
+   ],
+   "emoji": "🦜",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఆటబొమ్మలు",
+   "syllables": [
+    "ఆ",
+    "ట",
+    "బొ",
+    "మ్మ",
+    "లు"
+   ],
+   "emoji": "🧸",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "విహారయాత్ర",
+   "syllables": [
+    "వి",
+    "హా",
+    "ర",
+    "యా",
+    "త్ర"
+   ],
+   "emoji": "🧺",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "భోజనశాల",
+   "syllables": [
+    "భో",
+    "జ",
+    "న",
+    "శా",
+    "ల"
+   ],
+   "emoji": "🍽️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "అంగడివీధి",
+   "syllables": [
+    "అం",
+    "గ",
+    "డి",
+    "వీ",
+    "ధి"
+   ],
+   "emoji": "🛒",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "చిత్రలేఖనం",
+   "syllables": [
+    "చి",
+    "త్ర",
+    "లే",
+    "ఖ",
+    "నం"
+   ],
+   "emoji": "🎨",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "దూరదర్శిని",
+   "syllables": [
+    "దూ",
+    "ర",
+    "ద",
+    "ర్శి",
+    "ని"
+   ],
+   "emoji": "🔭",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "చలనచిత్రం",
+   "syllables": [
+    "చ",
+    "ల",
+    "న",
+    "చి",
+    "త్రం"
+   ],
+   "emoji": "🎬",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ప్రయోగశాల",
+   "syllables": [
+    "ప్ర",
+    "యో",
+    "గ",
+    "శా",
+    "ల"
+   ],
+   "emoji": "🧪",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఉపగ్రహము",
+   "syllables": [
+    "ఉ",
+    "ప",
+    "గ్ర",
+    "హ",
+    "ము"
+   ],
+   "emoji": "🛰️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "కాకరకాయ",
+   "syllables": [
+    "కా",
+    "క",
+    "ర",
+    "కా",
+    "య"
+   ],
+   "emoji": "🥒",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఉద్యానవనం",
+   "syllables": [
+    "ఉ",
+    "ద్యా",
+    "న",
+    "వ",
+    "నం"
+   ],
+   "emoji": "🏞️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "చేతిరుమాలు",
+   "syllables": [
+    "చే",
+    "తి",
+    "రు",
+    "మా",
+    "లు"
+   ],
+   "emoji": " handkerchief ",
+   "emojiBroken": true,
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "టెలివిజను",
+   "syllables": [
+    "టె",
+    "లి",
+    "వి",
+    "జ",
+    "ను"
+   ],
+   "emoji": "📺",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "వాతావరణం",
+   "syllables": [
+    "వా",
+    "తా",
+    "వ",
+    "ర",
+    "ణం"
+   ],
+   "emoji": "🌦️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "విజ్ఞానశాస్త్రం",
+   "syllables": [
+    "వి",
+    "జ్ఞా",
+    "న",
+    "శా",
+    "స్త్రం"
+   ],
+   "emoji": "🔬",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఆకాశహర్మ్యం",
+   "syllables": [
+    "ఆ",
+    "కా",
+    "శ",
+    "హ",
+    "ర్మ్యం"
+   ],
+   "emoji": "🏙️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "అయస్కాంతము",
+   "syllables": [
+    "అ",
+    "య",
+    "స్కాం",
+    "త",
+    "ము"
+   ],
+   "emoji": "🧲",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పరీక్షపత్రం",
+   "syllables": [
+    "ప",
+    "రీ",
+    "క్ష",
+    "ప",
+    "త్రం"
+   ],
+   "emoji": "📝",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "జలపాతము",
+   "syllables": [
+    "జ",
+    "ల",
+    "పా",
+    "త",
+    "ము"
+   ],
+   "emoji": "🌊",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "నవనీతము",
+   "syllables": [
+    "న",
+    "వ",
+    "నీ",
+    "త",
+    "ము"
+   ],
+   "emoji": "🧈",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "గణితశాస్త్రం",
+   "syllables": [
+    "గ",
+    "ణి",
+    "త",
+    "శా",
+    "స్త్రం"
+   ],
+   "emoji": "🔢",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "వ్యాయామశాల",
+   "syllables": [
+    "వ్యా",
+    "యా",
+    "మ",
+    "శా",
+    "ల"
+   ],
+   "emoji": "🏋️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "విమానాశ్రయం",
+   "syllables": [
+    "వి",
+    "మా",
+    "నా",
+    "శ్ర",
+    "యం"
+   ],
+   "emoji": "✈️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "సముద్రతీరం",
+   "syllables": [
+    "స",
+    "ము",
+    "ద్ర",
+    "తీ",
+    "రం"
+   ],
+   "emoji": "🏖️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "సమాచారము",
+   "syllables": [
+    "స",
+    "మా",
+    "చా",
+    "ర",
+    "ము"
+   ],
+   "emoji": "📰",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "అల్పాహారము",
+   "syllables": [
+    "అ",
+    "ల్పా",
+    "హా",
+    "ర",
+    "ము"
+   ],
+   "emoji": "🥞",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "బంగాళాదుంప",
+   "syllables": [
+    "బం",
+    "గా",
+    "ళా",
+    "దుం",
+    "ప"
+   ],
+   "emoji": "🥔",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "పర్యావరణము",
+   "syllables": [
+    "ప",
+    "ర్యా",
+    "వ",
+    "ర",
+    "ణ",
+    "ము"
+   ],
+   "emoji": "🌍",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "అగ్నిమాపకము",
+   "syllables": [
+    "అ",
+    "గ్ని",
+    "మా",
+    "ప",
+    "క",
+    "ము"
+   ],
+   "emoji": "🚒",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "విశ్వవిద్యాలయం",
+   "syllables": [
+    "వి",
+    "శ్వ",
+    "వి",
+    "ద్యా",
+    "ల",
+    "యం"
+   ],
+   "emoji": "🔭",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ద్విచక్రవాహనం",
+   "syllables": [
+    "ద్వి",
+    "చ",
+    "క్ర",
+    "వా",
+    "హ",
+    "నం"
+   ],
+   "emoji": "🚲",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "చంద్రమండలం",
+   "syllables": [
+    "చం",
+    "ద్ర",
+    "మం",
+    "డ",
+    "లం"
+   ],
+   "emoji": "🌕",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "భూగోళశాస్త్రం",
+   "syllables": [
+    "భూ",
+    "గో",
+    "ళ",
+    "శా",
+    "స్త్రం"
+   ],
+   "emoji": "🗺️",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "ఆవిరియంత్రము",
+   "syllables": [
+    "ఆ",
+    "వి",
+    "రి",
+    "యం",
+    "త్ర",
+    "ము"
+   ],
+   "emoji": "🚂",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "గాలిపటము",
+   "syllables": [
+    "గా",
+    "లి",
+    "ప",
+    "ట",
+    "ము"
+   ],
+   "emoji": "🪁",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "రోదసీనౌక",
+   "syllables": [
+    "రో",
+    "ద",
+    "సీ",
+    "నౌ",
+    "క"
+   ],
+   "emoji": "🚀",
+   "level": 4,
+   "sources": [
+    "tadaperata"
+   ]
+  },
+  {
+   "te": "నగ",
+   "syllables": [
+    "న",
+    "గ"
+   ],
+   "level": null,
+   "sources": [
+    "carushikaru"
+   ],
+   "meaning_en": "Jewel"
+  },
+  {
+   "te": "అరక",
+   "syllables": [
+    "అ",
+    "ర",
+    "క"
+   ],
+   "level": null,
+   "sources": [
+    "carushikaru"
+   ],
+   "meaning_en": "Plough"
+  },
+  {
+   "te": "వంద",
+   "syllables": [
+    "వం",
+    "ద"
+   ],
+   "level": null,
+   "sources": [
+    "carushikaru"
+   ],
+   "meaning_en": "Hundred"
+  },
+  {
+   "te": "సహజం",
+   "syllables": [
+    "స",
+    "హ",
+    "జం"
+   ],
+   "level": null,
+   "sources": [
+    "carushikaru"
+   ],
+   "meaning_en": "Natural"
+  },
+  {
+   "te": "ఆలయం",
+   "syllables": [
+    "ఆ",
+    "ల",
+    "యం"
+   ],
+   "level": null,
+   "sources": [
+    "carushikaru"
+   ],
+   "meaning_en": "Temple"
+  },
+  {
+   "te": "విజయం",
+   "syllables": [
+    "వి",
+    "జ",
+    "యం"
+   ],
+   "level": null,
+   "sources": [
+    "carushikaru"
+   ],
+   "meaning_en": "Victory"
+  },
+  {
+   "te": "ప్రపంచం",
+   "syllables": [
+    "ప్ర",
+    "పం",
+    "చం"
+   ],
+   "level": null,
+   "sources": [
+    "carushikaru"
+   ],
+   "meaning_en": "World"
+  },
+  {
+   "te": "పునరావృతం",
+   "syllables": [
+    "పు",
+    "న",
+    "రా",
+    "వృ",
+    "తం"
+   ],
+   "level": null,
+   "sources": [
+    "carushikaru"
+   ],
+   "meaning_en": "resume"
+  }
+ ]
+}

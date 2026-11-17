@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "note": "Single source of truth for the Telugu app gallery. 'next': an upgraded build is in next/ for testing. 'upgraded': the live file is on the shared lib/v1 kit.",
+  "apps": [
+    { "slug": "carushikaru", "te": "కారుషికారు", "en": "Carushikaru", "category": "games", "accent": "saffron", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "కారు నడుపుతూ సరైన అక్షరాలను పట్టుకుని తెలుగు పదాలను పూర్తి చేయండి." },
+    { "slug": "flappyka", "te": "ఫ్లాపీ 'క'", "en": "FlappyKa", "category": "games", "accent": "chili", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "ఫ్లాపీ బర్డ్ నుండి ప్రేరణ పొందిన ఈ గేమ్‌లో 'క' అక్షరంతో అడ్డంకులను దాటండి." },
+    { "slug": "telugallika", "te": "తెలుగల్లిక", "en": "Telugallika", "category": "games", "accent": "gold", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "పదాల పజిళ్లు అల్లుదాం రండి" },
+    { "slug": "tadaperata", "te": "తడపేరాట", "en": "Tadaperata", "category": "games", "accent": "turmeric", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "తెలుగు పదాలు మీకు ఎంత బాగా వొచ్చూనో ??!!!" },
+    { "slug": "ankelata", "te": "అంకెల ఆట", "en": "Ankela Ata", "category": "games", "accent": "peacock", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "తెలుగు అంకెలు నేర్చుకుందాం రండి!" },
+    { "slug": "aksharasangamam", "te": "అక్షర సంగమం", "en": "Akshara Sangamam", "category": "games", "accent": "lotus", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "తెలుగు అక్షరాల్ని గుంపులుగా చేసి పాయింట్లు కొట్టేయండి" },
+    { "slug": "aksharaveta", "te": "అక్షరాల వేట", "en": "Aksharala Veta", "category": "games", "accent": "leaf", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "ఈ సరదా పాక్‌మన్-శైలి గేమ్‌లో సరైన తెలుగు అక్షరాలను సేకరించండి!" },
+    { "slug": "aksharanusarika", "te": "అక్షరానుసారిక", "en": "Aksharanusarika", "category": "tools", "accent": "indigo", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "తెలుగు వచనాన్ని విశ్లేషించి, అక్షరాల వర్గీకరణ మరియు గణాంకాలను పొందండి." },
+    { "slug": "aksharayatra", "te": "అక్షర యాత్ర", "en": "Akshara Yatra", "category": "tools", "accent": "gold", "live": true, "next": false, "upgraded": false,
+      "blurb_te": "బ్రాహ్మీ నుండి నేటి తెలుగు దాకా — 2,300 ఏళ్లలో ప్రతి అక్షరం ఎలా మారిందో కణాల యానిమేషన్‌లో చూడండి." },
+    { "slug": "telugusampada", "te": "తెలుగు సంపద", "en": "Telugu Sampada", "category": "tools", "accent": "peacock", "live": false, "next": false, "upgraded": false,
+      "blurb_te": "పద్యార్చన, పదార్చన ప్రాజెక్టుల ప్రగతి — కొత్త వెర్షన్ (v2)" }
+  ]
+}
