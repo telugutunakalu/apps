@@ -1,6 +1,6 @@
 {
  "version": 1,
- "note": "Imported unchanged from tadaperata.html and carushikaru.html (2026-11-17). Content review pending; entries with emojiBroken need a picture.",
+ "note": "Imported unchanged from tadaperata.html, carushikaru.html and telugallika.html (2026-11-17). Content review pending; entries with emojiBroken need a picture.",
  "words": [
   {
    "te": "పండు",
@@ -143,8 +143,10 @@
    "emoji": "🏞️",
    "level": 1,
    "sources": [
-    "tadaperata"
-   ]
+    "tadaperata",
+    "telugallika"
+   ],
+   "hint_te": "నీరు ప్రవహించే మార్గం"
   },
   {
    "te": "పక్షి",
@@ -532,8 +534,10 @@
    "emoji": "🏫",
    "level": 3,
    "sources": [
-    "tadaperata"
-   ]
+    "tadaperata",
+    "telugallika"
+   ],
+   "hint_te": "విద్యార్థులు చదువుకునే చోటు"
   },
   {
    "te": "దోమతెర",
@@ -1494,6 +1498,79 @@
     "carushikaru"
    ],
    "meaning_en": "resume"
+  },
+  {
+   "te": "శాలువా",
+   "syllables": [
+    "శా",
+    "లు",
+    "వా"
+   ],
+   "level": null,
+   "sources": [
+    "telugallika"
+   ],
+   "hint_te": "చలిలో కప్పుకునేది"
+  },
+  {
+   "te": "వాన",
+   "syllables": [
+    "వా",
+    "న"
+   ],
+   "level": null,
+   "sources": [
+    "telugallika"
+   ],
+   "hint_te": "ఆకాశం నుండి పడేది"
+  },
+  {
+   "te": "దినం",
+   "syllables": [
+    "ది",
+    "నం"
+   ],
+   "level": null,
+   "sources": [
+    "telugallika"
+   ],
+   "hint_te": "24 గంటలు"
+  },
+  {
+   "te": "తల",
+   "syllables": [
+    "త",
+    "ల"
+   ],
+   "level": null,
+   "sources": [
+    "telugallika"
+   ],
+   "hint_te": "శరీరంలో పై భాగం"
+  },
+  {
+   "te": "నల్ల",
+   "syllables": [
+    "న",
+    "ల్ల"
+   ],
+   "level": null,
+   "sources": [
+    "telugallika"
+   ],
+   "hint_te": "చీకటి రంగు"
+  },
+  {
+   "te": "లత",
+   "syllables": [
+    "ల",
+    "త"
+   ],
+   "level": null,
+   "sources": [
+    "telugallika"
+   ],
+   "hint_te": "చెట్టుపై ఎక్కే మొక్క"
   }
  ]
 }
